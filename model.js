@@ -1,10 +1,10 @@
 // Fastener grid model helpers shared by the server and the labels. Rows are thread sizes (diameter + pitch); columns are lengths.
 // Cell keys: `${row.id}|${length}` for screws, `${row.id}|nut` for nuts, `${dia}|washer` for washers (washers span the rows of a diameter).
-const FRAC = { 0.125: '1/8', 0.25: '1/4', 0.375: '3/8', 0.5: '1/2', 0.625: '5/8', 0.75: '3/4', 0.875: '7/8' };
 function lengthText(page, len) {
   if (page.units === 'mm') return `${+len}mm`;
-  const whole = Math.floor(len + 1e-9), frac = +(len - whole).toFixed(4);
-  const f = FRAC[frac] || (frac ? String(frac).replace(/^0/, '') : '');
+  const whole = Math.floor(len + 1e-9), frac = +(len - whole).toFixed(6);
+  let f = '';
+  if (frac) { for (const d of [2, 4, 8, 16, 32, 64]) { const n = frac * d; if (Math.abs(n - Math.round(n)) < 1e-6) { f = `${Math.round(n)}/${d}`; break; } } if (!f) f = String(frac).replace(/^0/, ''); }
   return (whole ? (f ? `${whole}-${f}` : String(whole)) : f) + '″';
 }
 // the ordered list of lengths: the step series, plus extras, minus skips
