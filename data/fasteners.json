@@ -19,8 +19,7 @@
     "socket",
     "button",
     "hex",
-    "nylon",
-    "setscrew"
+    "nylon"
    ],
    "nuts": [
     "nut",
@@ -111,6 +110,17 @@
     },
     "0-80|0.75": {
      "types": [
+      "button",
+      "socket"
+     ]
+    },
+    "0-80|0.875": {
+     "types": [
+      "socket"
+     ]
+    },
+    "0-80|1": {
+     "types": [
       "button"
      ]
     }
@@ -147,8 +157,7 @@
     "socket",
     "button",
     "hex",
-    "nylon",
-    "setscrew"
+    "nylon"
    ],
    "nuts": [
     "nut",

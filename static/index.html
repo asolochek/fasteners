@@ -21,11 +21,11 @@ th { font-weight:600; font-size:13px; color:var(--ink2); padding:2px 4px; white-
 th.row { text-align:right; font-size:15px; color:var(--ink); }
 th .del { color:var(--ink2); cursor:pointer; margin-left:4px; font-weight:400; }
 th .del:hover { color:var(--accent); }
-td.cell { background:var(--none); border-radius:5px; padding:5px 6px 4px; min-width:112px; vertical-align:top; position:relative; }
+td.cell { background:var(--none); border-radius:5px; padding:5px 6px 4px; min-width:150px; vertical-align:top; position:relative; }
 td.cell.have { background:var(--have); box-shadow:inset 0 0 0 1.5px var(--have2); }
 td.washer { background:var(--none); }
-.icons { display:flex; gap:3px; flex-wrap:wrap; }
-.ic { width:32px; height:32px; opacity:.28; cursor:pointer; border-radius:3px; }
+.icons { display:flex; gap:4px; flex-wrap:wrap; }
+.ic { width:44px; height:44px; opacity:.28; cursor:pointer; border-radius:3px; }
 .ic.on { opacity:1; }
 .ic:hover { outline:1.5px solid var(--accent); }
 .ic svg { width:100%; height:100%; display:block; }
@@ -38,7 +38,11 @@ td.washer { background:var(--none); }
 td.cell:not(.have) .print { visibility:hidden; }
 .legend { display:flex; gap:14px; flex-wrap:wrap; margin:0 0 10px; font-size:13px; color:var(--ink2); }
 .legend span { display:inline-flex; align-items:center; gap:4px; }
-.legend svg { width:26px; height:26px; }
+.legend svg { width:30px; height:30px; }
+#types { position:fixed; top:56px; right:14px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px 14px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; z-index:5; max-height:80vh; overflow:auto; }
+#types h3 { margin:6px 0 4px; font-size:13px; color:var(--ink2); }
+#types label { display:flex; align-items:center; gap:6px; padding:2px 0; cursor:pointer; }
+#types label svg { width:24px; height:24px; }
 #preview { position:fixed; right:14px; bottom:14px; background:#fff; border:1px solid var(--line); padding:6px; border-radius:6px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; }
 #preview img { display:block; height:60px; }
 </style>
@@ -48,6 +52,7 @@ td.cell:not(.have) .print { visibility:hidden; }
   <h1>Fasteners</h1>
   <div id="tabs"></div>
   <span class="spacer"></span>
+  <button id="typesBtn">Types…</button>
   <button id="addLen">Add length…</button>
   <button id="printNew">PDF: unprinted</button>
   <button id="printAll">PDF: all</button>
@@ -59,6 +64,7 @@ td.cell:not(.have) .print { visibility:hidden; }
   <div id="grid"></div>
 </main>
 <div id="preview"><img alt=""></div>
+<div id="types"></div>
 <script>
 let data, icons, printed = {}, pageId, saveTimer;
 const $ = s => document.querySelector(s);
@@ -132,6 +138,7 @@ function render() {
     tbl.appendChild(tr);
   }
   $('#grid').innerHTML = ''; $('#grid').appendChild(tbl);
+  if ($('#types').style.display === 'block') renderTypes();
   tbl.querySelectorAll('.del').forEach(x => x.onclick = () => removeLength(+x.dataset.len));
 }
 function canSkip(p, l) { return !p.rows.some(r => (p.cells[`${r.id}|${l}`]?.types || []).length); }
@@ -154,6 +161,19 @@ async function printKeys(keys) {
   if (!r.ok) { status(''); return alert((await r.json()).error || 'failed'); }
   const n = r.headers.get('X-Label-Count'); const blob = await r.blob(); window.open(URL.createObjectURL(blob), '_blank'); status(`${n} label${n == 1 ? '' : 's'} rendered`);
 }
+// which head / nut / washer types this page shows (types ticked in cells but hidden here still print)
+const GROUPS = [['heads', 'Heads', ['flat', 'pan', 'socket', 'button', 'hex', 'nylon', 'setscrew', 'wood', 'sheetmetal']], ['nuts', 'Nuts', ['nut', 'thin', 'lock', 'wing']], ['washers', 'Washers', ['washer', 'fender', 'thinw', 'split', 'toothed']]];
+function renderTypes() {
+  const p = page();
+  $('#types').innerHTML = GROUPS.map(([k, title, all]) => `<h3>${title}</h3>` + all.map(t => `<label><input type="checkbox" data-group="${k}" data-type="${t}" ${p[k].includes(t) ? 'checked' : ''}>${icons.svg[t]}${icons.labels[t] || t}</label>`).join('')).join('');
+  $('#types').querySelectorAll('input').forEach(i => i.onchange = () => {
+    const list = p[i.dataset.group], t = i.dataset.type;
+    if (i.checked) { if (!list.includes(t)) list.push(t); list.sort((a, b) => GROUPS.find(g => g[0] === i.dataset.group)[2].indexOf(a) - GROUPS.find(g => g[0] === i.dataset.group)[2].indexOf(b)); }
+    else p[i.dataset.group] = list.filter(x => x !== t);
+    save(); render();
+  });
+}
+$('#typesBtn').onclick = () => { const t = $('#types'); if (t.style.display === 'block') t.style.display = 'none'; else { renderTypes(); t.style.display = 'block'; } };
 $('#printAll').onclick = () => printKeys('all');
 $('#printNew').onclick = () => printKeys('new');
 $('#markPrinted').onclick = async () => {
