@@ -123,6 +123,16 @@
      "types": [
       "button"
      ]
+    },
+    "#0|washer": {
+     "types": [
+      "split"
+     ],
+     "drawer": "7"
+    },
+    "0-80|nut": {
+     "types": [],
+     "drawer": "8"
     }
    }
   },
