@@ -1,0 +1,290 @@
+{
+ "version": 1,
+ "pages": [
+  {
+   "id": "sae-machine",
+   "title": "SAE Machine Screws",
+   "class": "machine",
+   "units": "in",
+   "lengths": {
+    "start": 0.25,
+    "stop": 1.5,
+    "step": 0.125,
+    "extra": []
+   },
+   "heads": [
+    "flat",
+    "pan",
+    "socket",
+    "button",
+    "hex",
+    "nylon",
+    "setscrew"
+   ],
+   "nuts": [
+    "nut",
+    "thin",
+    "lock",
+    "wing"
+   ],
+   "washers": [
+    "washer",
+    "fender",
+    "thinw",
+    "split",
+    "toothed"
+   ],
+   "rows": [
+    {
+     "id": "0-80",
+     "label": "#0-80",
+     "dia": "#0",
+     "pitch": 80
+    },
+    {
+     "id": "1-64",
+     "label": "#1-64",
+     "dia": "#1",
+     "pitch": 64
+    },
+    {
+     "id": "2-56",
+     "label": "#2-56",
+     "dia": "#2",
+     "pitch": 56
+    },
+    {
+     "id": "4-40",
+     "label": "#4-40",
+     "dia": "#4",
+     "pitch": 40
+    },
+    {
+     "id": "6-32",
+     "label": "#6-32",
+     "dia": "#6",
+     "pitch": 32
+    },
+    {
+     "id": "8-32",
+     "label": "#8-32",
+     "dia": "#8",
+     "pitch": 32
+    },
+    {
+     "id": "10-24",
+     "label": "#10-24",
+     "dia": "#10",
+     "pitch": 24
+    },
+    {
+     "id": "10-32",
+     "label": "#10-32",
+     "dia": "#10",
+     "pitch": 32
+    },
+    {
+     "id": "12-24",
+     "label": "#12-24",
+     "dia": "#12",
+     "pitch": 24
+    },
+    {
+     "id": "1/4-20",
+     "label": "1/4-20",
+     "dia": "1/4",
+     "pitch": 20
+    },
+    {
+     "id": "5/16-18",
+     "label": "5/16-18",
+     "dia": "5/16",
+     "pitch": 18
+    }
+   ],
+   "cells": {
+    "4-40|0.5": {
+     "types": [
+      "pan",
+      "socket"
+     ],
+     "drawer": "12"
+    },
+    "4-40|nut": {
+     "types": [
+      "nut",
+      "lock"
+     ]
+    },
+    "#10|washer": {
+     "types": [
+      "washer",
+      "split"
+     ]
+    },
+    "10-24|0.75": {
+     "types": [
+      "flat"
+     ],
+     "drawer": "20"
+    },
+    "5/16-18|1.5": {
+     "types": [
+      "flat",
+      "pan",
+      "socket",
+      "button",
+      "hex"
+     ]
+    }
+   }
+  },
+  {
+   "id": "metric-machine",
+   "title": "Metric Machine Screws",
+   "class": "machine",
+   "units": "mm",
+   "lengths": {
+    "start": 4,
+    "stop": 40,
+    "step": 2,
+    "extra": [
+     25,
+     35
+    ],
+    "skip": [
+     18,
+     22,
+     24,
+     26,
+     28,
+     32,
+     34,
+     36,
+     38
+    ]
+   },
+   "heads": [
+    "flat",
+    "pan",
+    "socket",
+    "button",
+    "hex",
+    "nylon",
+    "setscrew"
+   ],
+   "nuts": [
+    "nut",
+    "thin",
+    "lock",
+    "wing"
+   ],
+   "washers": [
+    "washer",
+    "fender",
+    "thinw",
+    "split",
+    "toothed"
+   ],
+   "rows": [
+    {
+     "id": "M1.6",
+     "label": "M1.6",
+     "dia": "M1.6",
+     "pitch": 0.35
+    },
+    {
+     "id": "M2",
+     "label": "M2",
+     "dia": "M2",
+     "pitch": 0.4
+    },
+    {
+     "id": "M2.5",
+     "label": "M2.5",
+     "dia": "M2.5",
+     "pitch": 0.45
+    },
+    {
+     "id": "M3",
+     "label": "M3",
+     "dia": "M3",
+     "pitch": 0.5
+    },
+    {
+     "id": "M3.5",
+     "label": "M3.5",
+     "dia": "M3.5",
+     "pitch": 0.6
+    },
+    {
+     "id": "M4",
+     "label": "M4",
+     "dia": "M4",
+     "pitch": 0.7
+    },
+    {
+     "id": "M5",
+     "label": "M5",
+     "dia": "M5",
+     "pitch": 0.8
+    },
+    {
+     "id": "M6",
+     "label": "M6",
+     "dia": "M6",
+     "pitch": 1
+    }
+   ],
+   "cells": {}
+  },
+  {
+   "id": "wood",
+   "title": "Wood Screws",
+   "class": "wood",
+   "units": "in",
+   "lengths": {
+    "start": 0.5,
+    "stop": 3,
+    "step": 0.25,
+    "extra": []
+   },
+   "heads": [
+    "wood",
+    "sheetmetal"
+   ],
+   "nuts": [],
+   "washers": [
+    "washer",
+    "fender"
+   ],
+   "rows": [
+    {
+     "id": "#4",
+     "label": "#4",
+     "dia": "#4",
+     "pitch": 0
+    },
+    {
+     "id": "#6",
+     "label": "#6",
+     "dia": "#6",
+     "pitch": 0
+    },
+    {
+     "id": "#8",
+     "label": "#8",
+     "dia": "#8",
+     "pitch": 0
+    },
+    {
+     "id": "#10",
+     "label": "#10",
+     "dia": "#10",
+     "pitch": 0
+    }
+   ],
+   "cells": {}
+  }
+ ]
+}

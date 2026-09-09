@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fasteners</title>
+<style>
+:root { --paper:#f7f6f2; --ink:#17181a; --ink2:#5b6470; --line:#d9d7cf; --have:#dff3df; --have2:#8fcf8f; --none:#ebe9e3; --accent:#d8641f; }
+body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.35 system-ui, sans-serif; }
+header { display:flex; gap:10px; align-items:center; padding:10px 14px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+header h1 { font-size:18px; margin:0 12px 0 0; font-weight:600; }
+.tab { padding:6px 10px; border:1px solid var(--line); background:#fff; cursor:pointer; border-radius:4px; }
+.tab.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+.spacer { flex:1; }
+button { font:inherit; padding:6px 10px; border:1px solid var(--line); background:#fff; border-radius:4px; cursor:pointer; }
+button:hover { border-color:var(--ink2); }
+#status { color:var(--ink2); font-size:13px; }
+main { padding:12px 14px; overflow-x:auto; }
+table { border-collapse:separate; border-spacing:3px; }
+th { font-weight:600; font-size:13px; color:var(--ink2); padding:2px 4px; white-space:nowrap; text-align:center; vertical-align:bottom; }
+th.row { text-align:right; font-size:15px; color:var(--ink); }
+th .del { color:var(--ink2); cursor:pointer; margin-left:4px; font-weight:400; }
+th .del:hover { color:var(--accent); }
+td.cell { background:var(--none); border-radius:5px; padding:4px 5px 3px; min-width:84px; vertical-align:top; position:relative; }
+td.cell.have { background:var(--have); box-shadow:inset 0 0 0 1.5px var(--have2); }
+td.washer { background:var(--none); }
+.icons { display:flex; gap:3px; flex-wrap:wrap; }
+.ic { width:22px; height:22px; opacity:.28; cursor:pointer; border-radius:3px; }
+.ic.on { opacity:1; }
+.ic:hover { outline:1.5px solid var(--accent); }
+.ic svg { width:100%; height:100%; display:block; }
+.meta { display:flex; justify-content:space-between; align-items:center; margin-top:3px; font-size:11px; color:var(--ink2); min-height:14px; }
+.drawer { cursor:pointer; padding:0 3px; border-radius:3px; }
+.drawer:hover { background:#fff; }
+.drawer.set { color:var(--ink); font-weight:600; }
+.print { cursor:pointer; opacity:.55; }
+.print:hover { opacity:1; color:var(--accent); }
+td.cell:not(.have) .print { visibility:hidden; }
+.legend { display:flex; gap:14px; flex-wrap:wrap; margin:0 0 10px; font-size:13px; color:var(--ink2); }
+.legend span { display:inline-flex; align-items:center; gap:4px; }
+.legend svg { width:18px; height:18px; }
+#preview { position:fixed; right:14px; bottom:14px; background:#fff; border:1px solid var(--line); padding:6px; border-radius:6px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; }
+#preview img { display:block; height:60px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Fasteners</h1>
+  <div id="tabs"></div>
+  <span class="spacer"></span>
+  <button id="addLen">Add length…</button>
+  <button id="printNew">PDF: unprinted</button>
+  <button id="printAll">PDF: all</button>
+  <button id="markPrinted">Mark all printed</button>
+  <span id="status"></span>
+</header>
+<main>
+  <div class="legend" id="legend"></div>
+  <div id="grid"></div>
+</main>
+<div id="preview"><img alt=""></div>
+<script>
+let data, icons, printed = {}, pageId, saveTimer;
+const $ = s => document.querySelector(s);
+const FRAC = { 0.125: '1/8', 0.25: '1/4', 0.375: '3/8', 0.5: '1/2', 0.625: '5/8', 0.75: '3/4', 0.875: '7/8' };
+function lengthText(page, len) {
+  if (page.units === 'mm') return `${+len}mm`;
+  const whole = Math.floor(len + 1e-9), frac = +(len - whole).toFixed(4);
+  const f = FRAC[frac] || (frac ? String(frac).replace(/^0/, '') : '');
+  return (whole ? (f ? `${whole}-${f}` : String(whole)) : f) + '″';
+}
+function lengths(page) {
+  const L = page.lengths, out = new Set();
+  for (let x = L.start; x <= L.stop + 1e-9; x = +(x + L.step).toFixed(6)) out.add(+x.toFixed(6));
+  for (const e of L.extra || []) out.add(+e);
+  for (const s of L.skip || []) out.delete(+s);
+  return [...out].sort((a, b) => a - b);
+}
+const page = () => data.pages.find(p => p.id === pageId);
+function status(t) { $('#status').textContent = t; }
+function save() {
+  clearTimeout(saveTimer); status('saving…');
+  saveTimer = setTimeout(async () => {
+    const r = await fetch('/api/data', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    status(r.ok ? 'saved' : 'save failed'); if (!r.ok) alert('Save failed');
+  }, 400);
+}
+function cell(key) { const p = page(); return p.cells[key] || (p.cells[key] = { types: [] }); }
+function toggle(key, type) {
+  const c = cell(key); const i = c.types.indexOf(type);
+  if (i >= 0) c.types.splice(i, 1); else c.types.push(type);
+  save(); render();
+}
+function setDrawer(key) {
+  const c = cell(key); const v = prompt(`Drawer for ${key.replace('|', ' ')}`, c.drawer || '');
+  if (v === null) return; c.drawer = v.trim(); save(); render();
+}
+function iconEl(type, on, key) {
+  const d = document.createElement('div'); d.className = 'ic' + (on ? ' on' : ''); d.title = icons.labels[type] || type;
+  d.innerHTML = icons.svg[type]; d.onclick = () => toggle(key, type); return d;
+}
+function cellTd(key, types, extraClass = '') {
+  const c = page().cells[key] || { types: [] };
+  const td = document.createElement('td'); td.className = 'cell ' + extraClass + (c.types.length ? ' have' : '');
+  const ic = document.createElement('div'); ic.className = 'icons';
+  for (const t of types) ic.appendChild(iconEl(t, c.types.includes(t), key));
+  td.appendChild(ic);
+  const meta = document.createElement('div'); meta.className = 'meta';
+  const dr = document.createElement('span'); dr.className = 'drawer' + (c.drawer ? ' set' : ''); dr.textContent = c.drawer ? `drawer ${c.drawer}` : 'drawer?'; dr.onclick = () => setDrawer(key);
+  const pr = document.createElement('span'); pr.className = 'print'; pr.textContent = '⎙'; pr.title = 'PDF for this label'; pr.onclick = () => printKeys([key]);
+  pr.onmouseenter = () => showPreview(key); pr.onmouseleave = hidePreview;
+  meta.appendChild(dr); meta.appendChild(pr); td.appendChild(meta);
+  return td;
+}
+function render() {
+  const p = page(), lens = lengths(p);
+  $('#tabs').innerHTML = data.pages.map(x => `<span class="tab${x.id === pageId ? ' on' : ''}" data-id="${x.id}">${x.title}</span>`).join(' ');
+  document.querySelectorAll('.tab').forEach(t => t.onclick = () => { pageId = t.dataset.id; render(); });
+  $('#legend').innerHTML = [...p.heads, ...p.nuts, ...p.washers].map(t => `<span>${icons.svg[t]}${icons.labels[t] || t}</span>`).join('');
+  const tbl = document.createElement('table');
+  const thead = document.createElement('tr');
+  thead.innerHTML = '<th></th>' + lens.map(l => `<th>${lengthText(p, l)}${p.lengths.extra?.includes(l) || canSkip(p, l) ? `<span class="del" data-len="${l}" title="remove this length">×</span>` : ''}</th>`).join('') + (p.nuts.length ? '<th>Nuts</th>' : '') + (p.washers.length ? '<th>Washers</th>' : '');
+  tbl.appendChild(thead);
+  const diaRows = {}; p.rows.forEach(r => (diaRows[r.dia] = diaRows[r.dia] || []).push(r));
+  const doneDia = new Set();
+  for (const r of p.rows) {
+    const tr = document.createElement('tr');
+    const th = document.createElement('th'); th.className = 'row'; th.textContent = r.label; tr.appendChild(th);
+    for (const l of lens) tr.appendChild(cellTd(`${r.id}|${l}`, p.heads));
+    if (p.nuts.length) tr.appendChild(cellTd(`${r.id}|nut`, p.nuts));
+    if (p.washers.length && !doneDia.has(r.dia)) { doneDia.add(r.dia); const td = cellTd(`${r.dia}|washer`, p.washers, 'washer'); td.rowSpan = diaRows[r.dia].length; tr.appendChild(td); }
+    tbl.appendChild(tr);
+  }
+  $('#grid').innerHTML = ''; $('#grid').appendChild(tbl);
+  tbl.querySelectorAll('.del').forEach(x => x.onclick = () => removeLength(+x.dataset.len));
+}
+function canSkip(p, l) { return !p.rows.some(r => (p.cells[`${r.id}|${l}`]?.types || []).length); }
+function removeLength(l) {
+  const p = page();
+  if (!canSkip(p, l)) return alert('That length still has screws ticked.');
+  if (p.lengths.extra?.includes(l)) p.lengths.extra = p.lengths.extra.filter(x => x !== l); else (p.lengths.skip = p.lengths.skip || []).push(l);
+  save(); render();
+}
+$('#addLen').onclick = () => {
+  const p = page(); const v = prompt(`Length to add (${p.units === 'mm' ? 'mm, e.g. 22' : 'inches as a decimal, e.g. 0.4375 for 7/16'})`); if (!v) return;
+  const n = +v; if (!(n > 0)) return alert('Not a number');
+  p.lengths.skip = (p.lengths.skip || []).filter(x => x !== n);
+  if (!lengths(p).includes(n)) (p.lengths.extra = p.lengths.extra || []).push(n);
+  save(); render();
+};
+async function printKeys(keys) {
+  status('rendering…');
+  const r = await fetch('/api/labels', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page: pageId, keys }) });
+  if (!r.ok) { status(''); return alert((await r.json()).error || 'failed'); }
+  const n = r.headers.get('X-Label-Count'); const blob = await r.blob(); window.open(URL.createObjectURL(blob), '_blank'); status(`${n} label${n == 1 ? '' : 's'} rendered`);
+}
+$('#printAll').onclick = () => printKeys('all');
+$('#printNew').onclick = () => printKeys('new');
+$('#markPrinted').onclick = async () => {
+  if (!confirm('Record every populated cell on this page as printed with its current text?')) return;
+  const r = await fetch('/api/printed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page: pageId, keys: 'all' }) });
+  status(r.ok ? `${(await r.json()).marked} marked printed` : 'failed');
+};
+function showPreview(key) { const img = $('#preview img'); img.src = `/api/preview.png?page=${encodeURIComponent(pageId)}&key=${encodeURIComponent(key)}&t=${Date.now()}`; $('#preview').style.display = 'block'; }
+function hidePreview() { $('#preview').style.display = 'none'; }
+(async () => {
+  [data, icons] = await Promise.all([fetch('/api/data').then(r => r.json()), fetch('/api/icons').then(r => r.json())]);
+  pageId = data.pages[0].id; render(); status('loaded');
+})();
+</script>
+</body>
+</html>

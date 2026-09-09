@@ -1,0 +1,14 @@
+# systemd unit for the fastener grid. Install:  sudo cp fasteners.service /etc/systemd/system/ && sudo systemctl enable --now fasteners
+[Unit]
+Description=Fastener grid (labels for the fastener cabinets)
+After=network.target
+
+[Service]
+User=aarons
+WorkingDirectory=/home/aarons/fasteners
+Environment=PORT=8093
+ExecStart=/usr/bin/node /home/aarons/fasteners/server.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
