@@ -1,7 +1,1 @@
-{
- "sae-machine|4-40|0.5": "#4-40 × 1/2″|pan,socket",
- "sae-machine|4-40|nut": "#4-40 Nut|nut,lock",
- "sae-machine|10-24|0.75": "#10-24 × 3/4″|flat",
- "sae-machine|#10|washer": "#10 Washer|washer,split",
- "sae-machine|5/16-18|1.5": "5/16-18 × 1-1/2″|flat,pan,socket,button,hex"
-}
+{}

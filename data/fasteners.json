@@ -102,42 +102,7 @@
      "pitch": 18
     }
    ],
-   "cells": {
-    "4-40|0.5": {
-     "types": [
-      "pan",
-      "socket"
-     ],
-     "drawer": "12"
-    },
-    "4-40|nut": {
-     "types": [
-      "nut",
-      "lock"
-     ]
-    },
-    "#10|washer": {
-     "types": [
-      "washer",
-      "split"
-     ]
-    },
-    "10-24|0.75": {
-     "types": [
-      "flat"
-     ],
-     "drawer": "20"
-    },
-    "5/16-18|1.5": {
-     "types": [
-      "flat",
-      "pan",
-      "socket",
-      "button",
-      "hex"
-     ]
-    }
-   }
+   "cells": {}
   },
   {
    "id": "metric-machine",
