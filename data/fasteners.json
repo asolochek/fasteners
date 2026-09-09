@@ -102,7 +102,13 @@
      "pitch": 18
     }
    ],
-   "cells": {}
+   "cells": {
+    "0-80|0.5": {
+     "types": [
+      "button"
+     ]
+    }
+   }
   },
   {
    "id": "metric-machine",
