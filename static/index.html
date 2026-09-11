@@ -53,6 +53,7 @@ td.cell:not(.have) .print { visibility:hidden; }
   <div id="tabs"></div>
   <span class="spacer"></span>
   <button id="typesBtn">Types…</button>
+  <button id="addRow">Add row…</button>
   <button id="addLen">Add length…</button>
   <button id="printNew">PDF: unprinted</button>
   <button id="printAll">PDF: all</button>
@@ -131,7 +132,9 @@ function render() {
   const doneDia = new Set();
   for (const r of p.rows) {
     const tr = document.createElement('tr');
-    const th = document.createElement('th'); th.className = 'row'; th.textContent = r.label; tr.appendChild(th);
+    const th = document.createElement('th'); th.className = 'row'; th.textContent = r.label;
+    if (rowEmpty(p, r)) { const x = document.createElement('span'); x.className = 'del'; x.textContent = '×'; x.title = 'remove this row'; x.onclick = () => removeRow(r.id); th.appendChild(x); }
+    tr.appendChild(th);
     for (const l of lens) tr.appendChild(cellTd(`${r.id}|${l}`, p.heads));
     if (p.nuts.length) tr.appendChild(cellTd(`${r.id}|nut`, p.nuts));
     if (p.washers.length && !doneDia.has(r.dia)) { doneDia.add(r.dia); const td = cellTd(`${r.dia}|washer`, p.washers, 'washer'); td.rowSpan = diaRows[r.dia].length; tr.appendChild(td); }
@@ -140,6 +143,31 @@ function render() {
   $('#grid').innerHTML = ''; $('#grid').appendChild(tbl);
   if ($('#types').style.display === 'block') renderTypes();
   tbl.querySelectorAll('.del').forEach(x => x.onclick = () => removeLength(+x.dataset.len));
+}
+// rows: thread sizes. "#3-48", "1/4-28", "M6x0.75" (metric without a pitch gets the coarse pitch). Kept in diameter order, coarse before fine.
+const COARSE = { 1.6: 0.35, 2: 0.4, 2.5: 0.45, 3: 0.5, 3.5: 0.6, 4: 0.7, 5: 0.8, 6: 1, 8: 1.25, 10: 1.5, 12: 1.75 };
+function parseRow(text, units) {
+  const t = text.trim().replace(/\s+/g, '');
+  if (units === 'mm') { const m = /^M(\d+(?:\.\d+)?)(?:[x×](\d+(?:\.\d+)?))?$/i.exec(t); if (!m) return null;
+    const d = +m[1], pitch = m[2] ? +m[2] : COARSE[d]; if (!pitch) return null;
+    const label = `M${d}${m[2] ? '×' + pitch : ''}`; return { id: label.replace('×', 'x'), label, dia: `M${d}`, pitch }; }
+  const m = /^#?(\d+|\d+\/\d+)-(\d+)$/.exec(t); if (!m) return null;
+  const dia = m[1].includes('/') ? m[1] : `#${m[1]}`, label = `${dia}-${m[2]}`; return { id: `${m[1]}-${m[2]}`, label, dia, pitch: +m[2] };
+}
+function diaValue(dia) { if (dia.startsWith('#')) return 0.06 + 0.013 * +dia.slice(1); if (dia.startsWith('M')) return +dia.slice(1) / 25.4; const [n, d] = dia.split('/'); return d ? n / d : +dia; }
+function rowKey(p, r) { return [diaValue(r.dia), p.units === 'mm' ? -r.pitch : r.pitch]; }   // metric: larger pitch (coarse) first; SAE: fewer threads (coarse) first
+function sortRows(p) { p.rows.sort((a, b) => { const [ka, pa] = rowKey(p, a), [kb, pb] = rowKey(p, b); return (ka - kb) || (pa - pb); }); }
+function rowEmpty(p, r) { return !Object.keys(p.cells).some(k => k.startsWith(r.id + '|') && (p.cells[k].types || []).length); }
+$('#addRow').onclick = () => {
+  const p = page(); const v = prompt(p.units === 'mm' ? 'Thread size, e.g. M6 or M6x0.75' : 'Thread size, e.g. #3-48 or 1/4-28'); if (!v) return;
+  const r = parseRow(v, p.units); if (!r) return alert('Could not read that as a thread size');
+  if (p.rows.some(x => x.id === r.id)) return alert('That row already exists');
+  p.rows.push(r); sortRows(p); save(); render();
+};
+function removeRow(id) {
+  const p = page(), r = p.rows.find(x => x.id === id);
+  if (!rowEmpty(p, r)) return alert('That row still has parts ticked.');
+  p.rows = p.rows.filter(x => x.id !== id); save(); render();
 }
 function canSkip(p, l) { return !p.rows.some(r => (p.cells[`${r.id}|${l}`]?.types || []).length); }
 function removeLength(l) {
