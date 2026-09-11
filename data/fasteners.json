@@ -19,6 +19,7 @@
     "socket",
     "button",
     "hex",
+    "shoulder",
     "nylon"
    ],
    "nuts": [
@@ -31,6 +32,7 @@
     "washer",
     "fender",
     "thinw",
+    "nylonw",
     "split",
     "toothed"
    ],
@@ -167,6 +169,7 @@
     "socket",
     "button",
     "hex",
+    "shoulder",
     "nylon"
    ],
    "nuts": [
@@ -179,6 +182,7 @@
     "washer",
     "fender",
     "thinw",
+    "nylonw",
     "split",
     "toothed"
    ],

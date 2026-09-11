@@ -162,7 +162,7 @@ async function printKeys(keys) {
   const n = r.headers.get('X-Label-Count'); const blob = await r.blob(); window.open(URL.createObjectURL(blob), '_blank'); status(`${n} label${n == 1 ? '' : 's'} rendered`);
 }
 // which head / nut / washer types this page shows (types ticked in cells but hidden here still print)
-const GROUPS = [['heads', 'Heads', ['flat', 'pan', 'socket', 'button', 'hex', 'nylon', 'setscrew', 'wood', 'sheetmetal']], ['nuts', 'Nuts', ['nut', 'thin', 'lock', 'wing']], ['washers', 'Washers', ['washer', 'fender', 'thinw', 'split', 'toothed']]];
+const GROUPS = [['heads', 'Heads', ['flat', 'pan', 'socket', 'button', 'hex', 'shoulder', 'nylon', 'setscrew', 'wood', 'sheetmetal']], ['nuts', 'Nuts', ['nut', 'thin', 'lock', 'wing']], ['washers', 'Washers', ['washer', 'fender', 'thinw', 'nylonw', 'split', 'toothed']]];
 function renderTypes() {
   const p = page();
   $('#types').innerHTML = GROUPS.map(([k, title, all]) => `<h3>${title}</h3>` + all.map(t => `<label><input type="checkbox" data-group="${k}" data-type="${t}" ${p[k].includes(t) ? 'checked' : ''}>${icons.svg[t]}${icons.labels[t] || t}</label>`).join('')).join('');
