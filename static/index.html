@@ -6,7 +6,8 @@
 <title>Fasteners</title>
 <style>
 :root { --paper:#f7f6f2; --ink:#17181a; --ink2:#5b6470; --line:#d9d7cf; --have:#dff3df; --have2:#8fcf8f; --none:#ebe9e3; --accent:#d8641f; }
-body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.35 system-ui, sans-serif; }
+html, body { height:100%; }
+body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.35 system-ui, sans-serif; display:flex; flex-direction:column; }
 header { display:flex; gap:10px; align-items:center; padding:10px 14px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
 header h1 { font-size:18px; margin:0 12px 0 0; font-weight:600; }
 .tab { padding:6px 10px; border:1px solid var(--line); background:#fff; cursor:pointer; border-radius:4px; }
@@ -15,7 +16,11 @@ header h1 { font-size:18px; margin:0 12px 0 0; font-weight:600; }
 button { font:inherit; padding:6px 10px; border:1px solid var(--line); background:#fff; border-radius:4px; cursor:pointer; }
 button:hover { border-color:var(--ink2); }
 #status { color:var(--ink2); font-size:13px; }
-main { padding:12px 14px; overflow-x:auto; }
+/* the grid is the only thing that scrolls: header and legend stay put, the length row sticks to the top and the size column to the left */
+main { flex:1; min-height:0; overflow:auto; padding:0 14px 14px; }
+thead th { position:sticky; top:0; background:var(--paper); z-index:3; padding-top:8px; }
+th.row { position:sticky; left:0; background:var(--paper); z-index:2; }
+thead th:first-child { left:0; z-index:4; }
 table { border-collapse:separate; border-spacing:3px; }
 th { font-weight:600; font-size:13px; color:var(--ink2); padding:2px 4px; white-space:nowrap; text-align:center; vertical-align:bottom; }
 th.row { text-align:right; font-size:15px; color:var(--ink); }
@@ -36,7 +41,7 @@ td.washer { background:var(--none); }
 .print { cursor:pointer; opacity:.55; }
 .print:hover { opacity:1; color:var(--accent); }
 td.cell:not(.have) .print { visibility:hidden; }
-.legend { display:flex; gap:14px; flex-wrap:wrap; margin:0 0 10px; font-size:13px; color:var(--ink2); }
+.legend { display:flex; gap:14px; flex-wrap:wrap; padding:8px 14px; font-size:13px; color:var(--ink2); border-bottom:1px solid var(--line); }
 .legend span { display:inline-flex; align-items:center; gap:4px; }
 .legend svg { width:30px; height:30px; }
 #types { position:fixed; top:56px; right:14px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px 14px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; z-index:5; max-height:80vh; overflow:auto; }
@@ -60,8 +65,8 @@ td.cell:not(.have) .print { visibility:hidden; }
   <button id="markPrinted">Mark all printed</button>
   <span id="status"></span>
 </header>
+<div class="legend" id="legend"></div>
 <main>
-  <div class="legend" id="legend"></div>
   <div id="grid"></div>
 </main>
 <div id="preview"><img alt=""></div>
@@ -125,9 +130,8 @@ function render() {
   document.querySelectorAll('.tab').forEach(t => t.onclick = () => { pageId = t.dataset.id; render(); });
   $('#legend').innerHTML = [...p.heads, ...p.nuts, ...p.washers].map(t => `<span>${icons.svg[t]}${icons.labels[t] || t}</span>`).join('');
   const tbl = document.createElement('table');
-  const thead = document.createElement('tr');
+  const thead = document.createElement('tr'); const theadEl = document.createElement('thead'); theadEl.appendChild(thead); tbl.appendChild(theadEl); const tbody = document.createElement('tbody'); tbl.appendChild(tbody);
   thead.innerHTML = '<th></th>' + lens.map(l => `<th>${lengthText(p, l)}${p.lengths.extra?.includes(l) || canSkip(p, l) ? `<span class="del" data-len="${l}" title="remove this length">×</span>` : ''}</th>`).join('') + (p.nuts.length ? '<th>Nuts</th>' : '') + (p.washers.length ? '<th>Washers</th>' : '');
-  tbl.appendChild(thead);
   const diaRows = {}; p.rows.forEach(r => (diaRows[r.dia] = diaRows[r.dia] || []).push(r));
   const doneDia = new Set();
   for (const r of p.rows) {
@@ -138,7 +142,7 @@ function render() {
     for (const l of lens) tr.appendChild(cellTd(`${r.id}|${l}`, p.heads));
     if (p.nuts.length) tr.appendChild(cellTd(`${r.id}|nut`, p.nuts));
     if (p.washers.length && !doneDia.has(r.dia)) { doneDia.add(r.dia); const td = cellTd(`${r.dia}|washer`, p.washers, 'washer'); td.rowSpan = diaRows[r.dia].length; tr.appendChild(td); }
-    tbl.appendChild(tr);
+    tbody.appendChild(tr);
   }
   $('#grid').innerHTML = ''; $('#grid').appendChild(tbl);
   if ($('#types').style.display === 'block') renderTypes();
