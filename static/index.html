@@ -48,6 +48,11 @@ td.cell:not(.have) .print { visibility:hidden; }
 .legend svg { width:30px; height:30px; }
 #types { position:fixed; top:56px; right:14px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px 14px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; z-index:5; max-height:80vh; overflow:auto; }
 #types h3 { margin:6px 0 4px; font-size:13px; color:var(--ink2); }
+#helper { position:fixed; top:56px; right:14px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:12px 14px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; z-index:5; width:340px; font-size:14px; }
+#helper label { display:block; margin:6px 0 2px; color:var(--ink2); font-size:12px; }
+#helper input, #helper select { width:100%; box-sizing:border-box; font:inherit; padding:4px 6px; border:1px solid var(--line); border-radius:4px; }
+#helper .row { display:flex; gap:8px; margin-top:10px; align-items:center; }
+#helper .msg { font-size:12px; color:var(--ink2); margin-top:6px; min-height:16px; }
 #types label { display:flex; align-items:center; gap:6px; padding:2px 0; cursor:pointer; }
 #types label svg { width:24px; height:24px; }
 #preview { position:fixed; right:14px; bottom:14px; background:#fff; border:1px solid var(--line); padding:6px; border-radius:6px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; }
@@ -66,6 +71,7 @@ td.cell:not(.have) .print { visibility:hidden; }
   <button id="printNew">PDF: unprinted</button>
   <button id="printAll">PDF: all</button>
   <button id="markPrinted">Mark all printed</button>
+  <button id="helperBtn" title="print helper on the PC with the label printer">Printer…</button>
   <span id="status"></span>
 </header>
 <div class="legend" id="legend"></div>
@@ -74,6 +80,7 @@ td.cell:not(.have) .print { visibility:hidden; }
 </main>
 <div id="preview"><img alt=""></div>
 <div id="types"></div>
+<div id="helper"></div>
 <script>
 let data, icons, printed = {}, pageId, saveTimer;
 const $ = s => document.querySelector(s);
@@ -216,11 +223,26 @@ $('#addLen').onclick = () => {
   if (!lengths(p).includes(n)) (p.lengths.extra = p.lengths.extra || []).push(n);
   save(); render();
 };
+// print helper (helper/print-helper.py on the PC with the printer): settings live in this browser
+const HS = { get() { try { return JSON.parse(localStorage.getItem('helper') || '{}'); } catch (e) { return {}; } }, set(v) { try { localStorage.setItem('helper', JSON.stringify(v)); } catch (e) {} } };
+function helperUrl(path, extra = '') { const h = HS.get(); const base = (h.url || '').replace(/\/+$/, ''); return base ? `${base}${path}?token=${encodeURIComponent(h.token || '')}${extra}` : null; }
+async function sendToPrinter(blob, n) {
+  const h = HS.get(), url = helperUrl('/print', `&printer=${encodeURIComponent(h.printer || '')}`);
+  if (!url || !h.printer) return false;
+  status(`sending ${n} label${n == 1 ? '' : 's'} to ${h.printer}…`);
+  try {
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: blob });
+    const j = await r.json();
+    if (!r.ok) { alert('Print helper: ' + (j.error || r.status)); status('print failed'); return true; }
+    status(`printed ${j.pages} label${j.pages == 1 ? '' : 's'} on ${h.printer}`); return true;
+  } catch (e) { alert(`Could not reach the print helper at ${h.url}. Downloading the PDF instead.`); return false; }
+}
 async function printKeys(keys, body) {
   status('rendering…');
   const r = await fetch('/api/labels', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || { page: pageId, keys }) });
   if (!r.ok) { status(''); return alert((await r.json()).error || 'failed'); }
   const n = r.headers.get('X-Label-Count'); const blob = await r.blob();
+  if (HS.get().direct && await sendToPrinter(blob, n)) return;
   // download rather than open: a pop-up would be blocked, and the file is what gets printed anyway
   const name = (/filename="([^"]+)"/.exec(r.headers.get('Content-Disposition') || '') || [])[1] || 'labels.pdf';
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
@@ -242,6 +264,29 @@ function renderTypes() {
   });
 }
 $('#typesBtn').onclick = () => { const t = $('#types'); if (t.style.display === 'block') t.style.display = 'none'; else { renderTypes(); t.style.display = 'block'; } };
+function renderHelper() {
+  const h = HS.get();
+  $('#helper').innerHTML = `<b>Print helper</b>
+    <label>Helper address (the PC with the printer)</label><input id="hUrl" placeholder="http://192.168.1.20:8094" value="${h.url || ''}">
+    <label>Token (if the helper was started with --token)</label><input id="hTok" value="${h.token || ''}">
+    <label>Printer queue for 9 mm drawer labels</label><select id="hPrn"><option value="">(fetch printers first)</option></select>
+    <div class="row"><button id="hTest" type="button">Fetch printers</button><label style="margin:0"><input type="checkbox" id="hDirect" style="width:auto" ${h.direct ? 'checked' : ''}> print directly instead of downloading</label></div>
+    <div class="msg" id="hMsg"></div>
+    <div class="row"><button id="hSave" type="button">Save</button><button id="hClose" type="button">Close</button></div>`;
+  const sel = $('#hPrn'); if (h.printer) { sel.innerHTML = `<option value="${h.printer}">${h.printer}</option>`; }
+  $('#hTest').onclick = async () => {
+    HS.set({ ...HS.get(), url: $('#hUrl').value.trim(), token: $('#hTok').value.trim() });
+    const url = helperUrl('/printers'); if (!url) return ($('#hMsg').textContent = 'enter the helper address first');
+    $('#hMsg').textContent = 'contacting helper…';
+    try { const j = await (await fetch(url)).json(); if (j.error) throw new Error(j.error);
+      sel.innerHTML = j.printers.map(pn => `<option ${pn === h.printer ? 'selected' : ''}>${pn}</option>`).join('') || '<option value="">(no printers found)</option>';
+      $('#hMsg').textContent = `helper ok · SumatraPDF ${j.sumatra ? 'found' : 'NOT found'} · ${j.printers.length} printers`;
+    } catch (e) { $('#hMsg').textContent = 'no answer from the helper: ' + e.message; }
+  };
+  $('#hSave').onclick = () => { HS.set({ url: $('#hUrl').value.trim(), token: $('#hTok').value.trim(), printer: sel.value, direct: $('#hDirect').checked }); $('#hMsg').textContent = 'saved'; };
+  $('#hClose').onclick = () => { $('#helper').style.display = 'none'; };
+}
+$('#helperBtn').onclick = () => { const t = $('#helper'); if (t.style.display === 'block') t.style.display = 'none'; else { renderHelper(); t.style.display = 'block'; } };
 $('#printAll').onclick = () => printKeys('all');
 $('#printDrawers').onclick = () => { const v = prompt('Drawers to print, across every page: a list or ranges, R/F for one half of a divided drawer. e.g. 12-16, 20, 30R'); if (v) printKeys(null, { drawers: v }); };
 $('#printNew').onclick = () => printKeys('new');
