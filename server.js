@@ -30,13 +30,40 @@ function labelFor(page, key) {
   return { kind: 'drawer', pn, value: '', specs: '', pinout: null, glyphSvg: I.icons(types), glyphMaxW: Math.max(0.01, Math.min(types.length, free / S.glyphH)),
            generic: true, _n: types.length, _sig: `${pn}|${types.join(',')}` };
 }
+// cells that share a drawer half print as ONE label: "#10 Washers" (washers + lock washers), "#4-40 Nuts" (nuts + lock nuts),
+// or for a mix with screws the size in the big slot and the items on the detail line; the icons are the union of the cells'
+function groupByDrawer(page, keys) {
+  const groups = new Map(), singles = [];
+  for (const k of keys) {
+    const c = page.cells[k] || {};
+    if (!c.drawer) { singles.push([k]); continue; }
+    const g = `${c.drawer}|${c.half || ''}`; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(k);
+  }
+  return [...singles, ...groups.values()];
+}
+function labelForGroup(page, keys) {
+  if (keys.length === 1) return labelFor(page, keys[0]);
+  const S = L.STYLE.drawer, cells = keys.map(k => ({ k, ...(page.cells[k] || {}), suffix: k.split('|')[1], base: k.split('|')[0] }));
+  const types = [...new Set(cells.flatMap(c => c.types || []))];
+  const bases = new Set(cells.map(c => c.suffix.endsWith('washer') ? c.base : (page.rows.find(r => r.id === c.base)?.label || c.base)));
+  const base = [...bases].join(' / ');
+  let pn, value = '';
+  if (cells.every(c => c.suffix.endsWith('washer'))) pn = `${base} Washer`;
+  else if (cells.every(c => c.suffix.endsWith('nut'))) pn = `${base} Nut`;
+  else { pn = base; value = cells.map(c => M.HW.find(h => h[1] === c.suffix)?.[3] || M.lengthText(page, +c.suffix)).join(', '); }
+  // the icons take the width left after the big text and, when there is one, the detail line
+  const free = S.len - S.pad - 1.5 - Math.max(S.pnX + L.textWidth(pn, S.pn), value ? S.detX + L.textWidth(value, S.spec) : 0);
+  return { kind: 'drawer', pn, value, specs: '', pinout: null, glyphSvg: I.icons(types), glyphMaxW: Math.max(0.01, Math.min(types.length, free / S.glyphH)),
+           generic: true, _n: types.length, _sig: `${pn}|${value}|${types.join(',')}` };
+}
 // POST /api/labels { page, keys: [...] | "all" | "new" } -> PDF
 app.post('/api/labels', async (req, res) => {
   const d = load(), page = d.pages.find(p => p.id === req.body.page);
   if (!page) return res.status(404).json({ error: 'no such page' });
   let keys = req.body.keys === 'all' || req.body.keys === 'new' ? M.populated(page) : (req.body.keys || []);
-  if (req.body.keys === 'new') { const pr = loadPrinted(); keys = keys.filter(k => pr[`${page.id}|${k}`] !== labelFor(page, k)._sig); }
-  const labels = keys.map(k => labelFor(page, k)).filter(l => l._n > 0);
+  let groups = groupByDrawer(page, keys);
+  if (req.body.keys === 'new') { const pr = loadPrinted(); groups = groups.filter(g => pr[`${page.id}|${g[0]}`] !== labelForGroup(page, g)._sig); }
+  const labels = groups.map(g => labelForGroup(page, g)).filter(l => l._n > 0);
   if (!labels.length) return res.status(400).json({ error: 'nothing to print' });
   L.warnings.length = 0;
   const pdf = await L.pdf(labels);
@@ -50,13 +77,13 @@ app.post('/api/printed', (req, res) => {
   const d = load(), page = d.pages.find(p => p.id === req.body.page); if (!page) return res.status(404).json({ error: 'no such page' });
   const pr = loadPrinted();
   const keys = req.body.keys === 'all' ? M.populated(page) : (req.body.keys || []);
-  for (const k of keys) pr[`${page.id}|${k}`] = labelFor(page, k)._sig;
+  for (const g of groupByDrawer(page, keys)) { const sig = labelForGroup(page, g)._sig; for (const k of g) pr[`${page.id}|${k}`] = sig; }
   fs.writeFileSync(PRINTED, JSON.stringify(pr, null, 1)); res.json({ ok: true, marked: keys.length });
 });
 // GET /api/preview.png?page=..&key=..  -> a PNG of one label for the on-screen preview
 app.get('/api/preview.png', async (req, res) => {
   const d = load(), page = d.pages.find(p => p.id === req.query.page); if (!page) return res.status(404).end();
-  const l = labelFor(page, req.query.key);
+  const l = labelForGroup(page, groupByDrawer(page, M.populated(page)).find(g => g.includes(req.query.key)) || [req.query.key]);
   res.setHeader('Content-Type', 'image/png'); res.send(await L.renderPng(L.labelSvg('drawer', l)));
 });
 const port = +process.env.PORT || 8093;
