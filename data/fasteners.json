@@ -39,6 +39,8 @@
     "washer",
     "fender",
     "thinw",
+    "cup",
+    "sleeved",
     "nylonw"
    ],
    "rows": [
@@ -248,11 +250,13 @@
     }
    },
    "locknuts": [
-    "lock",
-    "nylock"
+    "nylock",
+    "toothednut"
    ],
    "lockwashers": [
     "split",
+    "spring",
+    "inttooth",
     "toothed"
    ]
   },
@@ -301,6 +305,8 @@
     "washer",
     "fender",
     "thinw",
+    "cup",
+    "sleeved",
     "nylonw"
    ],
    "rows": [
@@ -355,11 +361,13 @@
    ],
    "cells": {},
    "locknuts": [
-    "lock",
-    "nylock"
+    "nylock",
+    "toothednut"
    ],
    "lockwashers": [
     "split",
+    "spring",
+    "inttooth",
     "toothed"
    ]
   },
