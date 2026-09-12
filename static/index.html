@@ -188,9 +188,16 @@ function removeLength(l) {
   if (p.lengths.extra?.includes(l)) p.lengths.extra = p.lengths.extra.filter(x => x !== l); else (p.lengths.skip = p.lengths.skip || []).push(l);
   save(); render();
 }
+// a length typed as a decimal, a fraction or a mixed number: 0.4375, 7/16, 1-1/2, 1 1/2, 22
+function parseLength(text) {
+  const t = text.trim().replace(/[″"]/g, '').replace(/mm$/i, '').trim();
+  const m = /^(\d+)?(?:[\s-]*(\d+)\/(\d+))?$/.exec(t);
+  if (m && (m[1] || m[2])) return (+(m[1] || 0)) + (m[2] ? +m[2] / +m[3] : 0);
+  const n = +t; return n > 0 ? n : NaN;
+}
 $('#addLen').onclick = () => {
-  const p = page(); const v = prompt(`Length to add (${p.units === 'mm' ? 'mm, e.g. 22' : 'inches as a decimal, e.g. 0.4375 for 7/16'})`); if (!v) return;
-  const n = +v; if (!(n > 0)) return alert('Not a number');
+  const p = page(); const v = prompt(`Length to add (${p.units === 'mm' ? 'mm, e.g. 22' : 'e.g. 7/16, 0.4375 or 1-1/2'})`); if (!v) return;
+  const n = +parseLength(v).toFixed(6); if (!(n > 0)) return alert('Could not read that as a length');
   p.lengths.skip = (p.lengths.skip || []).filter(x => x !== n);
   if (!lengths(p).includes(n)) (p.lengths.extra = p.lengths.extra || []).push(n);
   save(); render();

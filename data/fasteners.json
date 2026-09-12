@@ -159,7 +159,9 @@
       "flat",
       "hex",
       "socket",
-      "sems"
+      "sems",
+      "button",
+      "pan"
      ],
      "drawer": "33",
      "half": "front"
