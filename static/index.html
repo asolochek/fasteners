@@ -40,6 +40,7 @@ td.washer { background:var(--none); }
 .drawer:hover { background:#fff; }
 .drawer.set { color:var(--ink); font-weight:600; }
 .print { cursor:pointer; opacity:.55; }
+.rowprint { margin-left:6px; font-weight:400; }
 .print:hover { opacity:1; color:var(--accent); }
 td.cell:not(.have) .print { visibility:hidden; }
 .legend { display:flex; gap:14px; flex-wrap:wrap; padding:8px 14px; font-size:13px; color:var(--ink2); border-bottom:1px solid var(--line); }
@@ -61,6 +62,7 @@ td.cell:not(.have) .print { visibility:hidden; }
   <button id="typesBtn">Types…</button>
   <button id="addRow">Add row…</button>
   <button id="addLen">Add length…</button>
+  <button id="printDrawers">PDF: drawers…</button>
   <button id="printNew">PDF: unprinted</button>
   <button id="printAll">PDF: all</button>
   <button id="markPrinted">Mark all printed</button>
@@ -147,6 +149,7 @@ function render() {
     const tr = document.createElement('tr');
     const th = document.createElement('th'); th.className = 'row'; th.textContent = r.label;
     if (rowEmpty(p, r)) { const x = document.createElement('span'); x.className = 'del'; x.textContent = '×'; x.title = 'remove this row'; x.onclick = () => removeRow(r.id); th.appendChild(x); }
+    else { const pr = document.createElement('span'); pr.className = 'print rowprint'; pr.textContent = '⎙'; pr.title = 'PDF for everything in this row (and its washers)'; pr.onclick = () => printKeys(rowKeys(p, r)); th.appendChild(pr); }
     tr.appendChild(th);
     for (const l of lens) tr.appendChild(cellTd(`${r.id}|${l}`, p.heads));
     for (const [list, suffix, per] of HW) {
@@ -175,6 +178,7 @@ function parseRow(text, units) {
 function diaValue(dia) { if (dia.startsWith('#')) return 0.06 + 0.013 * +dia.slice(1); if (dia.startsWith('M')) return +dia.slice(1) / 25.4; const [n, d] = dia.split('/'); return d ? n / d : +dia; }
 function rowKey(p, r) { return [diaValue(r.dia), p.units === 'mm' ? -r.pitch : r.pitch]; }   // metric: larger pitch (coarse) first; SAE: fewer threads (coarse) first
 function sortRows(p) { p.rows.sort((a, b) => { const [ka, pa] = rowKey(p, a), [kb, pb] = rowKey(p, b); return (ka - kb) || (pa - pb); }); }
+function rowKeys(p, r) { return Object.keys(p.cells).filter(k => (k.startsWith(r.id + '|') || k.startsWith(r.dia + '|')) && (p.cells[k].types || []).length); }
 function rowEmpty(p, r) { return !Object.keys(p.cells).some(k => k.startsWith(r.id + '|') && (p.cells[k].types || []).length); }
 $('#addRow').onclick = () => {
   const p = page(); const v = prompt(p.units === 'mm' ? 'Thread size, e.g. M6 or M6x0.75' : 'Thread size, e.g. #3-48 or 1/4-28 (gauge only, e.g. #6, for wood and sheet metal screws)'); if (!v) return;
@@ -208,9 +212,9 @@ $('#addLen').onclick = () => {
   if (!lengths(p).includes(n)) (p.lengths.extra = p.lengths.extra || []).push(n);
   save(); render();
 };
-async function printKeys(keys) {
+async function printKeys(keys, body) {
   status('rendering…');
-  const r = await fetch('/api/labels', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page: pageId, keys }) });
+  const r = await fetch('/api/labels', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || { page: pageId, keys }) });
   if (!r.ok) { status(''); return alert((await r.json()).error || 'failed'); }
   const n = r.headers.get('X-Label-Count'); const blob = await r.blob(); window.open(URL.createObjectURL(blob), '_blank'); status(`${n} label${n == 1 ? '' : 's'} rendered`);
 }
@@ -230,6 +234,7 @@ function renderTypes() {
 }
 $('#typesBtn').onclick = () => { const t = $('#types'); if (t.style.display === 'block') t.style.display = 'none'; else { renderTypes(); t.style.display = 'block'; } };
 $('#printAll').onclick = () => printKeys('all');
+$('#printDrawers').onclick = () => { const v = prompt('Drawers to print, across every page: a list or ranges, R/F for one half of a divided drawer. e.g. 12-16, 20, 30R'); if (v) printKeys(null, { drawers: v }); };
 $('#printNew').onclick = () => printKeys('new');
 $('#markPrinted').onclick = async () => {
   if (!confirm('Record every populated cell on this page as printed with its current text?')) return;

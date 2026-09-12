@@ -150,14 +150,18 @@
      "types": [
       "pressfit",
       "nut"
-     ]
+     ],
+     "drawer": "39",
+     "half": "front"
     },
     "6-32|locknut": {
      "types": [
       "lock",
       "nylock",
       "toothednut"
-     ]
+     ],
+     "drawer": "39",
+     "half": "back"
     },
     "6-32|0.25": {
      "types": [
@@ -254,12 +258,17 @@
      "types": [
       "inttooth",
       "split"
-     ]
+     ],
+     "drawer": "40",
+     "half": "back"
     },
     "#6|washer": {
      "types": [
-      "nylonw"
-     ]
+      "nylonw",
+      "washer"
+     ],
+     "drawer": "40",
+     "half": "front"
     }
    },
    "locknuts": [

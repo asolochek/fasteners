@@ -56,19 +56,44 @@ function labelForGroup(page, keys) {
   return { kind: 'drawer', pn, value, specs: '', pinout: null, glyphSvg: I.icons(types), glyphMaxW: Math.max(0.01, Math.min(types.length, free / S.glyphH)),
            generic: true, _n: types.length, _sig: `${pn}|${value}|${types.join(',')}` };
 }
-// POST /api/labels { page, keys: [...] | "all" | "new" } -> PDF
+// drawer spec: "12-16, 20, 30R, 31F" -> predicate on (drawer, half). A bare number matches both halves of a divided drawer.
+function drawerMatcher(spec) {
+  const terms = String(spec).split(/[,\s]+/).filter(Boolean).map(t => {
+    const m = /^(\d+)(?:-(\d+))?([rRfFbB])?$/.exec(t); if (!m) return null;
+    const half = m[3] ? (/[fF]/.test(m[3]) ? 'front' : 'back') : null;
+    return { lo: +m[1], hi: +(m[2] || m[1]), half };
+  });
+  if (terms.some(t => !t)) return null;
+  return (drawer, half) => { const n = +drawer; return terms.some(t => n >= t.lo && n <= t.hi && (!t.half || t.half === (half || ''))); };
+}
+// POST /api/labels { page, keys: [...] | "all" | "new" }  or  { drawers: "12-16, 20, 30R" } (every page) -> PDF
 app.post('/api/labels', async (req, res) => {
-  const d = load(), page = d.pages.find(p => p.id === req.body.page);
-  if (!page) return res.status(404).json({ error: 'no such page' });
-  let keys = req.body.keys === 'all' || req.body.keys === 'new' ? M.populated(page) : (req.body.keys || []);
-  let groups = groupByDrawer(page, keys);
-  if (req.body.keys === 'new') { const pr = loadPrinted(); groups = groups.filter(g => pr[`${page.id}|${g[0]}`] !== labelForGroup(page, g)._sig); }
-  const labels = groups.map(g => labelForGroup(page, g)).filter(l => l._n > 0);
+  const d = load();
+  let groups = [], pageOf = new Map(), name = 'all';
+  if (req.body.drawers) {
+    const ok = drawerMatcher(req.body.drawers); if (!ok) return res.status(400).json({ error: 'bad drawer list; use e.g. 12-16, 20, 30R' });
+    for (const page of d.pages) {
+      const keys = M.populated(page).filter(k => page.cells[k]?.drawer && ok(page.cells[k].drawer, page.cells[k].half));
+      for (const g of groupByDrawer(page, keys)) { groups.push(g); pageOf.set(g, page); }
+    }
+    // drawer order, rear before front
+    const dk = g => { const c = pageOf.get(g).cells[g[0]]; return [+c.drawer, c.half === 'front' ? 1 : 0]; };
+    groups.sort((a, b) => { const [x, y] = dk(a), [u, v] = dk(b); return (x - u) || (y - v); });
+    name = 'drawers-' + String(req.body.drawers).replace(/[^\w-]+/g, '_');
+  } else {
+    const page = d.pages.find(p => p.id === req.body.page);
+    if (!page) return res.status(404).json({ error: 'no such page' });
+    let keys = req.body.keys === 'all' || req.body.keys === 'new' ? M.populated(page) : (req.body.keys || []);
+    groups = groupByDrawer(page, keys); groups.forEach(g => pageOf.set(g, page));
+    if (req.body.keys === 'new') { const pr = loadPrinted(); groups = groups.filter(g => pr[`${page.id}|${g[0]}`] !== labelForGroup(page, g)._sig); }
+    name = `${page.id}-${Array.isArray(req.body.keys) ? (req.body.keys.length === 1 ? req.body.keys[0] : 'selection') : req.body.keys}`;
+  }
+  const labels = groups.map(g => labelForGroup(pageOf.get(g), g)).filter(l => l._n > 0);
   if (!labels.length) return res.status(400).json({ error: 'nothing to print' });
   L.warnings.length = 0;
   const pdf = await L.pdf(labels);
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="labels-${page.id}-${keys.length === 1 ? keys[0].replace(/[^\w.-]+/g, '_') : req.body.keys === 'new' ? 'new' : 'all'}.pdf"`);
+  res.setHeader('Content-Disposition', `inline; filename="labels-${name.replace(/[^\w.-]+/g, '_')}.pdf"`);
   res.setHeader('X-Label-Count', String(labels.length));
   res.send(Buffer.from(pdf));
 });
