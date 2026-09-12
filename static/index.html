@@ -24,7 +24,7 @@ thead th:first-child { left:0; z-index:4; }
 table { border-collapse:separate; border-spacing:3px; }
 th { font-weight:600; font-size:13px; color:var(--ink2); padding:2px 4px; white-space:nowrap; text-align:center; vertical-align:bottom; }
 th.row { text-align:right; font-size:15px; color:var(--ink); }
-th .dec { font-weight:400; font-size:11px; color:var(--ink2); }
+th .dec { font-weight:400; color:var(--ink2); }
 th .del { color:var(--ink2); cursor:pointer; margin-left:4px; font-weight:400; }
 th .del:hover { color:var(--accent); }
 td.cell { background:var(--none); border-radius:5px; padding:5px 6px 4px; min-width:150px; vertical-align:top; position:relative; }
@@ -139,7 +139,7 @@ function render() {
   const tbl = document.createElement('table');
   const thead = document.createElement('tr'); const theadEl = document.createElement('thead'); theadEl.appendChild(thead); tbl.appendChild(theadEl); const tbody = document.createElement('tbody'); tbl.appendChild(tbody);
   // inch headers show the decimal under the fraction
-  const hdr = l => p.units === 'mm' ? lengthText(p, l) : `${lengthText(p, l)}<div class="dec">${(+l).toFixed(4).replace(/0+$/, '').replace(/^0/, '')}</div>`;
+  const hdr = l => p.units === 'mm' ? lengthText(p, l) : `${lengthText(p, l)} <span class="dec">(${(+l).toFixed(4).replace(/0+$/, '').replace(/^0/, '')})</span>`;
   thead.innerHTML = '<th></th>' + lens.map(l => `<th>${hdr(l)}${p.lengths.extra?.includes(l) || canSkip(p, l) ? `<span class="del" data-len="${l}" title="remove this length">×</span>` : ''}</th>`).join('') + (p.nuts.length ? '<th>Nuts</th>' : '') + (p.washers.length ? '<th>Washers</th>' : '');
   const diaRows = {}; p.rows.forEach(r => (diaRows[r.dia] = diaRows[r.dia] || []).push(r));
   const doneDia = new Set();
