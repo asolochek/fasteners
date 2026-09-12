@@ -27,7 +27,8 @@ function labelFor(page, key) {
   const cell = page.cells[key] || {}, types = cell.types || [], pn = M.cellText(page, key), S = L.STYLE.drawer;
   // the icons take whatever width the text leaves free (at most one glyph height each); the drawer number stays off the label
   const free = S.len - S.pad - S.pnX - L.textWidth(pn, S.pn) - 1.5;
-  return { kind: 'drawer', pn, value: '', specs: '', pinout: null, glyphSvg: I.icons(types), glyphMaxW: Math.max(0.01, Math.min(types.length, free / S.glyphH)),
+  const lay = I.layout(types, free, S.glyphH);   // one row or two, whichever keeps the icons larger
+  return { kind: 'drawer', pn, value: '', specs: '', pinout: null, glyphSvg: I.icons(types, lay.rows), glyphMaxW: lay.maxW,
            generic: true, _n: types.length, _sig: `${pn}|${types.join(',')}` };
 }
 // cells that share a drawer half print as ONE label: "#10 Washers" (washers + lock washers), "#4-40 Nuts" (nuts + lock nuts),
@@ -53,7 +54,8 @@ function labelForGroup(page, keys) {
   else { pn = base; value = cells.map(c => M.HW.find(h => h[1] === c.suffix)?.[3] || M.lengthText(page, +c.suffix)).join(', '); }
   // the icons take the width left after the big text and, when there is one, the detail line
   const free = S.len - S.pad - 1.5 - Math.max(S.pnX + L.textWidth(pn, S.pn), value ? S.detX + L.textWidth(value, S.spec) : 0);
-  return { kind: 'drawer', pn, value, specs: '', pinout: null, glyphSvg: I.icons(types), glyphMaxW: Math.max(0.01, Math.min(types.length, free / S.glyphH)),
+  const lay = I.layout(types, free, S.glyphH);
+  return { kind: 'drawer', pn, value, specs: '', pinout: null, glyphSvg: I.icons(types, lay.rows), glyphMaxW: lay.maxW,
            generic: true, _n: types.length, _sig: `${pn}|${value}|${types.join(',')}` };
 }
 // drawer spec: "12-16, 20, 30R, 31F" -> predicate on (drawer, half). A bare number matches both halves of a divided drawer.

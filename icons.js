@@ -58,6 +58,16 @@ const LABELS = { flat: 'Flat', pan: 'Pan', socket: 'Socket cap', button: 'Button
   nut: 'Nut', thin: 'Thin nut', lock: 'Lock nut (prevailing torque)', nylock: 'Nylon insert', toothednut: 'Toothed flange', pressfit: 'Press-fit nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', nylonw: 'Plastic washer', cup: 'Cup', sleeved: 'Sleeved', split: 'Split', spring: 'Spring', inttooth: 'Internal tooth', toothed: 'External tooth' };
 // one icon as a standalone SVG
 const icon = name => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${ALL[name] || ''}</svg>`;
-// several icons in a row, for the label glyph slot
-const icons = names => `<svg viewBox="0 0 ${100 * names.length} 100" xmlns="http://www.w3.org/2000/svg">${names.map((n, i) => `<g transform="translate(${i * 100} 0)">${ALL[n] || ''}</g>`).join('')}</svg>`;
-module.exports = { HEADS, NUTS, WASHERS, ALL, LABELS, icon, icons };
+// several icons for the label glyph slot, in one or two rows (rows = 2 puts ceil(n/2) per row, the second row left-aligned)
+const icons = (names, rows = 1) => {
+  const cols = Math.ceil(names.length / rows);
+  return `<svg viewBox="0 0 ${100 * cols} ${100 * rows}" xmlns="http://www.w3.org/2000/svg">${names.map((n, i) => `<g transform="translate(${(i % cols) * 100} ${Math.floor(i / cols) * 100})">${ALL[n] || ''}</g>`).join('')}</svg>`;
+};
+// choose one or two rows for a glyph slot `h` high with `w` of width free: whichever gives the bigger icons
+function layout(names, w, h) {
+  const n = names.length; if (!n) return { rows: 1, size: 0, maxW: 0.01 };
+  const one = Math.min(h, w / n), two = Math.min(h / 2, w / Math.ceil(n / 2));
+  const rows = two > one ? 2 : 1, cols = Math.ceil(n / rows);
+  return { rows, size: rows === 2 ? two : one, maxW: Math.max(0.01, (cols / rows) * Math.min(1, (rows === 2 ? two * 2 : one) / h)) };
+}
+module.exports = { HEADS, NUTS, WASHERS, ALL, LABELS, icon, icons, layout };
