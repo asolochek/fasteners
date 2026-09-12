@@ -11,7 +11,9 @@
     "stop": 1.5,
     "step": 0.125,
     "extra": [
-     0.125
+     0.125,
+     0.3125,
+     0.4375
     ],
     "skip": []
    },
@@ -159,12 +161,33 @@
       "flat",
       "hex",
       "socket",
-      "sems",
       "button",
-      "pan"
+      "pan",
+      "sems"
      ],
      "drawer": "33",
      "half": "front"
+    },
+    "6-32|0.3125": {
+     "types": [
+      "nylon",
+      "flat"
+     ],
+     "drawer": "34",
+     "half": "back"
+    },
+    "6-32|0.375": {
+     "types": [
+      "flat",
+      "pan"
+     ],
+     "drawer": "34",
+     "half": "front"
+    },
+    "6-32|0.4375": {
+     "types": [
+      "flat"
+     ]
     }
    }
   },
