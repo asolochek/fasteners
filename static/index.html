@@ -135,12 +135,12 @@ function render() {
   const p = page(), lens = lengths(p);
   $('#tabs').innerHTML = data.pages.map(x => `<span class="tab${x.id === pageId ? ' on' : ''}" data-id="${x.id}">${x.title}</span>`).join(' ');
   document.querySelectorAll('.tab').forEach(t => t.onclick = () => { pageId = t.dataset.id; render(); });
-  $('#legend').innerHTML = [...p.heads, ...p.nuts, ...p.washers].map(t => `<span>${icons.svg[t]}${icons.labels[t] || t}</span>`).join('');
+  $('#legend').innerHTML = [...p.heads, ...HW.flatMap(([list]) => p[list] || [])].map(t => `<span>${icons.svg[t]}${icons.labels[t] || t}</span>`).join('');
   const tbl = document.createElement('table');
   const thead = document.createElement('tr'); const theadEl = document.createElement('thead'); theadEl.appendChild(thead); tbl.appendChild(theadEl); const tbody = document.createElement('tbody'); tbl.appendChild(tbody);
   // inch headers show the decimal under the fraction
   const hdr = l => p.units === 'mm' ? lengthText(p, l) : `${lengthText(p, l)} <span class="dec">(${(+l).toFixed(4).replace(/0+$/, '').replace(/^0/, '')})</span>`;
-  thead.innerHTML = '<th></th>' + lens.map(l => `<th>${hdr(l)}${p.lengths.extra?.includes(l) || canSkip(p, l) ? `<span class="del" data-len="${l}" title="remove this length">×</span>` : ''}</th>`).join('') + (p.nuts.length ? '<th>Nuts</th>' : '') + (p.washers.length ? '<th>Washers</th>' : '');
+  thead.innerHTML = '<th></th>' + lens.map(l => `<th>${hdr(l)}${p.lengths.extra?.includes(l) || canSkip(p, l) ? `<span class="del" data-len="${l}" title="remove this length">×</span>` : ''}</th>`).join('') + HW.filter(([list]) => (p[list] || []).length).map(([, , , title]) => `<th>${title}s</th>`).join('');
   const diaRows = {}; p.rows.forEach(r => (diaRows[r.dia] = diaRows[r.dia] || []).push(r));
   const doneDia = new Set();
   for (const r of p.rows) {
@@ -149,8 +149,11 @@ function render() {
     if (rowEmpty(p, r)) { const x = document.createElement('span'); x.className = 'del'; x.textContent = '×'; x.title = 'remove this row'; x.onclick = () => removeRow(r.id); th.appendChild(x); }
     tr.appendChild(th);
     for (const l of lens) tr.appendChild(cellTd(`${r.id}|${l}`, p.heads));
-    if (p.nuts.length) tr.appendChild(cellTd(`${r.id}|nut`, p.nuts));
-    if (p.washers.length && !doneDia.has(r.dia)) { doneDia.add(r.dia); const td = cellTd(`${r.dia}|washer`, p.washers, 'washer'); td.rowSpan = diaRows[r.dia].length; tr.appendChild(td); }
+    for (const [list, suffix, per] of HW) {
+      if (!(p[list] || []).length) continue;
+      if (per === 'row') tr.appendChild(cellTd(`${r.id}|${suffix}`, p[list]));
+      else if (!doneDia.has(r.dia + suffix)) { doneDia.add(r.dia + suffix); const td = cellTd(`${r.dia}|${suffix}`, p[list], 'washer'); td.rowSpan = diaRows[r.dia].length; tr.appendChild(td); }
+    }
     tbody.appendChild(tr);
   }
   $('#grid').innerHTML = ''; $('#grid').appendChild(tbl);
@@ -212,12 +215,14 @@ async function printKeys(keys) {
   const n = r.headers.get('X-Label-Count'); const blob = await r.blob(); window.open(URL.createObjectURL(blob), '_blank'); status(`${n} label${n == 1 ? '' : 's'} rendered`);
 }
 // which head / nut / washer types this page shows (types ticked in cells but hidden here still print)
-const GROUPS = [['heads', 'Heads', ['flat', 'pan', 'socket', 'button', 'truss', 'hex', 'sems', 'shoulder', 'nylon', 'setscrew', 'wood', 'sheetmetal', 'buttonsm', 'trusssm', 'hexsm']], ['nuts', 'Nuts', ['nut', 'thin', 'lock', 'pressfit', 'wing']], ['washers', 'Washers', ['washer', 'fender', 'thinw', 'nylonw', 'split', 'toothed']]];
+// hardware columns: [page list, cell key suffix, per row or per diameter, label]
+const HW = [['nuts', 'nut', 'row', 'Nut'], ['locknuts', 'locknut', 'row', 'Lock Nut'], ['washers', 'washer', 'dia', 'Washer'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer']];
+const GROUPS = [['heads', 'Heads', ['flat', 'pan', 'socket', 'button', 'truss', 'hex', 'sems', 'shoulder', 'nylon', 'setscrew', 'wood', 'sheetmetal', 'buttonsm', 'trusssm', 'hexsm']], ['nuts', 'Nuts', ['nut', 'thin', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['lock', 'nylock']], ['washers', 'Washers', ['washer', 'fender', 'thinw', 'nylonw']], ['lockwashers', 'Lock washers', ['split', 'toothed']]];
 function renderTypes() {
   const p = page();
   $('#types').innerHTML = GROUPS.map(([k, title, all]) => `<h3>${title}</h3>` + all.map(t => `<label><input type="checkbox" data-group="${k}" data-type="${t}" ${p[k].includes(t) ? 'checked' : ''}>${icons.svg[t]}${icons.labels[t] || t}</label>`).join('')).join('');
   $('#types').querySelectorAll('input').forEach(i => i.onchange = () => {
-    const list = p[i.dataset.group], t = i.dataset.type;
+    p[i.dataset.group] = p[i.dataset.group] || []; const list = p[i.dataset.group], t = i.dataset.type;
     if (i.checked) { if (!list.includes(t)) list.push(t); list.sort((a, b) => GROUPS.find(g => g[0] === i.dataset.group)[2].indexOf(a) - GROUPS.find(g => g[0] === i.dataset.group)[2].indexOf(b)); }
     else p[i.dataset.group] = list.filter(x => x !== t);
     save(); render();

@@ -13,7 +13,9 @@
     "extra": [
      0.125,
      0.3125,
-     0.4375
+     0.4375,
+     3,
+     2
     ],
     "skip": []
    },
@@ -30,7 +32,6 @@
    "nuts": [
     "nut",
     "thin",
-    "lock",
     "pressfit",
     "wing"
    ],
@@ -38,9 +39,7 @@
     "washer",
     "fender",
     "thinw",
-    "nylonw",
-    "split",
-    "toothed"
+    "nylonw"
    ],
    "rows": [
     {
@@ -132,15 +131,11 @@
       "button"
      ]
     },
-    "#0|washer": {
+    "#0|lockwasher": {
      "types": [
       "split"
      ],
      "drawer": "7"
-    },
-    "0-80|nut": {
-     "types": [],
-     "drawer": "8"
     },
     "6-32|0.125": {
      "types": [
@@ -152,8 +147,12 @@
     "6-32|nut": {
      "types": [
       "pressfit",
-      "lock",
       "nut"
+     ]
+    },
+    "6-32|locknut": {
+     "types": [
+      "lock"
      ]
     },
     "6-32|0.25": {
@@ -179,7 +178,8 @@
     "6-32|0.375": {
      "types": [
       "flat",
-      "pan"
+      "pan",
+      "socket"
      ],
      "drawer": "34",
      "half": "front"
@@ -190,8 +190,71 @@
      ],
      "drawer": "35",
      "half": "back"
+    },
+    "6-32|0.5": {
+     "types": [
+      "socket",
+      "pan"
+     ],
+     "drawer": "35",
+     "half": "front"
+    },
+    "6-32|0.75": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "36",
+     "half": "back"
+    },
+    "6-32|0.875": {
+     "types": [
+      "flat",
+      "socket",
+      "button",
+      "pan"
+     ],
+     "drawer": "36",
+     "half": "front"
+    },
+    "6-32|1": {
+     "types": [
+      "pan",
+      "flat"
+     ],
+     "drawer": "37",
+     "half": "back"
+    },
+    "6-32|3": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "38",
+     "half": "front"
+    },
+    "6-32|2": {
+     "types": [
+      "button",
+      "pan"
+     ],
+     "drawer": "38",
+     "half": "back"
+    },
+    "6-32|1.5": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "37",
+     "half": "front"
     }
-   }
+   },
+   "locknuts": [
+    "lock",
+    "nylock"
+   ],
+   "lockwashers": [
+    "split",
+    "toothed"
+   ]
   },
   {
    "id": "metric-machine",
@@ -231,7 +294,6 @@
    "nuts": [
     "nut",
     "thin",
-    "lock",
     "pressfit",
     "wing"
    ],
@@ -239,9 +301,7 @@
     "washer",
     "fender",
     "thinw",
-    "nylonw",
-    "split",
-    "toothed"
+    "nylonw"
    ],
    "rows": [
     {
@@ -293,7 +353,15 @@
      "pitch": 1
     }
    ],
-   "cells": {}
+   "cells": {},
+   "locknuts": [
+    "lock",
+    "nylock"
+   ],
+   "lockwashers": [
+    "split",
+    "toothed"
+   ]
   },
   {
    "id": "wood",
@@ -341,7 +409,9 @@
      "pitch": 0
     }
    ],
-   "cells": {}
+   "cells": {},
+   "locknuts": [],
+   "lockwashers": []
   }
  ]
 }

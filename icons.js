@@ -30,6 +30,7 @@ const NUTS = {
   nut:  `<path d="M50 14 L82 32 V68 L50 86 L18 68 V32 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><circle cx="50" cy="50" r="15" fill="none" stroke="${K}" stroke-width="${SW}"/>`,
   thin: `<path d="M50 14 L82 32 V68 L50 86 L18 68 V32 Z" fill="none" stroke="${K}" stroke-width="3" stroke-linejoin="round"/><circle cx="50" cy="50" r="15" fill="none" stroke="${K}" stroke-width="3"/>`,
   lock: `<path d="M50 14 L82 32 V68 L50 86 L18 68 V32 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><circle cx="50" cy="50" r="15" fill="none" stroke="${K}" stroke-width="${SW}"/><circle cx="50" cy="50" r="24" fill="none" stroke="${K}" stroke-width="3" stroke-dasharray="4 4"/>`,
+  nylock: `<path d="M50 14 L82 32 V68 L50 86 L18 68 V32 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><circle cx="50" cy="50" r="15" fill="none" stroke="${K}" stroke-width="${SW}"/><circle cx="50" cy="50" r="22" fill="none" stroke="${K}" stroke-width="${SW}" stroke-dasharray="7 5"/>`,
   // press-fit (self-clinching) nut, face-on: round body with the knurled clinch collar and a thread bore
   pressfit: `<circle cx="50" cy="50" r="38" fill="none" stroke="${K}" stroke-width="${SW}"/><circle cx="50" cy="50" r="26" fill="none" stroke="${K}" stroke-width="${SW}" stroke-dasharray="5 4"/><circle cx="50" cy="50" r="13" fill="none" stroke="${K}" stroke-width="${SW}"/>`,
   wing: `<path d="M50 14 L82 32 V68 L50 86 L18 68 V32 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><circle cx="50" cy="50" r="15" fill="none" stroke="${K}" stroke-width="${SW}"/><path d="M18 50 Q0 30 14 20 M82 50 Q100 30 86 20" fill="none" stroke="${K}" stroke-width="${SW}"/>`,
@@ -44,7 +45,7 @@ const WASHERS = {
 };
 const ALL = { ...HEADS, ...NUTS, ...WASHERS };
 const LABELS = { flat: 'Flat', pan: 'Pan', socket: 'Socket cap', button: 'Button', hex: 'Hex', nylon: 'Nylon', setscrew: 'Set screw', shoulder: 'Shoulder', sems: 'Captive lock washer', truss: 'Truss', wood: 'Flat, pointed', sheetmetal: 'Pan, pointed', buttonsm: 'Button, pointed', trusssm: 'Truss, pointed', hexsm: 'Hex washer, pointed',
-  nut: 'Nut', thin: 'Thin nut', lock: 'Lock nut', pressfit: 'Press-fit nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', nylonw: 'Plastic washer', split: 'Split lock', toothed: 'Toothed lock' };
+  nut: 'Nut', thin: 'Thin nut', lock: 'Lock nut (prevailing torque)', nylock: 'Nylon insert lock nut', pressfit: 'Press-fit nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', nylonw: 'Plastic washer', split: 'Split lock', toothed: 'Toothed lock' };
 // one icon as a standalone SVG
 const icon = name => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${ALL[name] || ''}</svg>`;
 // several icons in a row, for the label glyph slot

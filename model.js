@@ -18,13 +18,16 @@ function lengths(page) {
 const screwKey = (row, len) => `${row.id}|${len}`;
 const nutKey = row => `${row.id}|nut`;
 const washerKey = dia => `${dia}|washer`;
+// hardware columns: nuts and lock nuts belong to a thread size (row); washers and lock washers to a diameter (shared by its rows)
+const HW = [['nuts', 'nut', 'row', 'Nut'], ['locknuts', 'locknut', 'row', 'Lock Nut'], ['washers', 'washer', 'dia', 'Washer'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer']];
 // label text for a cell
 function cellText(page, key) {
   const [a, b] = key.split('|');
-  if (b === 'washer') return `${a} Washer`;
+  const hw = HW.find(h => h[1] === b);
+  if (hw && hw[2] === 'dia') return `${a} ${hw[3]}`;
   const row = page.rows.find(r => r.id === a);
   if (!row) return key;
-  if (b === 'nut') return `${row.label} Nut`;
+  if (hw) return `${row.label} ${hw[3]}`;
   return `${row.label} × ${lengthText(page, +b)}`;
 }
 // every cell key that has at least one type ticked, in page order (row by row, lengths then nut; washers after their diameter's rows)
@@ -32,10 +35,11 @@ function populated(page) {
   const out = [], seenDia = new Set();
   for (const row of page.rows) {
     for (const len of lengths(page)) { const k = screwKey(row, len); if (page.cells[k]?.types?.length) out.push(k); }
-    const nk = nutKey(row); if (page.cells[nk]?.types?.length) out.push(nk);
-    const wk = washerKey(row.dia);
-    if (!seenDia.has(row.dia)) { seenDia.add(row.dia); if (page.cells[wk]?.types?.length) out.push(wk); }
+    for (const [, suffix, per] of HW) {
+      if (per === 'row') { const k = `${row.id}|${suffix}`; if (page.cells[k]?.types?.length) out.push(k); }
+      else if (!seenDia.has(row.dia + suffix)) { seenDia.add(row.dia + suffix); const k = `${row.dia}|${suffix}`; if (page.cells[k]?.types?.length) out.push(k); }
+    }
   }
   return out;
 }
-module.exports = { lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated };
+module.exports = { lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, HW };
