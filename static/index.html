@@ -217,7 +217,12 @@ async function printKeys(keys, body) {
   status('rendering…');
   const r = await fetch('/api/labels', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || { page: pageId, keys }) });
   if (!r.ok) { status(''); return alert((await r.json()).error || 'failed'); }
-  const n = r.headers.get('X-Label-Count'); const blob = await r.blob(); window.open(URL.createObjectURL(blob), '_blank'); status(`${n} label${n == 1 ? '' : 's'} rendered`);
+  const n = r.headers.get('X-Label-Count'); const blob = await r.blob();
+  // download rather than open: a pop-up would be blocked, and the file is what gets printed anyway
+  const name = (/filename="([^"]+)"/.exec(r.headers.get('Content-Disposition') || '') || [])[1] || 'labels.pdf';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  status(`${n} label${n == 1 ? '' : 's'} → ${name}`);
 }
 // which head / nut / washer types this page shows (types ticked in cells but hidden here still print)
 // hardware columns: [page list, cell key suffix, per row or per diameter, label]

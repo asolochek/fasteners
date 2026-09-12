@@ -99,7 +99,8 @@ app.post('/api/labels', async (req, res) => {
   L.warnings.length = 0;
   const pdf = await L.pdf(labels);
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="labels-${name.replace(/[^\w.-]+/g, '_')}.pdf"`);
+  res.setHeader('Content-Disposition', `attachment; filename="labels-${name.replace(/[^\w.-]+/g, '_')}.pdf"`);
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition, X-Label-Count');
   res.setHeader('X-Label-Count', String(labels.length));
   res.send(Buffer.from(pdf));
 });
