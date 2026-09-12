@@ -14,11 +14,15 @@ app.use(express.static(path.join(__dirname, 'static')));
 const load = () => JSON.parse(fs.readFileSync(DATA, 'utf8'));
 const loadPrinted = () => fs.existsSync(PRINTED) ? JSON.parse(fs.readFileSync(PRINTED, 'utf8')) : {};
 app.get('/api/data', (req, res) => res.json(load()));
+// Saves carry the revision they were loaded from; a stale copy (another tab, or a model edit made here) is refused with the
+// current data so the page can reload instead of overwriting it.
 app.put('/api/data', (req, res) => {
-  const d = req.body;
+  const d = req.body, cur = load();
   if (!d || !Array.isArray(d.pages)) return res.status(400).json({ error: 'bad model' });
+  if ((d.rev || 0) !== (cur.rev || 0)) return res.status(409).json({ error: 'stale', data: cur });
+  d.rev = (cur.rev || 0) + 1;
   fs.writeFileSync(DATA + '.tmp', JSON.stringify(d, null, 1)); fs.renameSync(DATA + '.tmp', DATA);
-  res.json({ ok: true });
+  res.json({ ok: true, rev: d.rev });
 });
 app.get('/api/icons', (req, res) => res.json({ svg: Object.fromEntries(Object.keys(I.ALL).map(k => [k, I.icon(k)])), labels: I.LABELS }));
 app.get('/api/printed', (req, res) => res.json(loadPrinted()));

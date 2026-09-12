@@ -442,6 +442,81 @@
    "cells": {},
    "locknuts": [],
    "lockwashers": []
+  },
+  {
+   "id": "sheet-metal",
+   "title": "Sheet Metal Screws",
+   "class": "tapping",
+   "units": "in",
+   "lengths": {
+    "start": 0.25,
+    "stop": 2,
+    "step": 0.25,
+    "extra": [
+     0.375,
+     0.625
+    ],
+    "skip": []
+   },
+   "heads": [
+    "wood",
+    "buttonsm",
+    "trusssm"
+   ],
+   "nuts": [],
+   "locknuts": [],
+   "washers": [
+    "washer",
+    "fender",
+    "nylonw"
+   ],
+   "lockwashers": [],
+   "rows": [
+    {
+     "id": "#2",
+     "label": "#2",
+     "dia": "#2",
+     "pitch": 0
+    },
+    {
+     "id": "#4",
+     "label": "#4",
+     "dia": "#4",
+     "pitch": 0
+    },
+    {
+     "id": "#6",
+     "label": "#6",
+     "dia": "#6",
+     "pitch": 0
+    },
+    {
+     "id": "#8",
+     "label": "#8",
+     "dia": "#8",
+     "pitch": 0
+    },
+    {
+     "id": "#10",
+     "label": "#10",
+     "dia": "#10",
+     "pitch": 0
+    },
+    {
+     "id": "#12",
+     "label": "#12",
+     "dia": "#12",
+     "pitch": 0
+    },
+    {
+     "id": "1/4",
+     "label": "1/4",
+     "dia": "1/4",
+     "pitch": 0
+    }
+   ],
+   "cells": {}
   }
- ]
+ ],
+ "rev": 1
 }

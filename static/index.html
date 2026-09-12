@@ -97,7 +97,8 @@ function save() {
   clearTimeout(saveTimer); status('saving…');
   saveTimer = setTimeout(async () => {
     const r = await fetch('/api/data', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-    status(r.ok ? 'saved' : 'save failed'); if (!r.ok) alert('Save failed');
+    if (r.status === 409) { data = (await r.json()).data; render(); status('reloaded'); alert('The data had changed on the server (another tab, or an update). Reloaded it — please redo your last change.'); return; }
+    if (r.ok) { data.rev = (await r.json()).rev; status('saved'); } else { status('save failed'); alert('Save failed'); }
   }, 400);
 }
 function cell(key) { const p = page(); return p.cells[key] || (p.cells[key] = { types: [] }); }
@@ -243,10 +244,14 @@ $('#markPrinted').onclick = async () => {
 };
 function showPreview(key) { const img = $('#preview img'); img.src = `/api/preview.png?page=${encodeURIComponent(pageId)}&key=${encodeURIComponent(key)}&t=${Date.now()}`; $('#preview').style.display = 'block'; }
 function hidePreview() { $('#preview').style.display = 'none'; }
-(async () => {
-  [data, icons] = await Promise.all([fetch('/api/data').then(r => r.json()), fetch('/api/icons').then(r => r.json())]);
-  pageId = data.pages[0].id; render(); status('loaded');
-})();
+async function reload() {
+  const [d, ic] = await Promise.all([fetch('/api/data').then(r => r.json()), fetch('/api/icons').then(r => r.json())]);
+  if (data && d.rev === data.rev) return;
+  data = d; icons = ic; if (!pageId || !data.pages.some(p => p.id === pageId)) pageId = data.pages[0].id; render(); status('loaded');
+}
+// pick up changes made elsewhere whenever the tab comes back into view
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !saveTimer) reload(); });
+reload();
 </script>
 </body>
 </html>
