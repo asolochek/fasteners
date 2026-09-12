@@ -272,6 +272,18 @@
      ],
      "drawer": "40",
      "half": "front"
+    },
+    "4-40|nut": {
+     "types": [
+      "square"
+     ]
+    },
+    "4-40|0.25": {
+     "types": [
+      "sems",
+      "flat",
+      "pan"
+     ]
     }
    },
    "locknuts": [
@@ -525,5 +537,5 @@
    "cells": {}
   }
  ],
- "rev": 5
+ "rev": 9
 }

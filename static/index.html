@@ -19,7 +19,8 @@ button:hover { border-color:var(--ink2); }
 /* the grid is the only thing that scrolls: header and legend stay put, the length row sticks to the top and the size column to the left */
 main { flex:1; min-height:0; overflow:auto; padding:0 14px 14px; }
 thead th { position:sticky; top:0; background:var(--paper); z-index:3; padding-top:8px; }
-th.row { position:sticky; left:0; background:var(--paper); z-index:2; }
+th.row { position:sticky; left:0; background:var(--paper); z-index:2; vertical-align:middle; padding-right:24px; }
+th.row .del, th.row .rowprint { position:absolute; right:4px; bottom:4px; margin:0; }
 thead th:first-child { left:0; z-index:4; }
 table { border-collapse:separate; border-spacing:3px; }
 th { font-weight:600; font-size:13px; color:var(--ink2); padding:2px 4px; white-space:nowrap; text-align:center; vertical-align:bottom; }
