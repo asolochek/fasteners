@@ -39,6 +39,7 @@ const NUTS = {
   toothednut: `<circle cx="50" cy="50" r="40" fill="none" stroke="${K}" stroke-width="${SW}"/>${Array.from({ length: 16 }, (_, i) => { const a = i * Math.PI / 8, c = Math.cos(a), s = Math.sin(a); return `<line x1="${(50 + 40 * c).toFixed(1)}" y1="${(50 + 40 * s).toFixed(1)}" x2="${(50 + 47 * c).toFixed(1)}" y2="${(50 + 47 * s).toFixed(1)}" stroke="${K}" stroke-width="3.5"/>`; }).join('')}<path d="M50 24 L72 37 V63 L50 76 L28 63 V37 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><circle cx="50" cy="50" r="11" fill="none" stroke="${K}" stroke-width="${SW}"/>`,
   // press-fit (self-clinching) nut, face-on: round body with the knurled clinch collar and a thread bore
   pressfit: `<circle cx="50" cy="50" r="38" fill="none" stroke="${K}" stroke-width="${SW}"/><circle cx="50" cy="50" r="26" fill="none" stroke="${K}" stroke-width="${SW}" stroke-dasharray="5 4"/><circle cx="50" cy="50" r="13" fill="none" stroke="${K}" stroke-width="${SW}"/>`,
+  square: `<rect x="18" y="18" width="64" height="64" rx="3" fill="none" stroke="${K}" stroke-width="${SW}"/><circle cx="50" cy="50" r="15" fill="none" stroke="${K}" stroke-width="${SW}"/>`,
   wing: `<path d="M50 14 L82 32 V68 L50 86 L18 68 V32 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><circle cx="50" cy="50" r="15" fill="none" stroke="${K}" stroke-width="${SW}"/><path d="M18 50 Q0 30 14 20 M82 50 Q100 30 86 20" fill="none" stroke="${K}" stroke-width="${SW}"/>`,
 };
 const WASHERS = {
@@ -59,7 +60,7 @@ const WASHERS = {
 };
 const ALL = { ...HEADS, ...NUTS, ...WASHERS };
 const LABELS = { flat: 'Flat', pan: 'Pan', socket: 'Socket cap', button: 'Button', hex: 'Hex', nylon: 'Nylon', setscrew: 'Set screw', shoulder: 'Shoulder', sems: 'Captive lock washer', truss: 'Truss', wood: 'Flat, pointed', sheetmetal: 'Pan, pointed', buttonsm: 'Button, pointed', trusssm: 'Truss, pointed', trim: 'Trim head', flangesm: 'Flange head', hexsm: 'Hex washer, pointed',
-  nut: 'Nut', thin: 'Thin nut', lock: 'Lock nut (prevailing torque)', nylock: 'Nylon insert', toothednut: 'Toothed flange', pressfit: 'Press-fit nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', nylonw: 'Plastic washer', cup: 'Cup', sleeved: 'Sleeved', split: 'Split', spring: 'Spring', inttooth: 'Internal tooth', toothed: 'External tooth' };
+  nut: 'Nut', thin: 'Thin nut', lock: 'Lock nut (prevailing torque)', nylock: 'Nylon insert', toothednut: 'Toothed flange', pressfit: 'Press-fit nut', square: 'Square nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', nylonw: 'Plastic washer', cup: 'Cup', sleeved: 'Sleeved', split: 'Split', spring: 'Spring', inttooth: 'Internal tooth', toothed: 'External tooth' };
 // one icon as a standalone SVG
 const icon = name => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${ALL[name] || ''}</svg>`;
 // several icons for the label glyph slot, in one or two rows (rows = 2 puts ceil(n/2) per row, the second row left-aligned)

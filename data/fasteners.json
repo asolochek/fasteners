@@ -32,6 +32,7 @@
    "nuts": [
     "nut",
     "thin",
+    "square",
     "pressfit",
     "wing"
    ],
@@ -209,7 +210,8 @@
     },
     "6-32|0.75": {
      "types": [
-      "pan"
+      "pan",
+      "socket"
      ],
      "drawer": "36",
      "half": "back"
@@ -321,6 +323,7 @@
    "nuts": [
     "nut",
     "thin",
+    "square",
     "pressfit",
     "wing"
    ],
@@ -522,5 +525,5 @@
    "cells": {}
   }
  ],
- "rev": 3
+ "rev": 5
 }
