@@ -265,7 +265,8 @@
     "#6|washer": {
      "types": [
       "nylonw",
-      "washer"
+      "washer",
+      "sleeved"
      ],
      "drawer": "40",
      "half": "front"
@@ -521,5 +522,5 @@
    "cells": {}
   }
  ],
- "rev": 2
+ "rev": 3
 }

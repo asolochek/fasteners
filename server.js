@@ -11,6 +11,7 @@ const PRINTED = path.join(__dirname, 'data', 'printed.json');   // { "<page>|<ce
 const app = express();
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'static')));
+app.use('/helper', express.static(path.join(__dirname, 'helper'), { index: false }));   // the Windows print helper, downloadable from the page's host
 const load = () => JSON.parse(fs.readFileSync(DATA, 'utf8'));
 const loadPrinted = () => fs.existsSync(PRINTED) ? JSON.parse(fs.readFileSync(PRINTED, 'utf8')) : {};
 app.get('/api/data', (req, res) => res.json(load()));
