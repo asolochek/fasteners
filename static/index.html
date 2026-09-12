@@ -103,9 +103,15 @@ function toggle(key, type) {
   if (i >= 0) c.types.splice(i, 1); else c.types.push(type);
   save(); render();
 }
+// drawer number with an optional half: "12" (undivided), "12R" / "12 rear", "12F" / "12 front"
+const halfText = h => h === 'back' ? 'rear' : h === 'front' ? 'front' : '';
 function setDrawer(key) {
-  const c = cell(key); const v = prompt(`Drawer for ${key.replace('|', ' ')}`, c.drawer || '');
-  if (v === null) return; c.drawer = v.trim(); save(); render();
+  const c = cell(key); const v = prompt(`Drawer for ${key.replace('|', ' ')} — number, then R (rear) or F (front) if the drawer is divided, e.g. 12, 12R, 12F`, (c.drawer || '') + (c.half === 'back' ? 'R' : c.half === 'front' ? 'F' : ''));
+  if (v === null) return;
+  const m = /^\s*([^\s]*?)\s*(r|rear|b|back|f|front)?\s*$/i.exec(v) || [];
+  c.drawer = (m[1] || '').trim(); const h = (m[2] || '').toLowerCase();
+  c.half = /^(r|rear|b|back)$/.test(h) ? 'back' : /^(f|front)$/.test(h) ? 'front' : '';
+  save(); render();
 }
 function iconEl(type, on, key) {
   const d = document.createElement('div'); d.className = 'ic' + (on ? ' on' : ''); d.title = icons.labels[type] || type;
@@ -118,7 +124,7 @@ function cellTd(key, types, extraClass = '') {
   for (const t of types) ic.appendChild(iconEl(t, c.types.includes(t), key));
   td.appendChild(ic);
   const meta = document.createElement('div'); meta.className = 'meta';
-  const dr = document.createElement('span'); dr.className = 'drawer' + (c.drawer ? ' set' : ''); dr.textContent = c.drawer ? `drawer ${c.drawer}` : 'drawer?'; dr.onclick = () => setDrawer(key);
+  const dr = document.createElement('span'); dr.className = 'drawer' + (c.drawer ? ' set' : ''); dr.textContent = c.drawer ? `drawer ${c.drawer}${c.half ? ' ' + halfText(c.half) : ''}` : 'drawer?'; dr.onclick = () => setDrawer(key);
   const pr = document.createElement('span'); pr.className = 'print'; pr.textContent = '⎙'; pr.title = 'PDF for this label'; pr.onclick = () => printKeys([key]);
   pr.onmouseenter = () => showPreview(key); pr.onmouseleave = hidePreview;
   meta.appendChild(dr); meta.appendChild(pr); td.appendChild(meta);
