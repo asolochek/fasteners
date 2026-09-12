@@ -216,7 +216,7 @@ async function printKeys(keys) {
 }
 // which head / nut / washer types this page shows (types ticked in cells but hidden here still print)
 // hardware columns: [page list, cell key suffix, per row or per diameter, label]
-const HW = [['nuts', 'nut', 'row', 'Nut'], ['locknuts', 'locknut', 'row', 'Lock Nut'], ['washers', 'washer', 'dia', 'Washer'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer']];
+const HW = [['locknuts', 'locknut', 'row', 'Lock Nut'], ['nuts', 'nut', 'row', 'Nut'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer'], ['washers', 'washer', 'dia', 'Washer']];
 const GROUPS = [['heads', 'Heads', ['flat', 'pan', 'socket', 'button', 'truss', 'hex', 'sems', 'shoulder', 'nylon', 'setscrew', 'wood', 'sheetmetal', 'buttonsm', 'trusssm', 'hexsm']], ['nuts', 'Nuts', ['nut', 'thin', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'fender', 'thinw', 'cup', 'sleeved', 'nylonw']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed']]];
 function renderTypes() {
   const p = page();

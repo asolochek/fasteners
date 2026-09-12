@@ -19,7 +19,7 @@ const screwKey = (row, len) => `${row.id}|${len}`;
 const nutKey = row => `${row.id}|nut`;
 const washerKey = dia => `${dia}|washer`;
 // hardware columns: nuts and lock nuts belong to a thread size (row); washers and lock washers to a diameter (shared by its rows)
-const HW = [['nuts', 'nut', 'row', 'Nut'], ['locknuts', 'locknut', 'row', 'Lock Nut'], ['washers', 'washer', 'dia', 'Washer'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer']];
+const HW = [['locknuts', 'locknut', 'row', 'Lock Nut'], ['nuts', 'nut', 'row', 'Nut'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer'], ['washers', 'washer', 'dia', 'Washer']];
 // label text for a cell
 function cellText(page, key) {
   const [a, b] = key.split('|');
