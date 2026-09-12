@@ -280,7 +280,7 @@ function renderHelper() {
     $('#hMsg').textContent = 'contacting helper…';
     try { const j = await (await fetch(url)).json(); if (j.error) throw new Error(j.error);
       sel.innerHTML = j.printers.map(pn => `<option ${pn === h.printer ? 'selected' : ''}>${pn}</option>`).join('') || '<option value="">(no printers found)</option>';
-      $('#hMsg').textContent = `helper ok · SumatraPDF ${j.sumatra ? 'found' : 'NOT found'} · ${j.printers.length} printers`;
+      $('#hMsg').textContent = `helper ok · print program: ${j.backend || 'NONE FOUND'} · ${j.printers.length} printers`;
     } catch (e) { $('#hMsg').textContent = 'no answer from the helper: ' + e.message; }
   };
   $('#hSave').onclick = () => { HS.set({ url: $('#hUrl').value.trim(), token: $('#hTok').value.trim(), printer: sel.value, direct: $('#hDirect').checked }); $('#hMsg').textContent = 'saved'; };
