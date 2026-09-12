@@ -6,8 +6,7 @@ fastener page (or anything else on the LAN) POSTs to it, silently, using the pri
 
 Endpoints (CORS open, so a browser page served from elsewhere can call them):
     GET  /printers                         -> JSON list of installed printer names
-    POST /print?printer=NAME[&token=..][&settings=paper=9mm,landscape]  -> body = the PDF; prints it, returns {"ok":true,"pages":N}
-         settings are passed to SumatraPDF's -print-settings after "noscale" (see its manual: paper=NAME, portrait, landscape, ...)
+    POST /print?printer=NAME[&token=..]    -> body = the PDF; prints it, returns {"ok":true,"pages":N}
     GET  /                                  -> a tiny status page
 
 Needs SumatraPDF (https://www.sumatrapdfreader.org/, the portable exe is fine). Its -print-to uses the queue's default
@@ -77,8 +76,6 @@ class H(BaseHTTPRequestHandler):
         if not self._auth(q): return self._json(403, {'error': 'bad token'})
         printer = q.get('printer', [''])[0]
         if not printer: return self._json(400, {'error': 'printer= is required'})
-        # extra SumatraPDF print settings from the caller, e.g. "paper=9mm,landscape"; noscale is always applied
-        settings = ','.join(x for x in ['noscale', q.get('settings', [''])[0].strip()] if x)
         n = int(self.headers.get('Content-Length', '0')); data = self.rfile.read(n)
         if not data.startswith(b'%PDF'): return self._json(400, {'error': 'body is not a PDF'})
         exe = find_sumatra()
@@ -86,10 +83,10 @@ class H(BaseHTTPRequestHandler):
         fd, path = tempfile.mkstemp(suffix='.pdf', prefix='labels-'); os.write(fd, data); os.close(fd)
         try:
             # -print-settings noscale: the page is the printable strip at exact size; the queue's defaults set tape and cutting
-            r = subprocess.run([exe, '-print-to', printer, '-print-settings', settings, '-silent', path], capture_output=True, text=True, timeout=300)
+            r = subprocess.run([exe, '-print-to', printer, '-print-settings', 'noscale', '-silent', path], capture_output=True, text=True, timeout=300)
             if r.returncode != 0: return self._json(500, {'error': f'SumatraPDF exit {r.returncode}: {(r.stderr or r.stdout).strip()[:300]}'})
-            self.log_message('printed %d page(s) to %s (%s)', count_pages(data), printer, settings)
-            return self._json(200, {'ok': True, 'pages': count_pages(data), 'printer': printer, 'settings': settings})
+            self.log_message('printed %d page(s) to %s', count_pages(data), printer)
+            return self._json(200, {'ok': True, 'pages': count_pages(data), 'printer': printer})
         finally:
             try: time.sleep(1); os.remove(path)
             except OSError: pass
