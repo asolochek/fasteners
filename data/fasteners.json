@@ -154,7 +154,9 @@
     },
     "6-32|locknut": {
      "types": [
-      "lock"
+      "lock",
+      "nylock",
+      "toothednut"
      ]
     },
     "6-32|0.25": {
