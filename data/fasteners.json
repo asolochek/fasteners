@@ -406,6 +406,8 @@
    },
    "heads": [
     "wood",
+    "trim",
+    "flangesm",
     "sheetmetal"
    ],
    "nuts": [],
@@ -461,7 +463,8 @@
    "heads": [
     "wood",
     "buttonsm",
-    "trusssm"
+    "trusssm",
+    "hexsm"
    ],
    "nuts": [],
    "locknuts": [],
@@ -518,5 +521,5 @@
    "cells": {}
   }
  ],
- "rev": 1
+ "rev": 2
 }
