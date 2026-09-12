@@ -18,6 +18,7 @@ const HEADS = {
   shoulder: `<rect x="30" y="10" width="40" height="24" rx="3" fill="none" stroke="${K}" stroke-width="${SW}"/><rect x="38" y="34" width="24" height="34" fill="none" stroke="${K}" stroke-width="${SW}"/>${shank(50, 68, 92)}${threads(50, 68, 92)}`,
   // wood / self-tapping: pointed tip
   wood:   `<path d="M20 22 H80 L62 44 H38 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="50" y1="22" x2="50" y2="34" stroke="${K}" stroke-width="3.5"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
+  hexsm:  `<path d="M22 20 H78 V38 H22 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="40" y1="20" x2="40" y2="38" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="38" stroke="${K}" stroke-width="3"/><line x1="16" y1="44" x2="84" y2="44" stroke="${K}" stroke-width="${SW}"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
   sheetmetal: `<path d="M24 44 V32 Q24 18 40 18 H60 Q76 18 76 32 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="36" y1="22" x2="64" y2="22" stroke="${K}" stroke-width="3.5"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
 };
 // nuts and washers: face-on
@@ -38,7 +39,7 @@ const WASHERS = {
   toothed: `<circle cx="50" cy="50" r="36" fill="none" stroke="${K}" stroke-width="${SW}"/><circle cx="50" cy="50" r="16" fill="none" stroke="${K}" stroke-width="${SW}"/>${Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6, c = Math.cos(a), s = Math.sin(a); return `<line x1="${(50 + 36 * c).toFixed(1)}" y1="${(50 + 36 * s).toFixed(1)}" x2="${(50 + 46 * c).toFixed(1)}" y2="${(50 + 46 * s).toFixed(1)}" stroke="${K}" stroke-width="4"/>`; }).join('')}`,
 };
 const ALL = { ...HEADS, ...NUTS, ...WASHERS };
-const LABELS = { flat: 'Flat', pan: 'Pan', socket: 'Socket cap', button: 'Button', hex: 'Hex', nylon: 'Nylon', setscrew: 'Set screw', shoulder: 'Shoulder', sems: 'Captive lock washer', wood: 'Wood', sheetmetal: 'Sheet metal',
+const LABELS = { flat: 'Flat', pan: 'Pan', socket: 'Socket cap', button: 'Button', hex: 'Hex', nylon: 'Nylon', setscrew: 'Set screw', shoulder: 'Shoulder', sems: 'Captive lock washer', wood: 'Flat, pointed', sheetmetal: 'Pan, pointed', hexsm: 'Hex washer, pointed',
   nut: 'Nut', thin: 'Thin nut', lock: 'Lock nut', pressfit: 'Press-fit nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', nylonw: 'Plastic washer', split: 'Split lock', toothed: 'Toothed lock' };
 // one icon as a standalone SVG
 const icon = name => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${ALL[name] || ''}</svg>`;
