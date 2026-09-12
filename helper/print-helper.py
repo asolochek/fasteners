@@ -48,10 +48,11 @@ def backend():
 def print_pdf(name, exe, path, printer):
     """run the backend; returns (ok, message)"""
     if name == 'acrobat':
-        # /t = print to the named printer silently; Acrobat stays open afterwards, so give it a moment and close it
-        p = subprocess.Popen([exe, '/n', '/t', path, printer])
-        try: p.wait(timeout=120)
-        except subprocess.TimeoutExpired: p.kill()
+        # /t prints to the named printer; /n new instance, /s no splash, /o no open-file dialog, /h minimised. Acrobat does
+        # not exit by itself, so the job is given a few seconds to reach the spooler and the instance is then closed.
+        p = subprocess.Popen([exe, '/n', '/s', '/o', '/h', '/t', path, printer])
+        try: p.wait(timeout=ARGS.acrobat_wait)
+        except subprocess.TimeoutExpired: p.terminate()
         return (True, 'acrobat')
     if name == 'gs':
         r = subprocess.run([exe, '-dBATCH', '-dNOPAUSE', '-dNoCancel', '-dNOSAFER', '-q', '-sDEVICE=mswinpr2', f'-sOutputFile=%printer%{printer}', path], capture_output=True, text=True, timeout=300)
@@ -128,6 +129,7 @@ if __name__ == '__main__':
     ap.add_argument('--token', default='', help='if set, callers must send ?token= or X-Token')
     ap.add_argument('--backend', choices=['acrobat', 'gs', 'sumatra'], default='', help='print program (default: first found of acrobat, gs, sumatra)')
     ap.add_argument('--exe', default='', help='path to that program, if it is not found automatically')
+    ap.add_argument('--acrobat-wait', type=int, default=8, help='seconds to let Acrobat hand the job to the spooler before closing it')
     ARGS = ap.parse_args()
     name, exe = backend()
     print(f'label print helper on http://{ARGS.bind}:{ARGS.port}/  backend: {name or "NONE FOUND"} ({exe})  printers: {printers() or "(none)"}', flush=True)
