@@ -27,7 +27,9 @@ th.row { text-align:right; font-size:15px; color:var(--ink); }
 th .dec { font-weight:400; color:var(--ink2); }
 th .del { color:var(--ink2); cursor:pointer; margin-left:4px; font-weight:400; }
 th .del:hover { color:var(--accent); }
-td.cell { background:var(--none); border-radius:5px; padding:5px 6px 4px; min-width:150px; vertical-align:top; position:relative; }
+td.cell { background:var(--none); border-radius:5px; padding:5px 6px 4px; min-width:150px; vertical-align:top; position:relative; height:1px; }
+td.cell > .wrap { display:flex; flex-direction:column; height:100%; }
+td.cell > .wrap > .icons { flex:1; align-content:flex-start; }
 td.cell.have { background:var(--have); box-shadow:inset 0 0 0 1.5px var(--have2); }
 td.washer { background:var(--none); }
 .icons { display:flex; gap:4px; flex-wrap:wrap; }
@@ -121,14 +123,15 @@ function iconEl(type, on, key) {
 function cellTd(key, types, extraClass = '') {
   const c = page().cells[key] || { types: [] };
   const td = document.createElement('td'); td.className = 'cell ' + extraClass + (c.types.length ? ' have' : '');
+  const wrap = document.createElement('div'); wrap.className = 'wrap'; td.appendChild(wrap);
   const ic = document.createElement('div'); ic.className = 'icons';
   for (const t of types) ic.appendChild(iconEl(t, c.types.includes(t), key));
-  td.appendChild(ic);
+  wrap.appendChild(ic);
   const meta = document.createElement('div'); meta.className = 'meta';
   const dr = document.createElement('span'); dr.className = 'drawer' + (c.drawer ? ' set' : ''); dr.textContent = c.drawer ? `drawer ${c.drawer}${c.half ? ' ' + halfText(c.half) : ''}` : 'drawer?'; dr.onclick = () => setDrawer(key);
   const pr = document.createElement('span'); pr.className = 'print'; pr.textContent = '⎙'; pr.title = 'PDF for this label'; pr.onclick = () => printKeys([key]);
   pr.onmouseenter = () => showPreview(key); pr.onmouseleave = hidePreview;
-  meta.appendChild(dr); meta.appendChild(pr); td.appendChild(meta);
+  meta.appendChild(dr); meta.appendChild(pr); wrap.appendChild(meta);
   return td;
 }
 function render() {

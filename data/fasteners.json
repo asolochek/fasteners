@@ -247,6 +247,17 @@
      ],
      "drawer": "37",
      "half": "front"
+    },
+    "#6|lockwasher": {
+     "types": [
+      "inttooth",
+      "split"
+     ]
+    },
+    "#6|washer": {
+     "types": [
+      "nylonw"
+     ]
     }
    },
    "locknuts": [
