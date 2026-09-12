@@ -226,8 +226,9 @@ $('#addLen').onclick = () => {
 // print helper (helper/print-helper.py on the PC with the printer): settings live in this browser
 const HS = { get() { try { return JSON.parse(localStorage.getItem('helper') || '{}'); } catch (e) { return {}; } }, set(v) { try { localStorage.setItem('helper', JSON.stringify(v)); } catch (e) {} } };
 function helperUrl(path, extra = '') { const h = HS.get(); const base = (h.url || '').replace(/\/+$/, ''); return base ? `${base}${path}?token=${encodeURIComponent(h.token || '')}${extra}` : null; }
+const helperSettings = () => { const h = HS.get(); return h.settings ? `&settings=${encodeURIComponent(h.settings)}` : ''; };
 async function sendToPrinter(blob, n) {
-  const h = HS.get(), url = helperUrl('/print', `&printer=${encodeURIComponent(h.printer || '')}`);
+  const h = HS.get(), url = helperUrl('/print', `&printer=${encodeURIComponent(h.printer || '')}${helperSettings()}`);
   if (!url || !h.printer) return false;
   status(`sending ${n} label${n == 1 ? '' : 's'} to ${h.printer}…`);
   try {
@@ -270,6 +271,7 @@ function renderHelper() {
     <label>Helper address (the PC with the printer)</label><input id="hUrl" placeholder="http://192.168.1.20:8094" value="${h.url || ''}">
     <label>Token (if the helper was started with --token)</label><input id="hTok" value="${h.token || ''}">
     <label>Printer queue for 9 mm drawer labels</label><select id="hPrn"><option value="">(fetch printers first)</option></select>
+    <label>Extra SumatraPDF print settings (e.g. paper=9mm,landscape — noscale is always on)</label><input id="hSet" value="${h.settings || ''}">
     <div class="row"><button id="hTest" type="button">Fetch printers</button><label style="margin:0"><input type="checkbox" id="hDirect" style="width:auto" ${h.direct ? 'checked' : ''}> print directly instead of downloading</label></div>
     <div class="msg" id="hMsg"></div>
     <div class="row"><button id="hSave" type="button">Save</button><button id="hClose" type="button">Close</button></div>`;
@@ -283,7 +285,7 @@ function renderHelper() {
       $('#hMsg').textContent = `helper ok · SumatraPDF ${j.sumatra ? 'found' : 'NOT found'} · ${j.printers.length} printers`;
     } catch (e) { $('#hMsg').textContent = 'no answer from the helper: ' + e.message; }
   };
-  $('#hSave').onclick = () => { HS.set({ url: $('#hUrl').value.trim(), token: $('#hTok').value.trim(), printer: sel.value, direct: $('#hDirect').checked }); $('#hMsg').textContent = 'saved'; };
+  $('#hSave').onclick = () => { HS.set({ url: $('#hUrl').value.trim(), token: $('#hTok').value.trim(), printer: sel.value, direct: $('#hDirect').checked, settings: $('#hSet').value.trim() }); $('#hMsg').textContent = 'saved'; };
   $('#hClose').onclick = () => { $('#helper').style.display = 'none'; };
 }
 $('#helperBtn').onclick = () => { const t = $('#helper'); if (t.style.display === 'block') t.style.display = 'none'; else { renderHelper(); t.style.display = 'block'; } };
