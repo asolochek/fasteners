@@ -30,14 +30,16 @@ function cellText(page, key) {
   if (hw) return `${row.label} ${hw[3]}`;
   return `${row.label} × ${lengthText(page, +b)}`;
 }
-// every cell key that has at least one type ticked, in page order (row by row, lengths then nut; washers after their diameter's rows)
+// every cell key that has at least one type ticked, in COLUMN order: down each length column in turn, then the hardware
+// columns (lock nuts, nuts, lock washers, washers), rows top to bottom within a column; a diameter's washer cell once
 function populated(page) {
-  const out = [], seenDia = new Set();
-  for (const row of page.rows) {
-    for (const len of lengths(page)) { const k = screwKey(row, len); if (page.cells[k]?.types?.length) out.push(k); }
-    for (const [, suffix, per] of HW) {
-      if (per === 'row') { const k = `${row.id}|${suffix}`; if (page.cells[k]?.types?.length) out.push(k); }
-      else if (!seenDia.has(row.dia + suffix)) { seenDia.add(row.dia + suffix); const k = `${row.dia}|${suffix}`; if (page.cells[k]?.types?.length) out.push(k); }
+  const out = [], has = k => page.cells[k]?.types?.length;
+  for (const len of lengths(page)) for (const row of page.rows) { const k = screwKey(row, len); if (has(k)) out.push(k); }
+  for (const [, suffix, per] of HW) {
+    const seenDia = new Set();
+    for (const row of page.rows) {
+      if (per === 'row') { const k = `${row.id}|${suffix}`; if (has(k)) out.push(k); }
+      else if (!seenDia.has(row.dia)) { seenDia.add(row.dia); const k = `${row.dia}|${suffix}`; if (has(k)) out.push(k); }
     }
   }
   return out;

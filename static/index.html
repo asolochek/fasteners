@@ -179,7 +179,10 @@ function parseRow(text, units) {
 function diaValue(dia) { if (dia.startsWith('#')) return 0.06 + 0.013 * +dia.slice(1); if (dia.startsWith('M')) return +dia.slice(1) / 25.4; const [n, d] = dia.split('/'); return d ? n / d : +dia; }
 function rowKey(p, r) { return [diaValue(r.dia), p.units === 'mm' ? -r.pitch : r.pitch]; }   // metric: larger pitch (coarse) first; SAE: fewer threads (coarse) first
 function sortRows(p) { p.rows.sort((a, b) => { const [ka, pa] = rowKey(p, a), [kb, pb] = rowKey(p, b); return (ka - kb) || (pa - pb); }); }
-function rowKeys(p, r) { return Object.keys(p.cells).filter(k => (k.startsWith(r.id + '|') || k.startsWith(r.dia + '|')) && (p.cells[k].types || []).length); }
+function rowKeys(p, r) {   // lengths in order, then lock nut, nut, lock washer, washer
+  const has = k => (p.cells[k]?.types || []).length;
+  return [...lengths(p).map(l => `${r.id}|${l}`), ...HW.map(([, suffix, per]) => `${per === 'row' ? r.id : r.dia}|${suffix}`)].filter(has);
+}
 function rowEmpty(p, r) { return !Object.keys(p.cells).some(k => k.startsWith(r.id + '|') && (p.cells[k].types || []).length); }
 $('#addRow').onclick = () => {
   const p = page(); const v = prompt(p.units === 'mm' ? 'Thread size, e.g. M6 or M6x0.75' : 'Thread size, e.g. #3-48 or 1/4-28 (gauge only, e.g. #6, for wood and sheet metal screws)'); if (!v) return;
