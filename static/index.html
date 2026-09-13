@@ -20,7 +20,7 @@ button:hover { border-color:var(--ink2); }
 main { flex:1; min-height:0; overflow:auto; padding:0 14px 14px; }
 thead th { position:sticky; top:0; background:var(--paper); z-index:3; padding-top:8px; }
 th.row { position:sticky; left:0; background:var(--paper); z-index:2; vertical-align:middle; padding-right:24px; }
-th.row .del, th.row .rowprint { position:absolute; right:4px; bottom:4px; margin:0; }
+th.row .rowctl { position:absolute; right:3px; bottom:3px; margin:0; padding:0 4px; border:0; background:transparent; font:inherit; line-height:1; z-index:3; cursor:pointer; }
 thead th:first-child { left:0; z-index:4; }
 table { border-collapse:separate; border-spacing:3px; }
 th { font-weight:600; font-size:13px; color:var(--ink2); padding:2px 4px; white-space:nowrap; text-align:center; vertical-align:bottom; }
@@ -157,8 +157,10 @@ function render() {
   for (const r of p.rows) {
     const tr = document.createElement('tr');
     const th = document.createElement('th'); th.className = 'row'; th.textContent = r.label;
-    if (rowEmpty(p, r)) { const x = document.createElement('span'); x.className = 'del'; x.textContent = '×'; x.title = 'remove this row'; x.onclick = () => removeRow(r.id); th.appendChild(x); }
-    else { const pr = document.createElement('span'); pr.className = 'print rowprint'; pr.textContent = '⎙'; pr.title = 'PDF for everything in this row (and its washers)'; pr.onclick = () => printKeys(rowKeys(p, r)); th.appendChild(pr); }
+    const ctl = document.createElement('button'); ctl.type = 'button'; ctl.dataset.row = r.id;
+    if (rowEmpty(p, r)) { ctl.className = 'del rowctl'; ctl.textContent = '×'; ctl.title = 'remove this row'; ctl.dataset.act = 'remove'; }
+    else { ctl.className = 'print rowprint rowctl'; ctl.textContent = '⎙'; ctl.title = 'PDF for everything in this row (and its washers)'; ctl.dataset.act = 'print'; }
+    th.appendChild(ctl);
     tr.appendChild(th);
     for (const l of lens) tr.appendChild(cellTd(`${r.id}|${l}`, p.heads));
     for (const [list, suffix, per] of HW) {
@@ -169,6 +171,11 @@ function render() {
     tbody.appendChild(tr);
   }
   $('#grid').innerHTML = ''; $('#grid').appendChild(tbl);
+  tbl.addEventListener('click', e => {
+    const b = e.target.closest('.rowctl'); if (!b) return;
+    const r = page().rows.find(x => x.id === b.dataset.row); if (!r) return;
+    if (b.dataset.act === 'remove') removeRow(r.id); else printKeys(rowKeys(page(), r));
+  });
   if ($('#types').style.display === 'block') renderTypes();
   tbl.querySelectorAll('.del').forEach(x => x.onclick = () => removeLength(+x.dataset.len));
 }
