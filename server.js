@@ -123,6 +123,26 @@ app.post('/api/printed', (req, res) => {
   for (const g of groupByDrawer(page, keys)) { const sig = labelForGroup(page, g)._sig; for (const k of g) pr[`${page.id}|${k}`] = sig; }
   fs.writeFileSync(PRINTED, JSON.stringify(pr, null, 1)); res.json({ ok: true, marked: keys.length });
 });
+// GET /api/cabinet -> what is in each drawer (all pages): { drawers: { "12": { back: [...], front: [...], whole: [...] } } }
+// each entry: { text, page, keys, gap } where gap = the screw lengths in that half are not a contiguous run of the page's lengths
+app.get('/api/cabinet', (req, res) => {
+  const d = load(), drawers = {};
+  for (const page of d.pages) {
+    const keys = M.populated(page).filter(k => page.cells[k]?.drawer);
+    for (const g of groupByDrawer(page, keys)) {
+      const c = page.cells[g[0]], half = c.half || 'whole', lab = labelForGroup(page, g);
+      // gap check per row: the lengths assigned here must be consecutive in the page's length list
+      const lens = M.lengths(page); let gap = false;
+      const byRow = {};
+      for (const k of g) { const [a, b] = k.split('|'); if (!isNaN(+b)) (byRow[a] = byRow[a] || []).push(lens.indexOf(+b)); }
+      for (const idx of Object.values(byRow)) { idx.sort((x, y) => x - y); for (let i = 1; i < idx.length; i++) if (idx[i] !== idx[i - 1] + 1) gap = true; }
+      const entry = { text: lab.pn + (lab.value ? '  ' + lab.value : ''), page: page.title, keys: g, gap };
+      const dr = drawers[c.drawer] = drawers[c.drawer] || { back: [], front: [], whole: [] };
+      dr[half].push(entry);
+    }
+  }
+  res.json({ drawers, pages: d.pages.map(p => p.title) });
+});
 // GET /api/preview.png?page=..&key=..  -> a PNG of one label for the on-screen preview
 app.get('/api/preview.png', async (req, res) => {
   const d = load(), page = d.pages.find(p => p.id === req.query.page); if (!page) return res.status(404).end();
