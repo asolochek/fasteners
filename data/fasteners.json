@@ -15,7 +15,8 @@
      0.3125,
      0.4375,
      3,
-     2
+     2,
+     0.1875
     ],
     "skip": []
    },
@@ -52,6 +53,12 @@
      "pitch": 80
     },
     {
+     "id": "00-90",
+     "label": "#00-90",
+     "dia": "#00",
+     "pitch": 90
+    },
+    {
      "id": "1-64",
      "label": "#1-64",
      "dia": "#1",
@@ -61,6 +68,18 @@
      "id": "2-56",
      "label": "#2-56",
      "dia": "#2",
+     "pitch": 56
+    },
+    {
+     "id": "3-48",
+     "label": "#3-48",
+     "dia": "#3",
+     "pitch": 48
+    },
+    {
+     "id": "3-56",
+     "label": "#3-56",
+     "dia": "#3",
      "pitch": 56
     },
     {
@@ -275,14 +294,156 @@
     },
     "4-40|nut": {
      "types": [
-      "square"
-     ]
+      "square",
+      "nut"
+     ],
+     "drawer": "31",
+     "half": "front"
     },
     "4-40|0.25": {
      "types": [
       "sems",
       "flat",
       "pan"
+     ],
+     "drawer": "26",
+     "half": "front"
+    },
+    "4-40|0.3125": {
+     "types": [
+      "pan",
+      "flat"
+     ],
+     "drawer": "27",
+     "half": "back"
+    },
+    "4-40|0.375": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "27",
+     "half": "front"
+    },
+    "4-40|0.5": {
+     "types": [
+      "flat",
+      "socket",
+      "pan"
+     ],
+     "drawer": "28",
+     "half": "front"
+    },
+    "4-40|0.625": {
+     "types": [
+      "flat",
+      "pan"
+     ],
+     "drawer": "29",
+     "half": "back"
+    },
+    "#4|washer": {
+     "types": [
+      "washer",
+      "nylonw",
+      "sleeved"
+     ],
+     "drawer": "32",
+     "half": "front"
+    },
+    "4-40|locknut": {
+     "types": [
+      "nylock"
+     ],
+     "drawer": "31",
+     "half": "back"
+    },
+    "4-40|0.125": {
+     "types": [],
+     "drawer": "26",
+     "half": "back"
+    },
+    "4-40|0.4375": {
+     "types": [],
+     "drawer": "28",
+     "half": "back"
+    },
+    "4-40|0.75": {
+     "types": [],
+     "drawer": "29",
+     "half": "front"
+    },
+    "4-40|0.875": {
+     "types": [],
+     "drawer": "30",
+     "half": "back"
+    },
+    "4-40|1": {
+     "types": [],
+     "drawer": "30",
+     "half": "front"
+    },
+    "#4|lockwasher": {
+     "types": [],
+     "drawer": "32",
+     "half": "back"
+    },
+    "3-48|nut": {
+     "types": [
+      "nut"
+     ],
+     "drawer": "25",
+     "half": "front"
+    },
+    "2-56|0.1875": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "17",
+     "half": "back"
+    },
+    "2-56|0.25": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "17",
+     "half": "front"
+    },
+    "2-56|0.3125": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "18",
+     "half": "back"
+    },
+    "2-56|0.75": {
+     "types": [
+      "nylon",
+      "pan"
+     ]
+    },
+    "2-56|0.625": {
+     "types": [
+      "pan"
+     ]
+    },
+    "2-56|1.25": {
+     "types": [
+      "socket"
+     ]
+    },
+    "3-56|0.5": {
+     "types": [
+      "pan"
+     ]
+    },
+    "3-56|0.25": {
+     "types": [
+      "pan"
+     ]
+    },
+    "#2|washer": {
+     "types": [
+      "washer"
      ]
     }
    },
@@ -537,5 +698,5 @@
    "cells": {}
   }
  ],
- "rev": 9
+ "rev": 55
 }

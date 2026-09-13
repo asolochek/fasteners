@@ -184,7 +184,10 @@ function parseRow(text, units) {
   if (!m[2]) return { id: dia, label: dia, dia, pitch: 0 };   // gauge only (wood / sheet metal screws)
   const label = `${dia}-${m[2]}`; return { id: `${m[1]}-${m[2]}`, label, dia, pitch: +m[2] };
 }
-function diaValue(dia) { if (dia.startsWith('#')) return 0.06 + 0.013 * +dia.slice(1); if (dia.startsWith('M')) return +dia.slice(1) / 25.4; const [n, d] = dia.split('/'); return d ? n / d : +dia; }
+function diaValue(dia) {   // major diameter in inches, for ordering
+  if (dia.startsWith('#')) { const t = dia.slice(1); if (/^0+$/.test(t)) return 0.06 - 0.013 * (t.length - 1); return 0.06 + 0.013 * +t; }   // #0 = .060, #00 = .047, #000 = .034
+  if (dia.startsWith('M')) return +dia.slice(1) / 25.4; const [n, d] = dia.split('/'); return d ? n / d : +dia;
+}
 function rowKey(p, r) { return [diaValue(r.dia), p.units === 'mm' ? -r.pitch : r.pitch]; }   // metric: larger pitch (coarse) first; SAE: fewer threads (coarse) first
 function sortRows(p) { p.rows.sort((a, b) => { const [ka, pa] = rowKey(p, a), [kb, pb] = rowKey(p, b); return (ka - kb) || (pa - pb); }); }
 function rowKeys(p, r) {   // reading order within the row: lengths, then lock nut, nut, lock washer, washer (the server puts drawers first)
