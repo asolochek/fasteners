@@ -43,7 +43,7 @@ td.washer { background:var(--none); }
 .print { cursor:pointer; opacity:.55; }
 .rowprint { margin-left:6px; font-weight:400; }
 .print:hover { opacity:1; color:var(--accent); }
-td.cell:not(.have) .print { visibility:hidden; }
+td.cell:not(.have) .print, .card:not(.have) .print { visibility:hidden; }
 .legend { display:flex; gap:14px; flex-wrap:wrap; padding:8px 14px; font-size:13px; color:var(--ink2); border-bottom:1px solid var(--line); }
 .legend span { display:inline-flex; align-items:center; gap:4px; }
 .legend svg { width:30px; height:30px; }
@@ -56,6 +56,26 @@ td.cell:not(.have) .print { visibility:hidden; }
 #helper .msg { font-size:12px; color:var(--ink2); margin-top:6px; min-height:16px; }
 #types label { display:flex; align-items:center; gap:6px; padding:2px 0; cursor:pointer; }
 #types label svg { width:24px; height:24px; }
+/* phone layout: one thread size at a time, as a vertical list of cards */
+.mobile header { padding:8px 10px; gap:6px; }
+.mobile header h1 { display:none; }
+.mobile #tabs { display:none; }
+.mobile #pageSel { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:4px; background:#fff; max-width:48vw; }
+.mobile .legend { display:none; }
+.mobile main { padding:8px 10px 60px; }
+.mrow { display:flex; gap:8px; align-items:center; margin:4px 0 10px; }
+.mrow select { flex:1; font:inherit; font-size:17px; padding:8px; border:1px solid var(--line); border-radius:6px; background:#fff; }
+.mrow button { padding:8px 10px; }
+.card { background:var(--none); border-radius:8px; padding:8px 10px 6px; margin:0 0 8px; }
+.card.have { background:var(--have); box-shadow:inset 0 0 0 1.5px var(--have2); }
+.card .ttl { font-weight:600; margin-bottom:6px; display:flex; justify-content:space-between; align-items:baseline; }
+.card .ttl .dec { font-weight:400; color:var(--ink2); font-size:13px; }
+.card .icons { gap:6px; }
+.card .ic { width:48px; height:48px; }
+.card .meta { position:static; margin-top:6px; font-size:13px; }
+.mobile #types, .mobile #helper { top:8px; right:8px; left:8px; width:auto; max-height:85vh; }
+#pageSel { display:none; }
+.mobile #addLen, .mobile #addRow { display:none; }
 #preview { position:fixed; right:14px; bottom:14px; background:#fff; border:1px solid var(--line); padding:6px; border-radius:6px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; }
 #preview img { display:block; height:60px; }
 </style>
@@ -64,6 +84,7 @@ td.cell:not(.have) .print { visibility:hidden; }
 <header>
   <h1>Fasteners</h1>
   <div id="tabs"></div>
+  <select id="pageSel"></select>
   <span class="spacer"></span>
   <button id="typesBtn">Types…</button>
   <button id="addRow">Add row…</button>
@@ -142,10 +163,18 @@ function cellTd(key, types, extraClass = '') {
   meta.appendChild(dr); meta.appendChild(pr); td.appendChild(meta);
   return td;
 }
+const isMobile = () => window.matchMedia('(max-width: 720px)').matches;
+let mobileRow = null;
+window.addEventListener('resize', () => { if (data) render(); });
 function render() {
   const p = page(), lens = lengths(p);
+  document.body.classList.toggle('mobile', isMobile());
   $('#tabs').innerHTML = data.pages.map(x => `<span class="tab${x.id === pageId ? ' on' : ''}" data-id="${x.id}">${x.title}</span>`).join(' ');
   document.querySelectorAll('.tab').forEach(t => t.onclick = () => { pageId = t.dataset.id; render(); });
+  $('#pageSel').innerHTML = data.pages.map(x => `<option value="${x.id}" ${x.id === pageId ? 'selected' : ''}>${x.title}</option>`).join('');
+  $('#pageSel').onchange = e => { pageId = e.target.value; mobileRow = null; render(); };
+  $('#pageSel').style.display = isMobile() ? 'block' : 'none';
+  if (isMobile()) return renderMobile(p, lens);
   $('#legend').innerHTML = [...p.heads, ...HW.flatMap(([list]) => p[list] || [])].map(t => `<span>${icons.svg[t]}${icons.labels[t] || t}</span>`).join('');
   const tbl = document.createElement('table');
   const thead = document.createElement('tr'); const theadEl = document.createElement('thead'); theadEl.appendChild(thead); tbl.appendChild(theadEl); const tbody = document.createElement('tbody'); tbl.appendChild(tbody);
@@ -212,6 +241,34 @@ function removeRow(id) {
   const p = page(), r = p.rows.find(x => x.id === id);
   if (!rowEmpty(p, r)) return alert('That row still has parts ticked.');
   p.rows = p.rows.filter(x => x.id !== id); save(); render();
+}
+// phone: pick a thread size, then every cell of that row as a card (lengths, lock nut, nut, then the diameter's washers)
+function renderMobile(p, lens) {
+  if (!mobileRow || !p.rows.some(r => r.id === mobileRow)) mobileRow = p.rows[0]?.id;
+  const r = p.rows.find(x => x.id === mobileRow);
+  const g = $('#grid'); g.innerHTML = '';
+  const bar = document.createElement('div'); bar.className = 'mrow';
+  const sel = document.createElement('select'); sel.innerHTML = p.rows.map(x => `<option value="${x.id}" ${x.id === mobileRow ? 'selected' : ''}>${x.label}</option>`).join('');
+  sel.onchange = e => { mobileRow = e.target.value; render(); };
+  const pb = document.createElement('button'); pb.textContent = '⎙ row'; pb.title = 'labels for this row'; pb.onclick = () => r && printKeys(rowKeys(p, r));
+  bar.appendChild(sel); bar.appendChild(pb); g.appendChild(bar);
+  if (!r) return;
+  const cards = [];
+  for (const l of lens) cards.push([`${r.id}|${l}`, p.heads, lengthText(p, l), p.units === 'mm' ? '' : `(${(+l).toFixed(4).replace(/0+$/, '').replace(/^0/, '')})`]);
+  for (const [list, suffix, per, title] of HW) { if (!(p[list] || []).length) continue; cards.push([`${per === 'row' ? r.id : r.dia}|${suffix}`, p[list], per === 'row' ? title : `${r.dia} ${title}`, per === 'dia' ? 'shared by this diameter' : '']); }
+  for (const [key, types, title, sub] of cards) {
+    const c = p.cells[key] || { types: [] };
+    const card = document.createElement('div'); card.className = 'card' + (c.types.length ? ' have' : '');
+    const t = document.createElement('div'); t.className = 'ttl'; t.innerHTML = `<span>${title}</span><span class="dec">${sub}</span>`; card.appendChild(t);
+    const ic = document.createElement('div'); ic.className = 'icons';
+    for (const ty of types) ic.appendChild(iconEl(ty, c.types.includes(ty), key));
+    card.appendChild(ic);
+    const meta = document.createElement('div'); meta.className = 'meta';
+    const dr = document.createElement('span'); dr.className = 'drawer' + (c.drawer ? ' set' : ''); dr.textContent = c.drawer ? `drawer ${c.drawer}${c.half ? ' ' + halfText(c.half) : ''}` : 'drawer?'; dr.onclick = () => setDrawer(key);
+    const pr = document.createElement('span'); pr.className = 'print'; pr.textContent = '⎙'; pr.onclick = () => printKeys([key]);
+    meta.appendChild(dr); meta.appendChild(pr); card.appendChild(meta);
+    g.appendChild(card);
+  }
 }
 function canSkip(p, l) { return !p.rows.some(r => (p.cells[`${r.id}|${l}`]?.types || []).length); }
 function removeLength(l) {
