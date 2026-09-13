@@ -101,6 +101,12 @@ app.post('/api/labels', async (req, res) => {
     const page = d.pages.find(p => p.id === req.body.page);
     if (!page) return res.status(404).json({ error: 'no such page' });
     let keys = req.body.keys === 'all' || req.body.keys === 'new' ? M.populated(page) : (req.body.keys || []);
+    if (Array.isArray(req.body.keys)) {
+      // a chosen cell that shares its drawer half with other cells prints the merged label for that half
+      const all = M.populated(page), slot = k => { const c = page.cells[k] || {}; return c.drawer ? `${c.drawer}|${c.half || ''}` : null; };
+      const slots = new Set(keys.map(slot).filter(Boolean));
+      keys = [...new Set([...keys, ...all.filter(k => slots.has(slot(k)))])];
+    }
     groups = M.drawerOrder(page, groupByDrawer(page, keys)); groups.forEach(g => pageOf.set(g, page));
     if (req.body.keys === 'new') { const pr = loadPrinted(); groups = groups.filter(g => pr[`${page.id}|${g[0]}`] !== labelForGroup(page, g)._sig); }
     name = `${page.id}-${Array.isArray(req.body.keys) ? (req.body.keys.length === 1 ? req.body.keys[0] : 'selection') : req.body.keys}`;
@@ -127,7 +133,8 @@ app.post('/api/printed', (req, res) => {
 // each entry: { text, page, keys, gap } where gap = the screw lengths in that half are not a contiguous run of the page's lengths
 app.get('/api/cabinet', (req, res) => {
   const d = load(), drawers = {};
-  for (const page of d.pages) {
+  const pages = req.query.page ? d.pages.filter(p => p.id === req.query.page) : d.pages;
+  for (const page of pages) {
     const keys = M.populated(page).filter(k => page.cells[k]?.drawer);
     for (const g of groupByDrawer(page, keys)) {
       const c = page.cells[g[0]], half = c.half || 'whole', lab = labelForGroup(page, g);
@@ -141,7 +148,7 @@ app.get('/api/cabinet', (req, res) => {
       dr[half].push(entry);
     }
   }
-  res.json({ drawers, pages: d.pages.map(p => p.title) });
+  res.json({ drawers, pages: d.pages.map(p => ({ id: p.id, title: p.title })), page: req.query.page || '' });
 });
 // GET /api/preview.png?page=..&key=..  -> a PNG of one label for the on-screen preview
 app.get('/api/preview.png', async (req, res) => {

@@ -94,7 +94,7 @@ td.cell:not(.have) .print, .card:not(.have) .print { visibility:hidden; }
   <button id="printAll">PDF: all</button>
   <button id="markPrinted">Mark all printed</button>
   <button id="helperBtn" title="print helper on the PC with the label printer">Printer…</button>
-  <a href="cabinet.html" target="_blank"><button type="button">Cabinet</button></a>
+  <button type="button" id="cabinetBtn" title="drawer map for this page">Cabinet</button>
   <span id="status"></span>
 </header>
 <div class="legend" id="legend"></div>
@@ -356,6 +356,7 @@ function renderHelper() {
   $('#hClose').onclick = () => { $('#helper').style.display = 'none'; };
 }
 $('#helperBtn').onclick = () => { const t = $('#helper'); if (t.style.display === 'block') t.style.display = 'none'; else { renderHelper(); t.style.display = 'block'; } };
+$('#cabinetBtn').onclick = () => window.open(`cabinet.html?page=${encodeURIComponent(pageId)}`, '_blank');
 $('#printAll').onclick = () => printKeys('all');
 $('#printDrawers').onclick = () => { const v = prompt('Drawers to print, across every page: a list or ranges, R/F for one half of a divided drawer. e.g. 12-16, 20, 30R'); if (v) printKeys(null, { drawers: v }); };
 $('#printNew').onclick = () => printKeys('new');

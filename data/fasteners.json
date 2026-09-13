@@ -411,7 +411,7 @@
      "types": [
       "nut"
      ],
-     "drawer": "25",
+     "drawer": "21",
      "half": "front"
     },
     "2-56|0.1875": {
@@ -460,12 +460,17 @@
     "3-56|0.5": {
      "types": [
       "pan"
-     ]
+     ],
+     "drawer": "22",
+     "half": "front"
     },
     "3-56|0.25": {
      "types": [
-      "pan"
-     ]
+      "pan",
+      "button"
+     ],
+     "drawer": "22",
+     "half": "back"
     },
     "#2|washer": {
      "types": [
@@ -596,6 +601,25 @@
      "types": [],
      "drawer": "19",
      "half": "front"
+    },
+    "#3|washer": {
+     "types": [],
+     "drawer": "24",
+     "half": "front"
+    },
+    "3-56|nut": {
+     "types": [
+      "nut"
+     ],
+     "drawer": "23",
+     "half": "front"
+    },
+    "3-56|0.1875": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "22",
+     "half": "back"
     }
    },
    "locknuts": [
@@ -849,5 +873,5 @@
    "cells": {}
   }
  ],
- "rev": 130
+ "rev": 139
 }

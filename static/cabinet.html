@@ -9,6 +9,7 @@
 body { margin:0; background:var(--paper); color:var(--ink); font:14px/1.3 system-ui, sans-serif; }
 header { display:flex; gap:12px; align-items:center; padding:10px 14px; border-bottom:1px solid var(--line); }
 h1 { font-size:18px; margin:0; font-weight:600; }
+#pageSel { font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:4px; background:#fff; }
 .legend { color:var(--ink2); font-size:13px; display:flex; gap:14px; }
 .legend i { display:inline-block; width:14px; height:14px; border-radius:3px; vertical-align:-2px; margin-right:4px; border:1px solid var(--line); }
 main { padding:14px; }
@@ -27,11 +28,17 @@ main { padding:14px; }
 </style>
 </head>
 <body>
-<header><h1>Fastener cabinet</h1><span class="legend"><span><i style="background:var(--none)"></i>unassigned</span><span><i style="background:var(--have)"></i>assigned</span><span><i style="background:var(--bad);border-color:var(--bad2)"></i>lengths not contiguous</span></span></header>
+<header><h1>Fastener cabinet</h1><select id="pageSel"></select><span class="legend"><span><i style="background:var(--none)"></i>unassigned</span><span><i style="background:var(--have)"></i>assigned</span><span><i style="background:var(--bad);border-color:var(--bad2)"></i>lengths not contiguous</span></span></header>
 <main><div class="grid" id="grid"></div></main>
 <script>
 (async () => {
-  const { drawers } = await (await fetch('/api/cabinet')).json();
+  const want = new URLSearchParams(location.search).get('page') || '';
+  const { drawers, pages, page } = await (await fetch('/api/cabinet?page=' + encodeURIComponent(want))).json();
+  const sel = document.getElementById('pageSel');
+  sel.innerHTML = pages.map(p => `<option value="${p.id}" ${p.id === page ? 'selected' : ''}>${p.title}</option>`).join('');
+  if (!page) sel.innerHTML = '<option value="">(all pages)</option>' + sel.innerHTML;
+  sel.onchange = () => location.search = '?page=' + encodeURIComponent(sel.value);
+  document.title = (pages.find(p => p.id === page)?.title || 'Fastener') + ' cabinet';
   const N = 64, g = document.getElementById('grid');
   const line = (e, cls, h) => `<div class="${cls}${e.gap ? ' gap' : ''}" ${h ? `data-h="${h}"` : ''}>${e.text}</div>`;
   for (let n = 1; n <= N; n++) {
