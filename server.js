@@ -51,14 +51,21 @@ function labelForGroup(page, keys) {
   if (keys.length === 1) return labelFor(page, keys[0]);
   const S = L.STYLE.drawer, cells = keys.map(k => ({ k, ...(page.cells[k] || {}), suffix: k.split('|')[1], base: k.split('|')[0] }));
   const types = [...new Set(cells.flatMap(c => c.types || []))];
-  const bases = new Set(cells.map(c => c.suffix.endsWith('washer') ? c.base : (page.rows.find(r => r.id === c.base)?.label || c.base)));
-  const base = [...bases].join(' / ');
+  // the size text: thread sizes of one diameter merge their pitches ("#8-32/36", "M6×1/0.75"); different diameters are listed
+  const rowsIn = [...new Set(cells.filter(c => !c.suffix.endsWith('washer')).map(c => c.base))].map(id => page.rows.find(r => r.id === id)).filter(Boolean);
+  const dias = [...new Set(rowsIn.map(r => r.dia))];
+  let base;
+  if (cells.every(c => c.suffix.endsWith('washer'))) base = [...new Set(cells.map(c => c.base))].join(' / ');
+  else if (dias.length === 1 && rowsIn.length > 1) base = page.units === 'mm' ? `${dias[0]}×${rowsIn.map(r => r.pitch).join('/')}` : `${dias[0]}-${rowsIn.map(r => r.pitch).join('/')}`;
+  else base = rowsIn.map(r => r.label).join(' / ');
+  const items = [...new Set(cells.map(c => M.HW.find(h => h[1] === c.suffix)?.[3] || M.lengthText(page, +c.suffix)))];   // one entry per length, however many rows share it
   let pn, value = '', extra = {};
   if (cells.every(c => c.suffix.endsWith('washer'))) pn = `${base} Washer`;
   else if (cells.every(c => c.suffix.endsWith('nut'))) pn = `${base} Nut`;
+  else if (items.length === 1 && !cells.some(c => isNaN(+c.suffix))) pn = `${base} × ${items[0]}`;   // one length shared by the rows: a plain screw label
   else {
     // size in the big slot, then the lengths (and any nut) right after it at a mid size, centred on the strip
-    pn = base; value = cells.map(c => M.HW.find(h => h[1] === c.suffix)?.[3] || M.lengthText(page, +c.suffix)).join('  ');
+    pn = base; value = items.join('  ');
     extra = { spec: 3.0, detX: S.pnX + L.textWidth(pn, S.pn) + 2.5, detCenter: true };
   }
   // the icons take the width left after the big text and, when there is one, the detail line; a long length list gives up

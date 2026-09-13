@@ -18,7 +18,8 @@
      2,
      0.1875,
      0.046875,
-     0.078125
+     0.078125,
+     0.5625
     ],
     "skip": [
      null,
@@ -110,6 +111,12 @@
      "label": "#8-32",
      "dia": "#8",
      "pitch": 32
+    },
+    {
+     "id": "8-36",
+     "label": "#8-36",
+     "dia": "#8",
+     "pitch": 36
     },
     {
      "id": "10-24",
@@ -620,6 +627,102 @@
      ],
      "drawer": "22",
      "half": "back"
+    },
+    "8-32|1": {
+     "types": [
+      "button",
+      "flat"
+     ],
+     "drawer": "44",
+     "half": "front"
+    },
+    "#8|washer": {
+     "types": [
+      "washer"
+     ],
+     "drawer": "48",
+     "half": "front"
+    },
+    "8-32|0.3125": {
+     "types": [
+      "flat"
+     ],
+     "drawer": "41",
+     "half": "front"
+    },
+    "8-32|0.1875": {
+     "types": [
+      "flat",
+      "pan"
+     ],
+     "drawer": "41",
+     "half": "back"
+    },
+    "8-32|0.375": {
+     "types": [
+      "flat",
+      "pan",
+      "socket"
+     ],
+     "drawer": "42",
+     "half": ""
+    },
+    "8-32|0.5": {
+     "types": [
+      "pan",
+      "flat"
+     ],
+     "drawer": "43",
+     "half": "back"
+    },
+    "8-36|0.5": {
+     "types": [
+      "sems"
+     ],
+     "drawer": "43",
+     "half": "back"
+    },
+    "8-32|0.75": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "44",
+     "half": "back"
+    },
+    "8-32|nut": {
+     "types": [
+      "nut"
+     ],
+     "drawer": "47",
+     "half": "front"
+    },
+    "8-32|1.5": {
+     "types": [
+      "flat",
+      "pan"
+     ]
+    },
+    "8-32|0.625": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "43",
+     "half": "front"
+    },
+    "8-32|2": {
+     "types": [
+      "pan"
+     ]
+    },
+    "8-32|locknut": {
+     "types": [
+      "nylock"
+     ]
+    },
+    "#8|lockwasher": {
+     "types": [],
+     "drawer": "48",
+     "half": "back"
     }
    },
    "locknuts": [
@@ -873,5 +976,5 @@
    "cells": {}
   }
  ],
- "rev": 139
+ "rev": 176
 }
