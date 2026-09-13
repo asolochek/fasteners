@@ -53,14 +53,24 @@ function labelForGroup(page, keys) {
   const types = [...new Set(cells.flatMap(c => c.types || []))];
   const bases = new Set(cells.map(c => c.suffix.endsWith('washer') ? c.base : (page.rows.find(r => r.id === c.base)?.label || c.base)));
   const base = [...bases].join(' / ');
-  let pn, value = '';
+  let pn, value = '', extra = {};
   if (cells.every(c => c.suffix.endsWith('washer'))) pn = `${base} Washer`;
   else if (cells.every(c => c.suffix.endsWith('nut'))) pn = `${base} Nut`;
-  else { pn = base; value = cells.map(c => M.HW.find(h => h[1] === c.suffix)?.[3] || M.lengthText(page, +c.suffix)).join(', '); }
-  // the icons take the width left after the big text and, when there is one, the detail line
-  const free = S.len - S.pad - 1.5 - Math.max(S.pnX + L.textWidth(pn, S.pn), value ? S.detX + L.textWidth(value, S.spec) : 0);
-  const lay = I.layout(types, free, S.glyphH);
-  return { kind: 'drawer', pn, value, specs: '', pinout: null, glyphSvg: I.icons(types, lay.rows), glyphMaxW: lay.maxW,
+  else {
+    // size in the big slot, then the lengths (and any nut) right after it at a mid size, centred on the strip
+    pn = base; value = cells.map(c => M.HW.find(h => h[1] === c.suffix)?.[3] || M.lengthText(page, +c.suffix)).join('  ');
+    extra = { spec: 3.0, detX: S.pnX + L.textWidth(pn, S.pn) + 2.5, detCenter: true };
+  }
+  // the icons take the width left after the big text and, when there is one, the detail line; a long length list gives up
+  // font size (3.0 → 1.9 mm) until the icons keep at least ~3 mm, so neither the text nor the icons get squeezed out
+  const freeFor = sp => S.len - S.pad - 1.5 - Math.max(S.pnX + L.textWidth(pn, S.pn), value ? (extra.detX ?? S.detX) + L.textWidth(value, sp ?? S.spec) : 0);
+  let lay, free;
+  for (const sp of (extra.spec ? [3.0, 2.6, 2.3, 2.0] : [null])) {
+    if (extra.spec) extra.spec = sp;
+    free = freeFor(extra.spec); lay = I.layout(types, free, S.glyphH);
+    if (lay.size >= Math.min(3.0, S.glyphH / 2)) break;
+  }
+  return { kind: 'drawer', pn, value, specs: '', pinout: null, glyphSvg: I.icons(types, lay.rows), glyphMaxW: lay.maxW, ...extra,
            generic: true, _n: types.length, _sig: `${pn}|${value}|${types.join(',')}` };
 }
 // drawer spec: "12-16, 20, 30R, 31F" -> predicate on (drawer, half). A bare number matches both halves of a divided drawer.
