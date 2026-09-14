@@ -972,7 +972,9 @@
      "half": "back"
     },
     "1/4-20|nut": {
-     "types": [],
+     "types": [
+      "nut"
+     ],
      "drawer": "65",
      "half": "front"
     },
@@ -1246,5 +1248,5 @@
    "cells": {}
   }
  ],
- "rev": 271
+ "rev": 272
 }

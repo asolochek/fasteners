@@ -66,7 +66,7 @@ const WASHERS = {
 };
 const ALL = { ...HEADS, ...NUTS, ...WASHERS };
 const LABELS = { flat: 'Flat', oval: 'Oval', pan: 'Pan', socket: 'Socket cap', button: 'Button', hex: 'Hex', flange: 'Flange', thumb: 'Thumb', setscrew: 'Set screw', shoulder: 'Shoulder', sems: 'Captive lock washer', truss: 'Truss', wood: 'Flat, pointed', sheetmetal: 'Pan, pointed', buttonsm: 'Button, pointed', trusssm: 'Truss, pointed', trim: 'Trim head', flangesm: 'Flange head', hexsm: 'Hex washer, pointed',
-  nut: 'Nut', thin: 'Thin nut', lock: 'Lock nut (prevailing torque)', nylock: 'Nylon insert', toothednut: 'Toothed flange', pressfit: 'Press-fit nut', square: 'Square nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', cup: 'Cup', sleeved: 'Sleeved', split: 'Split', spring: 'Spring', inttooth: 'Internal tooth', toothed: 'External tooth' };
+  nut: 'Nut', thin: 'Jam nut (thin)', lock: 'Lock nut (prevailing torque)', nylock: 'Nylon insert', toothednut: 'Toothed flange', pressfit: 'Press-fit nut', square: 'Square nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', cup: 'Cup', sleeved: 'Sleeved', split: 'Split', spring: 'Spring', inttooth: 'Internal tooth', toothed: 'External tooth' };
 // one icon as a standalone SVG
 const icon = name => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${ALL[name] || ''}</svg>`;
 // several icons for the label glyph slot, in one or two rows (rows = 2 puts ceil(n/2) per row, the second row left-aligned)
