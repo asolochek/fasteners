@@ -814,6 +814,12 @@
      "detail": {
       "fender": {
        "drawer": ""
+      },
+      "washer": {
+       "materials": [
+        "copper",
+        "steel-zinc"
+       ]
       }
      }
     },
@@ -876,7 +882,15 @@
       "nut"
      ],
      "drawer": "55",
-     "half": "front"
+     "half": "front",
+     "detail": {
+      "nut": {
+       "materials": [
+        "stainless",
+        "brass"
+       ]
+      }
+     }
     },
     "12-24|0.5": {
      "types": [
@@ -973,10 +987,20 @@
     },
     "1/4-20|nut": {
      "types": [
-      "nut"
+      "nut",
+      "thin"
      ],
      "drawer": "65",
-     "half": "front"
+     "half": "front",
+     "detail": {
+      "thin": {},
+      "nut": {
+       "materials": [
+        "steel-zinc",
+        "stainless"
+       ]
+      }
+     }
     },
     "1/4|lockwasher": {
      "types": [
@@ -1248,5 +1272,5 @@
    "cells": {}
   }
  ],
- "rev": 272
+ "rev": 281
 }

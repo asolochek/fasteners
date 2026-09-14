@@ -24,6 +24,8 @@ const HEADS = {
   flange: `<path d="M30 36 V30 Q30 18 42 18 H58 Q70 18 70 30 V36 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><path d="M16 36 H84 V44 H16 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
   // thumb screw: tall knurled head
   thumb:  `<path d="M30 14 H70 V44 H30 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/>${[36, 43, 50, 57, 64].map(x => `<line x1="${x}" y1="18" x2="${x}" y2="40" stroke="${K}" stroke-width="2.5"/>`).join('')}${shank(50, 44, 92)}${threads(50, 46, 92)}`,
+  // carriage bolt: domed head over a square neck, no drive
+  carriage: `<path d="M20 30 Q50 6 80 30 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><rect x="40" y="30" width="20" height="14" fill="none" stroke="${K}" stroke-width="${SW}"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
   // truss: wide, low dome
   truss:  `<path d="M14 44 Q14 24 50 22 Q86 24 86 44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
   buttonsm: `<path d="M22 44 Q22 16 50 16 Q78 16 78 44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
@@ -65,7 +67,7 @@ const WASHERS = {
   toothed: `<circle cx="50" cy="50" r="36" fill="none" stroke="${K}" stroke-width="${SW}"/><circle cx="50" cy="50" r="16" fill="none" stroke="${K}" stroke-width="${SW}"/>${Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6, c = Math.cos(a), s = Math.sin(a); return `<line x1="${(50 + 36 * c).toFixed(1)}" y1="${(50 + 36 * s).toFixed(1)}" x2="${(50 + 46 * c).toFixed(1)}" y2="${(50 + 46 * s).toFixed(1)}" stroke="${K}" stroke-width="4"/>`; }).join('')}`,
 };
 const ALL = { ...HEADS, ...NUTS, ...WASHERS };
-const LABELS = { flat: 'Flat', oval: 'Oval', pan: 'Pan', socket: 'Socket cap', button: 'Button', hex: 'Hex', flange: 'Flange', thumb: 'Thumb', setscrew: 'Set screw', shoulder: 'Shoulder', sems: 'Captive lock washer', truss: 'Truss', wood: 'Flat, pointed', sheetmetal: 'Pan, pointed', buttonsm: 'Button, pointed', trusssm: 'Truss, pointed', trim: 'Trim head', flangesm: 'Flange head', hexsm: 'Hex washer, pointed',
+const LABELS = { flat: 'Flat', oval: 'Oval', pan: 'Pan', socket: 'Socket cap', button: 'Button', hex: 'Hex', flange: 'Flange', thumb: 'Thumb', carriage: 'Carriage bolt', setscrew: 'Set screw', shoulder: 'Shoulder', sems: 'Captive lock washer', truss: 'Truss', wood: 'Flat, pointed', sheetmetal: 'Pan, pointed', buttonsm: 'Button, pointed', trusssm: 'Truss, pointed', trim: 'Trim head', flangesm: 'Flange head', hexsm: 'Hex washer, pointed',
   nut: 'Nut', thin: 'Jam nut (thin)', lock: 'Lock nut (prevailing torque)', nylock: 'Nylon insert', toothednut: 'Toothed flange', pressfit: 'Press-fit nut', square: 'Square nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', cup: 'Cup', sleeved: 'Sleeved', split: 'Split', spring: 'Spring', inttooth: 'Internal tooth', toothed: 'External tooth' };
 // one icon as a standalone SVG
 const icon = name => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${ALL[name] || ''}</svg>`;
