@@ -51,6 +51,7 @@
    ],
    "washers": [
     "washer",
+    "undersized",
     "fender",
     "thinw",
     "cup",
@@ -991,8 +992,8 @@
       "nut",
       "thin"
      ],
-     "drawer": "65",
-     "half": "front",
+     "drawer": "66",
+     "half": "",
      "detail": {
       "thin": {},
       "nut": {
@@ -1008,7 +1009,7 @@
       "inttooth",
       "split"
      ],
-     "drawer": "66",
+     "drawer": "67",
      "half": "back"
     },
     "1/4|washer": {
@@ -1021,7 +1022,10 @@
      "detail": {
       "fender": {
        "drawer": "67",
-       "half": "back"
+       "half": "front",
+       "materials": [
+        "steel-zinc"
+       ]
       }
      }
     },
@@ -1087,6 +1091,7 @@
    ],
    "washers": [
     "washer",
+    "undersized",
     "fender",
     "thinw",
     "cup",
@@ -1281,5 +1286,5 @@
    "cells": {}
   }
  ],
- "rev": 283
+ "rev": 288
 }
