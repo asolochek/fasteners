@@ -752,7 +752,12 @@
       "washer"
      ],
      "drawer": "56",
-     "half": "front"
+     "half": "front",
+     "detail": {
+      "fender": {
+       "drawer": ""
+      }
+     }
     },
     "#10|lockwasher": {
      "types": [],
@@ -924,7 +929,13 @@
       "fender"
      ],
      "drawer": "66",
-     "half": "front"
+     "half": "front",
+     "detail": {
+      "fender": {
+       "drawer": "66",
+       "half": "back"
+      }
+     }
     }
    },
    "locknuts": [
@@ -1177,5 +1188,5 @@
    "cells": {}
   }
  ],
- "rev": 246
+ "rev": 253
 }

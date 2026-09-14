@@ -110,13 +110,16 @@ app.post('/api/labels', async (req, res) => {
     const page = d.pages.find(p => p.id === req.body.page);
     if (!page) return res.status(404).json({ error: 'no such page' });
     let keys = req.body.keys === 'all' || req.body.keys === 'new' ? M.populated(page) : (req.body.keys || []);
+    let only = null;   // { slots: Set of "drawer|half" } when the caller chose which of a split cell's drawers to print
     if (Array.isArray(req.body.keys)) {
       // a chosen cell that shares a drawer half with other cells prints the merged label(s) for those halves
-      const slots = new Set(M.portions(page, keys).filter(pt => pt.drawer).map(pt => `${pt.drawer}|${pt.half || ''}`));
+      let slots = new Set(M.portions(page, keys).filter(pt => pt.drawer).map(pt => `${pt.drawer}|${pt.half || ''}`));
+      if (Array.isArray(req.body.slots)) { only = new Set(req.body.slots); slots = new Set([...slots].filter(x => only.has(x))); }
       const more = M.portions(page).filter(pt => pt.drawer && slots.has(`${pt.drawer}|${pt.half || ''}`)).map(pt => pt.key);
       keys = [...new Set([...keys, ...more])];
     }
     groups = M.drawerOrder(page, groupByDrawer(page, keys)); groups.forEach(g => pageOf.set(g, page));
+    if (only) groups = groups.filter(g => !g[0].drawer || only.has(`${g[0].drawer}|${g[0].half || ''}`));
     if (req.body.keys === 'new') { const pr = loadPrinted(); groups = groups.filter(g => pr[`${page.id}|${g[0].key}`] !== labelForGroup(page, g)._sig); }
     name = `${page.id}-${Array.isArray(req.body.keys) ? (req.body.keys.length === 1 ? req.body.keys[0] : 'selection') : req.body.keys}`;
   }

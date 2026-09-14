@@ -185,7 +185,7 @@ function cellTd(key, types, extraClass = '', universe = null) {
   td.appendChild(ic);
   const meta = document.createElement('div'); meta.className = 'meta';
   const dr = document.createElement('span'); dr.className = 'drawer' + (c.drawer ? ' set' : ''); dr.textContent = c.drawer ? `drawer ${c.drawer}${c.half ? ' ' + halfText(c.half) : ''}` : 'drawer?'; dr.onclick = () => setDrawer(key);
-  const pr = document.createElement('span'); pr.className = 'print'; pr.textContent = '⎙'; pr.title = 'PDF for this label'; pr.onclick = () => printKeys([key]);
+  const pr = document.createElement('span'); pr.className = 'print'; pr.textContent = '⎙'; pr.title = 'PDF for this label'; pr.onclick = e => printCell(key, e.clientX, e.clientY);
   pr.onmouseenter = () => showPreview(key); pr.onmouseleave = hidePreview;
   meta.appendChild(dr); meta.appendChild(pr); td.appendChild(meta);
   return td;
@@ -294,7 +294,7 @@ function renderMobile(p, lens) {
     card.appendChild(ic);
     const meta = document.createElement('div'); meta.className = 'meta';
     const dr = document.createElement('span'); dr.className = 'drawer' + (c.drawer ? ' set' : ''); dr.textContent = c.drawer ? `drawer ${c.drawer}${c.half ? ' ' + halfText(c.half) : ''}` : 'drawer?'; dr.onclick = () => setDrawer(key);
-    const pr = document.createElement('span'); pr.className = 'print'; pr.textContent = '⎙'; pr.onclick = () => printKeys([key]);
+    const pr = document.createElement('span'); pr.className = 'print'; pr.textContent = '⎙'; pr.onclick = e => printCell(key, e.clientX, e.clientY);
     meta.appendChild(dr); meta.appendChild(pr); card.appendChild(meta);
     g.appendChild(card);
   }
@@ -333,6 +333,24 @@ async function sendToPrinter(blob, n) {
     if (!r.ok) { alert('Print helper: ' + (j.error || r.status)); status('print failed'); return true; }
     status(`printed ${j.pages} label${j.pages == 1 ? '' : 's'} on ${h.printer}`); return true;
   } catch (e) { alert(`Could not reach the print helper at ${h.url}. Downloading the PDF instead.`); return false; }
+}
+// the drawer halves a cell's ticked types live in (per-head overrides included): [{ slot, label, types }]
+function cellSlots(key) {
+  const c = page().cells[key] || {}, by = {};
+  for (const t of c.types || []) {
+    const o = (c.detail || {})[t] || {}; const drawer = o.drawer || c.drawer || '', half = o.drawer ? (o.half || '') : (c.half || '');
+    const slot = drawer ? `${drawer}|${half}` : ''; (by[slot] = by[slot] || { slot, label: drawer ? `drawer ${drawer}${half ? ' ' + halfText(half) : ''}` : 'no drawer', types: [] }).types.push(t);
+  }
+  return Object.values(by);
+}
+function printCell(key, x, y) {
+  const slots = cellSlots(key);
+  if (slots.length < 2) return printKeys([key]);
+  $('#pop').innerHTML = `<h3>${cellTextClient(page(), key)} is split over ${slots.length} drawers — print which?</h3>` +
+    slots.map((s, i) => `<label><input type="checkbox" data-i="${i}" checked>${s.label} <span class="note">(${s.types.map(t => icons.labels[t] || t).join(', ')})</span></label>`).join('') +
+    `<div class="row"><button type="button" id="popGo">Print</button><button type="button" id="popClose">Cancel</button></div>`;
+  $('#popGo').onclick = () => { const chosen = [...$('#pop').querySelectorAll('input:checked')].map(i => slots[+i.dataset.i].slot); closePop(); if (chosen.length) printKeys(null, { page: pageId, keys: [key], slots: chosen }); };
+  $('#popClose').onclick = closePop; placePop(x, y);
 }
 async function printKeys(keys, body) {
   status('rendering…');
