@@ -8,7 +8,6 @@ own columns. Labels come out as PDFs sized for 9 mm tape on an Epson LabelWorks 
 Futura, with the head/nut/washer icons drawn on the label, and can be sent straight to the printer through a small helper
 that runs on the Windows PC the printer is attached to.
 
-![grid](docs/grid.png)
 
 ## Running it
 
