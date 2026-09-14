@@ -39,7 +39,6 @@
     "socket",
     "button",
     "hex",
-    "nylon",
     "truss"
    ],
    "nuts": [
@@ -224,11 +223,20 @@
     },
     "6-32|0.3125": {
      "types": [
-      "nylon",
-      "flat"
+      "flat",
+      "pan"
      ],
      "drawer": "34",
-     "half": "back"
+     "half": "back",
+     "detail": {
+      "pan": {
+       "drives": {
+        "phillips": [
+         "nylon"
+        ]
+       }
+      }
+     }
     },
     "6-32|0.375": {
      "types": [
@@ -445,11 +453,20 @@
     },
     "2-56|0.75": {
      "types": [
-      "nylon",
       "pan"
      ],
      "drawer": "17",
-     "half": "back"
+     "half": "back",
+     "detail": {
+      "pan": {
+       "drives": {
+        "phillips": [
+         "stainless",
+         "nylon"
+        ]
+       }
+      }
+     }
     },
     "2-56|0.625": {
      "types": [
@@ -865,7 +882,10 @@
       "socket"
      ],
      "drawer": "61",
-     "half": ""
+     "half": "",
+     "detail": {
+      "pan": {}
+     }
     },
     "1/4-20|0.875": {
      "types": [
@@ -980,7 +1000,6 @@
     "socket",
     "button",
     "hex",
-    "nylon",
     "truss"
    ],
    "nuts": [
@@ -1188,5 +1207,5 @@
    "cells": {}
   }
  ],
- "rev": 253
+ "rev": 255
 }
