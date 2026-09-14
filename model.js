@@ -43,9 +43,25 @@ function populated(page) {
   }
   return out;
 }
+// a cell may keep some of its head types in a different drawer (cell.detail[type].drawer/half overrides the cell's own):
+// portions() splits every populated cell into { key, types, drawer, half } pieces, one per distinct drawer half
+function portions(page, keys) {
+  const out = [];
+  for (const k of keys || populated(page)) {
+    const c = page.cells[k] || {}, by = {};
+    for (const t of c.types || []) {
+      const o = (c.detail || {})[t] || {};
+      const drawer = o.drawer !== undefined && o.drawer !== '' ? o.drawer : (c.drawer || ''), half = o.drawer ? (o.half || '') : (c.half || '');
+      const slot = drawer ? `${drawer}|${half}` : `cell:${k}`;
+      (by[slot] = by[slot] || { key: k, types: [], drawer, half }).types.push(t);
+    }
+    out.push(...Object.values(by));
+  }
+  return out;
+}
 // print order: labels with a drawer first, by drawer number then rear before front; the rest in reading order
 function drawerOrder(page, groups) {
-  const key = g => { const c = page.cells[g[0]] || {}; return c.drawer ? [0, +c.drawer, c.half === 'front' ? 1 : 0] : [1, 0, 0]; };
+  const key = g => { const c = g[0]; return c.drawer ? [0, +c.drawer, c.half === 'front' ? 1 : 0] : [1, 0, 0]; };
   return groups.map((g, i) => [g, key(g), i]).sort((a, b) => (a[1][0] - b[1][0]) || (a[1][1] - b[1][1]) || (a[1][2] - b[1][2]) || (a[2] - b[2])).map(x => x[0]);
 }
-module.exports = { lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, drawerOrder, HW };
+module.exports = { lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, portions, drawerOrder, HW };

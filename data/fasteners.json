@@ -19,7 +19,8 @@
      0.1875,
      0.046875,
      0.078125,
-     0.5625
+     0.5625,
+     1.75
     ],
     "skip": [
      null,
@@ -38,9 +39,8 @@
     "socket",
     "button",
     "hex",
-    "sems",
-    "shoulder",
-    "nylon"
+    "nylon",
+    "truss"
    ],
    "nuts": [
     "nut",
@@ -339,7 +339,8 @@
     "4-40|0.3125": {
      "types": [
       "pan",
-      "flat"
+      "flat",
+      "socket"
      ],
      "drawer": "27",
      "half": "back"
@@ -700,7 +701,9 @@
      "types": [
       "flat",
       "pan"
-     ]
+     ],
+     "drawer": "46",
+     "half": "back"
     },
     "8-32|0.625": {
      "types": [
@@ -712,17 +715,216 @@
     "8-32|2": {
      "types": [
       "pan"
-     ]
+     ],
+     "drawer": "46",
+     "half": "front"
     },
     "8-32|locknut": {
      "types": [
       "nylock"
-     ]
+     ],
+     "drawer": "47",
+     "half": "back"
     },
     "#8|lockwasher": {
      "types": [],
      "drawer": "48",
      "half": "back"
+    },
+    "10-24|0.375": {
+     "types": [
+      "button"
+     ],
+     "drawer": "49",
+     "half": "back"
+    },
+    "10-32|0.375": {
+     "types": [
+      "hex",
+      "button"
+     ],
+     "drawer": "49",
+     "half": "back"
+    },
+    "#10|washer": {
+     "types": [
+      "fender",
+      "washer"
+     ],
+     "drawer": "56",
+     "half": "front"
+    },
+    "#10|lockwasher": {
+     "types": [],
+     "drawer": "56",
+     "half": "back"
+    },
+    "10-32|0.5": {
+     "types": [
+      "button"
+     ],
+     "drawer": "49",
+     "half": "front"
+    },
+    "10-24|0.5": {
+     "types": [
+      "button"
+     ],
+     "drawer": "49",
+     "half": "front"
+    },
+    "10-24|0.625": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "50",
+     "half": "back"
+    },
+    "10-24|0.75": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "50",
+     "half": "front"
+    },
+    "10-24|1": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "51",
+     "half": "back"
+    },
+    "10-24|1.5": {
+     "types": [
+      "socket"
+     ],
+     "drawer": "53",
+     "half": ""
+    },
+    "10-24|locknut": {
+     "types": [
+      "nylock"
+     ],
+     "drawer": "55",
+     "half": "back"
+    },
+    "10-24|nut": {
+     "types": [
+      "nut"
+     ],
+     "drawer": "55",
+     "half": "front"
+    },
+    "12-24|0.5": {
+     "types": [
+      "pan"
+     ]
+    },
+    "12-24|0.625": {
+     "types": [
+      "pan"
+     ]
+    },
+    "1/4-20|0.375": {
+     "types": [
+      "socket"
+     ],
+     "drawer": "58",
+     "half": "back"
+    },
+    "1/4-20|0.5": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "58",
+     "half": "front"
+    },
+    "1/4-20|0.625": {
+     "types": [
+      "pan",
+      "button"
+     ],
+     "drawer": "59",
+     "half": "back"
+    },
+    "1/4-20|0.75": {
+     "types": [
+      "hex"
+     ],
+     "drawer": "59",
+     "half": "front"
+    },
+    "1/4-20|1": {
+     "types": [
+      "pan",
+      "socket"
+     ],
+     "drawer": "61",
+     "half": ""
+    },
+    "1/4-20|0.875": {
+     "types": [
+      "pan",
+      "socket"
+     ],
+     "drawer": "60",
+     "half": ""
+    },
+    "1/4-20|1.25": {
+     "types": [
+      "button",
+      "flat"
+     ],
+     "drawer": "62",
+     "half": "back"
+    },
+    "1/4-20|1.75": {
+     "types": [
+      "hex",
+      "pan"
+     ],
+     "drawer": "63",
+     "half": "back"
+    },
+    "1/4-20|2": {
+     "types": [
+      "pan"
+     ],
+     "drawer": "63",
+     "half": "front"
+    },
+    "1/4-20|1.5": {
+     "types": [
+      "socket"
+     ],
+     "drawer": "62",
+     "half": "front"
+    },
+    "1/4-20|locknut": {
+     "types": [],
+     "drawer": "65",
+     "half": "back"
+    },
+    "1/4-20|nut": {
+     "types": [],
+     "drawer": "65",
+     "half": "front"
+    },
+    "1/4|lockwasher": {
+     "types": [
+      "inttooth",
+      "split"
+     ],
+     "drawer": "66",
+     "half": "back"
+    },
+    "1/4|washer": {
+     "types": [
+      "washer",
+      "fender"
+     ],
+     "drawer": "66",
+     "half": "front"
     }
    },
    "locknuts": [
@@ -767,9 +969,8 @@
     "socket",
     "button",
     "hex",
-    "sems",
-    "shoulder",
-    "nylon"
+    "nylon",
+    "truss"
    ],
    "nuts": [
     "nut",
@@ -976,5 +1177,5 @@
    "cells": {}
   }
  ],
- "rev": 176
+ "rev": 246
 }

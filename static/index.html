@@ -32,6 +32,21 @@ td.cell { background:var(--none); border-radius:5px; padding:5px 6px 24px; min-w
 td.cell.have { background:var(--have); box-shadow:inset 0 0 0 1.5px var(--have2); }
 td.washer { background:var(--none); }
 .icons { display:flex; gap:4px; flex-wrap:wrap; }
+.icons.dense .ic { width:32px; height:32px; }
+.ic { position:relative; }
+.ic .badge { position:absolute; right:-3px; bottom:-3px; background:var(--accent); color:#fff; font-size:9px; line-height:1; padding:2px 3px; border-radius:6px; font-weight:600; pointer-events:none; }
+.ic.hasinfo::after { content:''; position:absolute; left:2px; top:2px; width:6px; height:6px; border-radius:3px; background:var(--ink2); }
+.more { width:28px; height:44px; display:flex; align-items:center; justify-content:center; color:var(--ink2); cursor:pointer; border-radius:3px; font-weight:600; }
+.more:hover { background:#fff; color:var(--ink); }
+#pop { position:fixed; background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px 12px; box-shadow:0 6px 24px rgba(0,0,0,.16); display:none; z-index:20; max-height:80vh; overflow:auto; width:300px; font-size:14px; }
+#pop h3 { margin:0 0 6px; font-size:14px; }
+#pop h4 { margin:8px 0 3px; font-size:12px; color:var(--ink2); text-transform:uppercase; letter-spacing:.04em; }
+#pop label { display:flex; align-items:center; gap:6px; padding:2px 0; cursor:pointer; }
+#pop label svg { width:24px; height:24px; }
+#pop .sub { margin-left:22px; }
+#pop input[type=text] { width:100%; box-sizing:border-box; font:inherit; padding:4px 6px; border:1px solid var(--line); border-radius:4px; }
+#pop .row { display:flex; gap:8px; margin-top:10px; }
+#pop .note { font-size:12px; color:var(--ink2); }
 .ic { width:44px; height:44px; opacity:.28; cursor:pointer; border-radius:3px; }
 .ic.on { opacity:1; }
 .ic:hover { outline:1.5px solid var(--accent); }
@@ -104,6 +119,7 @@ td.cell:not(.have) .print, .card:not(.have) .print { visibility:hidden; }
 <div id="preview"><img alt=""></div>
 <div id="types"></div>
 <div id="helper"></div>
+<div id="pop"></div>
 <script>
 let data, icons, printed = {}, pageId, saveTimer;
 const $ = s => document.querySelector(s);
@@ -148,14 +164,24 @@ function setDrawer(key) {
   save(); render();
 }
 function iconEl(type, on, key) {
-  const d = document.createElement('div'); d.className = 'ic' + (on ? ' on' : ''); d.title = icons.labels[type] || type;
-  d.innerHTML = icons.svg[type]; d.onclick = () => toggle(key, type); return d;
+  const c = page().cells[key] || {}, info = (c.detail || {})[type] || {};
+  const d = document.createElement('div'); d.className = 'ic' + (on ? ' on' : '') + (on && (info.drives || info.materials) ? ' hasinfo' : ''); d.title = (icons.labels[type] || type) + (on ? ' — right-click / long-press for drive, material, own drawer' : '');
+  d.innerHTML = icons.svg[type]; d.onclick = () => toggle(key, type);
+  if (on && info.drawer) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = info.drawer + (info.half === 'back' ? 'R' : info.half === 'front' ? 'F' : ''); d.appendChild(b); }
+  d.oncontextmenu = e => { e.preventDefault(); if (on) openDetail(key, type, e.clientX, e.clientY); };
+  return d;
 }
-function cellTd(key, types, extraClass = '') {
+function shownTypes(c, types, universe) {   // the column's own types plus any others ticked in this cell, in vocabulary order
+  const extra = (c.types || []).filter(t => !types.includes(t) && universe.includes(t));
+  return [...types, ...universe.filter(t => extra.includes(t))];
+}
+function cellTd(key, types, extraClass = '', universe = null) {
   const c = page().cells[key] || { types: [] };
   const td = document.createElement('td'); td.className = 'cell ' + extraClass + (c.types.length ? ' have' : '');
-  const ic = document.createElement('div'); ic.className = 'icons';
-  for (const t of types) ic.appendChild(iconEl(t, c.types.includes(t), key));
+  const shown = universe ? shownTypes(c, types, universe) : types;
+  const ic = document.createElement('div'); ic.className = 'icons' + (shown.length + (universe ? 1 : 0) > 9 ? ' dense' : '');
+  for (const t of shown) ic.appendChild(iconEl(t, c.types.includes(t), key));
+  if (universe && universe.some(t => !shown.includes(t))) { const m = document.createElement('div'); m.className = 'more'; m.textContent = '…'; m.title = 'other head types'; m.onclick = e => openMore(key, universe, e.clientX, e.clientY); ic.appendChild(m); }
   td.appendChild(ic);
   const meta = document.createElement('div'); meta.className = 'meta';
   const dr = document.createElement('span'); dr.className = 'drawer' + (c.drawer ? ' set' : ''); dr.textContent = c.drawer ? `drawer ${c.drawer}${c.half ? ' ' + halfText(c.half) : ''}` : 'drawer?'; dr.onclick = () => setDrawer(key);
@@ -192,7 +218,7 @@ function render() {
     else { ctl.className = 'print rowprint rowctl'; ctl.textContent = '⎙'; ctl.title = 'PDF for everything in this row (and its washers)'; ctl.dataset.act = 'print'; }
     th.appendChild(ctl);
     tr.appendChild(th);
-    for (const l of lens) tr.appendChild(cellTd(`${r.id}|${l}`, p.heads));
+    for (const l of lens) tr.appendChild(cellTd(`${r.id}|${l}`, p.heads, '', HEAD_UNIVERSE[p.class] || HEAD_UNIVERSE.machine));
     for (const [list, suffix, per] of HW) {
       if (!(p[list] || []).length) continue;
       if (per === 'row') tr.appendChild(cellTd(`${r.id}|${suffix}`, p[list]));
@@ -255,14 +281,16 @@ function renderMobile(p, lens) {
   bar.appendChild(sel); bar.appendChild(pb); g.appendChild(bar);
   if (!r) return;
   const cards = [];
-  for (const l of lens) cards.push([`${r.id}|${l}`, p.heads, lengthText(p, l), p.units === 'mm' ? '' : `(${(+l).toFixed(4).replace(/0+$/, '').replace(/^0/, '')})`]);
+  for (const l of lens) cards.push([`${r.id}|${l}`, p.heads, lengthText(p, l), p.units === 'mm' ? '' : `(${(+l).toFixed(4).replace(/0+$/, '').replace(/^0/, '')})`, HEAD_UNIVERSE[p.class] || HEAD_UNIVERSE.machine]);
   for (const [list, suffix, per, title] of HW) { if (!(p[list] || []).length) continue; cards.push([`${per === 'row' ? r.id : r.dia}|${suffix}`, p[list], per === 'row' ? title : `${r.dia} ${title}`, per === 'dia' ? 'shared by this diameter' : '']); }
-  for (const [key, types, title, sub] of cards) {
+  for (const [key, types, title, sub, universe] of cards) {
     const c = p.cells[key] || { types: [] };
     const card = document.createElement('div'); card.className = 'card' + (c.types.length ? ' have' : '');
     const t = document.createElement('div'); t.className = 'ttl'; t.innerHTML = `<span>${title}</span><span class="dec">${sub}</span>`; card.appendChild(t);
     const ic = document.createElement('div'); ic.className = 'icons';
-    for (const ty of types) ic.appendChild(iconEl(ty, c.types.includes(ty), key));
+    const shown = universe ? shownTypes(c, types, universe) : types;
+    for (const ty of shown) ic.appendChild(iconEl(ty, c.types.includes(ty), key));
+    if (universe && universe.some(x => !shown.includes(x))) { const m = document.createElement('div'); m.className = 'more'; m.textContent = '…'; m.onclick = e => openMore(key, universe, e.clientX, e.clientY); ic.appendChild(m); }
     card.appendChild(ic);
     const meta = document.createElement('div'); meta.className = 'meta';
     const dr = document.createElement('span'); dr.className = 'drawer' + (c.drawer ? ' set' : ''); dr.textContent = c.drawer ? `drawer ${c.drawer}${c.half ? ' ' + halfText(c.half) : ''}` : 'drawer?'; dr.onclick = () => setDrawer(key);
@@ -318,10 +346,56 @@ async function printKeys(keys, body) {
   setTimeout(() => URL.revokeObjectURL(a.href), 60000);
   status(`${n} label${n == 1 ? '' : 's'} → ${name}`);
 }
+// head types a class can have at all; a cell shows the page's primary list plus whatever else is ticked, and "…" offers the rest
+const HEAD_UNIVERSE = { machine: ['flat', 'oval', 'pan', 'button', 'truss', 'socket', 'hex', 'flange', 'thumb', 'sems', 'shoulder', 'nylon', 'setscrew'],
+                        tapping: ['wood', 'sheetmetal', 'buttonsm', 'trusssm', 'hexsm', 'flangesm', 'trim'], wood: ['wood', 'trim', 'flangesm', 'sheetmetal', 'buttonsm', 'trusssm'] };
+function placePop(x, y) { const pop = $('#pop'); pop.style.display = 'block'; pop.style.left = Math.min(x, window.innerWidth - 320) + 'px'; pop.style.top = Math.min(y, window.innerHeight - Math.min(pop.offsetHeight, window.innerHeight * .8) - 10) + 'px'; }
+function closePop() { $('#pop').style.display = 'none'; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
+function openMore(key, universe, x, y) {
+  const c = cell(key), p = page();
+  $('#pop').innerHTML = `<h3>Head types · ${cellTextClient(p, key)}</h3>` + universe.map(t => `<label><input type="checkbox" data-t="${t}" ${c.types.includes(t) ? 'checked' : ''}>${icons.svg[t]}${icons.labels[t] || t}</label>`).join('') + `<div class="row"><button type="button" id="popClose">Close</button></div>`;
+  $('#pop').querySelectorAll('input').forEach(i => i.onchange = () => { toggle(key, i.dataset.t); });
+  $('#popClose').onclick = closePop; placePop(x, y);
+}
+function cellTextClient(p, key) { const [a, b] = key.split('|'); const hw = HW.find(h => h[1] === b); if (hw && hw[2] === 'dia') return `${a} ${hw[3]}`; const r = p.rows.find(x => x.id === a); if (!r) return key; if (hw) return `${r.label} ${hw[3]}`; return `${r.label} × ${lengthText(p, +b)}`; }
+// per-head detail: own drawer, drive types, materials per drive (washers and nuts: materials only)
+function openDetail(key, type, x, y) {
+  const c = cell(key), p = page(); c.detail = c.detail || {}; const info = c.detail[type] = c.detail[type] || {};
+  const isHead = (HEAD_UNIVERSE[p.class] || HEAD_UNIVERSE.machine).includes(type), isWasher = key.split('|')[1].endsWith('washer');
+  const mats = isWasher ? MAT_WASHER : MAT_SCREW, fixed = isHead ? FIXED_DRIVE[type] : undefined;
+  const drives = isHead && fixed === undefined ? DRIVES : (fixed && fixed !== 'none' ? [[fixed, DRIVES.find(d => d[0] === fixed)[1] + ' (always)']] : []);
+  const matList = (drive) => `<div class="sub">` + mats.map(([m, l]) => `<label><input type="checkbox" data-drive="${drive}" data-m="${m}" ${((drive ? (info.drives || {})[drive] : info.materials) || []).includes(m) ? 'checked' : ''}>${l}</label>`).join('') + `</div>`;
+  let h = `<h3>${icons.svg[type]} ${icons.labels[type] || type} · ${cellTextClient(p, key)}</h3>
+    <h4>Own drawer</h4><input type="text" id="popDrawer" placeholder="blank = the cell's drawer; e.g. 41R" value="${info.drawer ? info.drawer + (info.half === 'back' ? 'R' : info.half === 'front' ? 'F' : '') : ''}">`;
+  if (drives.length) {
+    h += `<h4>Drive</h4>` + drives.map(([d, l]) => `<label><input type="checkbox" data-drive="${d}" ${(info.drives || {})[d] ? 'checked' : ''} ${fixed ? 'disabled checked' : ''}>${l}</label>` + ((info.drives || {})[d] || fixed ? `<div class="note sub">materials</div>` + matList(d) : '')).join('');
+  } else if (isHead && fixed === 'none') h += `<h4>Drive</h4><div class="note">none</div>` + `<h4>Materials</h4>` + matList('');
+  else h += `<h4>Materials</h4>` + matList('');
+  h += `<div class="row"><button type="button" id="popClose">Close</button></div>`;
+  $('#pop').innerHTML = h;
+  if (fixed && fixed !== 'none') { info.drives = info.drives || {}; info.drives[fixed] = info.drives[fixed] || []; }
+  $('#popDrawer').onchange = e => { const m = /^\s*([^\s]*?)\s*(r|rear|b|back|f|front)?\s*$/i.exec(e.target.value) || []; info.drawer = (m[1] || '').trim(); const hh = (m[2] || '').toLowerCase(); info.half = /^(r|rear|b|back)$/.test(hh) ? 'back' : /^(f|front)$/.test(hh) ? 'front' : ''; if (!info.drawer) delete info.half; save(); render(); };
+  $('#pop').querySelectorAll('input[type=checkbox]').forEach(i => i.onchange = () => {
+    if (i.dataset.m !== undefined) {   // a material
+      const list = i.dataset.drive ? (info.drives = info.drives || {}, info.drives[i.dataset.drive] = info.drives[i.dataset.drive] || []) : (info.materials = info.materials || []);
+      const j = list.indexOf(i.dataset.m); if (i.checked && j < 0) list.push(i.dataset.m); if (!i.checked && j >= 0) list.splice(j, 1);
+    } else {   // a drive
+      info.drives = info.drives || {}; if (i.checked) info.drives[i.dataset.drive] = info.drives[i.dataset.drive] || []; else delete info.drives[i.dataset.drive];
+    }
+    save(); openDetail(key, type, parseInt($('#pop').style.left), parseInt($('#pop').style.top)); render();
+  });
+  $('#popClose').onclick = closePop; placePop(x, y);
+}
 // which head / nut / washer types this page shows (types ticked in cells but hidden here still print)
+// drive and material vocabularies for the per-head detail (right-click / long-press on a ticked icon)
+const DRIVES = [['slotted', 'Slotted'], ['phillips', 'Phillips'], ['pozidriv', 'Pozidriv'], ['jis', 'JIS'], ['torx', 'Torx'], ['hex', 'Hex'], ['square', 'Square']];
+const FIXED_DRIVE = { socket: 'hex', shoulder: 'hex', setscrew: 'hex', hex: 'hex', hexsm: 'hex', thumb: 'none', nylon: null };   // heads whose drive is a given
+const MAT_SCREW = [['aluminum', 'Aluminum'], ['steel', 'Steel, plain'], ['steel-blackoxide', 'Steel, black oxide'], ['steel-zinc', 'Steel, zinc'], ['steel-cadmium', 'Steel, cadmium'], ['stainless', 'Stainless steel'], ['brass', 'Brass'], ['plastic', 'Plastic']];
+const MAT_WASHER = [...MAT_SCREW, ['fiber', 'Fiber'], ['copper', 'Copper'], ['bronze', 'Bronze'], ['ptfe', 'PTFE'], ['nylon', 'Nylon'], ['phenolic', 'Phenolic']];
 // hardware columns: [page list, cell key suffix, per row or per diameter, label]
 const HW = [['locknuts', 'locknut', 'row', 'Lock Nut'], ['nuts', 'nut', 'row', 'Nut'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer'], ['washers', 'washer', 'dia', 'Washer']];
-const GROUPS = [['heads', 'Heads', ['flat', 'pan', 'socket', 'button', 'truss', 'hex', 'sems', 'shoulder', 'nylon', 'setscrew', 'wood', 'sheetmetal', 'buttonsm', 'trusssm', 'trim', 'flangesm', 'hexsm']], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'fender', 'thinw', 'cup', 'sleeved', 'nylonw']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed']]];
+const GROUPS = [['heads', 'Heads', ['flat', 'oval', 'pan', 'button', 'truss', 'socket', 'hex', 'flange', 'thumb', 'sems', 'shoulder', 'nylon', 'setscrew', 'wood', 'sheetmetal', 'buttonsm', 'trusssm', 'trim', 'flangesm', 'hexsm']], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'fender', 'thinw', 'cup', 'sleeved', 'nylonw']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed']]];
 function renderTypes() {
   const p = page();
   $('#types').innerHTML = GROUPS.map(([k, title, all]) => `<h3>${title}</h3>` + all.map(t => `<label><input type="checkbox" data-group="${k}" data-type="${t}" ${p[k].includes(t) ? 'checked' : ''}>${icons.svg[t]}${icons.labels[t] || t}</label>`).join('')).join('');

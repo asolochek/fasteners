@@ -28,8 +28,8 @@ app.put('/api/data', (req, res) => {
 app.get('/api/icons', (req, res) => res.json({ svg: Object.fromEntries(Object.keys(I.ALL).map(k => [k, I.icon(k)])), labels: I.LABELS }));
 app.get('/api/printed', (req, res) => res.json(loadPrinted()));
 // a label for one cell: text in the part-number slot, the ticked types as icons in the glyph slot
-function labelFor(page, key) {
-  const cell = page.cells[key] || {}, types = cell.types || [], pn = M.cellText(page, key), S = L.STYLE.drawer;
+function labelFor(page, portion) {
+  const key = portion.key, types = portion.types || [], pn = M.cellText(page, key), S = L.STYLE.drawer;
   // the icons take whatever width the text leaves free (at most one glyph height each); the drawer number stays off the label
   const free = S.len - S.pad - S.pnX - L.textWidth(pn, S.pn) - 1.5;
   const lay = I.layout(types, free, S.glyphH);   // one row or two, whichever keeps the icons larger
@@ -40,16 +40,18 @@ function labelFor(page, key) {
 // or for a mix with screws the size in the big slot and the items on the detail line; the icons are the union of the cells'
 function groupByDrawer(page, keys) {
   const groups = new Map(), singles = [];
-  for (const k of keys) {
-    const c = page.cells[k] || {};
-    if (!c.drawer) { singles.push([k]); continue; }
-    const g = `${c.drawer}|${c.half || ''}`; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(k);
+  for (const pt of M.portions(page, keys)) {
+    if (!pt.drawer) { singles.push([pt]); continue; }
+    const g = `${pt.drawer}|${pt.half || ''}`; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(pt);
   }
   return [...singles, ...groups.values()];
 }
-function labelForGroup(page, keys) {
-  if (keys.length === 1) return labelFor(page, keys[0]);
-  const S = L.STYLE.drawer, cells = keys.map(k => ({ k, ...(page.cells[k] || {}), suffix: k.split('|')[1], base: k.split('|')[0] }));
+function labelForGroup(page, group) {
+  if (group.length === 1) return labelFor(page, group[0]);
+  const S = L.STYLE.drawer, cells = group.map(pt => ({ k: pt.key, types: pt.types, suffix: pt.key.split('|')[1], base: pt.key.split('|')[0] }));
+  // reading order inside the label: rows in page order, lengths ascending, hardware after the lengths
+  const rowIx = id => page.rows.findIndex(r => r.id === id);
+  cells.sort((a, b) => (rowIx(a.base) - rowIx(b.base)) || ((isNaN(+a.suffix) ? 1e9 : +a.suffix) - (isNaN(+b.suffix) ? 1e9 : +b.suffix)));
   const types = [...new Set(cells.flatMap(c => c.types || []))];
   // the size text: thread sizes of one diameter merge their pitches ("#8-32/36", "M6×1/0.75"); different diameters are listed
   const rowsIn = [...new Set(cells.filter(c => !c.suffix.endsWith('washer')).map(c => c.base))].map(id => page.rows.find(r => r.id === id)).filter(Boolean);
@@ -109,13 +111,13 @@ app.post('/api/labels', async (req, res) => {
     if (!page) return res.status(404).json({ error: 'no such page' });
     let keys = req.body.keys === 'all' || req.body.keys === 'new' ? M.populated(page) : (req.body.keys || []);
     if (Array.isArray(req.body.keys)) {
-      // a chosen cell that shares its drawer half with other cells prints the merged label for that half
-      const all = M.populated(page), slot = k => { const c = page.cells[k] || {}; return c.drawer ? `${c.drawer}|${c.half || ''}` : null; };
-      const slots = new Set(keys.map(slot).filter(Boolean));
-      keys = [...new Set([...keys, ...all.filter(k => slots.has(slot(k)))])];
+      // a chosen cell that shares a drawer half with other cells prints the merged label(s) for those halves
+      const slots = new Set(M.portions(page, keys).filter(pt => pt.drawer).map(pt => `${pt.drawer}|${pt.half || ''}`));
+      const more = M.portions(page).filter(pt => pt.drawer && slots.has(`${pt.drawer}|${pt.half || ''}`)).map(pt => pt.key);
+      keys = [...new Set([...keys, ...more])];
     }
     groups = M.drawerOrder(page, groupByDrawer(page, keys)); groups.forEach(g => pageOf.set(g, page));
-    if (req.body.keys === 'new') { const pr = loadPrinted(); groups = groups.filter(g => pr[`${page.id}|${g[0]}`] !== labelForGroup(page, g)._sig); }
+    if (req.body.keys === 'new') { const pr = loadPrinted(); groups = groups.filter(g => pr[`${page.id}|${g[0].key}`] !== labelForGroup(page, g)._sig); }
     name = `${page.id}-${Array.isArray(req.body.keys) ? (req.body.keys.length === 1 ? req.body.keys[0] : 'selection') : req.body.keys}`;
   }
   const labels = groups.map(g => labelForGroup(pageOf.get(g), g)).filter(l => l._n > 0);
@@ -133,7 +135,7 @@ app.post('/api/printed', (req, res) => {
   const d = load(), page = d.pages.find(p => p.id === req.body.page); if (!page) return res.status(404).json({ error: 'no such page' });
   const pr = loadPrinted();
   const keys = req.body.keys === 'all' ? M.populated(page) : (req.body.keys || []);
-  for (const g of groupByDrawer(page, keys)) { const sig = labelForGroup(page, g)._sig; for (const k of g) pr[`${page.id}|${k}`] = sig; }
+  for (const g of groupByDrawer(page, keys)) { const sig = labelForGroup(page, g)._sig; for (const pt of g) pr[`${page.id}|${pt.key}`] = sig; }
   fs.writeFileSync(PRINTED, JSON.stringify(pr, null, 1)); res.json({ ok: true, marked: keys.length });
 });
 // GET /api/cabinet -> what is in each drawer (all pages): { drawers: { "12": { back: [...], front: [...], whole: [...] } } }
@@ -142,15 +144,14 @@ app.get('/api/cabinet', (req, res) => {
   const d = load(), drawers = {};
   const pages = req.query.page ? d.pages.filter(p => p.id === req.query.page) : d.pages;
   for (const page of pages) {
-    const keys = M.populated(page).filter(k => page.cells[k]?.drawer);
-    for (const g of groupByDrawer(page, keys)) {
-      const c = page.cells[g[0]], half = c.half || 'whole', lab = labelForGroup(page, g);
+    for (const g of groupByDrawer(page, M.populated(page)).filter(g => g[0].drawer)) {
+      const c = g[0], half = c.half || 'whole', lab = labelForGroup(page, g);
       // gap check per row: the lengths assigned here must be consecutive in the page's length list
       const lens = M.lengths(page); let gap = false;
       const byRow = {};
-      for (const k of g) { const [a, b] = k.split('|'); if (!isNaN(+b)) (byRow[a] = byRow[a] || []).push(lens.indexOf(+b)); }
+      for (const pt of g) { const [a, b] = pt.key.split('|'); if (!isNaN(+b)) (byRow[a] = byRow[a] || []).push(lens.indexOf(+b)); }
       for (const idx of Object.values(byRow)) { idx.sort((x, y) => x - y); for (let i = 1; i < idx.length; i++) if (idx[i] !== idx[i - 1] + 1) gap = true; }
-      const entry = { text: lab.pn + (lab.value ? '  ' + lab.value : ''), page: page.title, keys: g, gap };
+      const entry = { text: lab.pn + (lab.value ? '  ' + lab.value : ''), page: page.title, keys: g.map(pt => pt.key), gap };
       const dr = drawers[c.drawer] = drawers[c.drawer] || { back: [], front: [], whole: [] };
       dr[half].push(entry);
     }
@@ -160,7 +161,7 @@ app.get('/api/cabinet', (req, res) => {
 // GET /api/preview.png?page=..&key=..  -> a PNG of one label for the on-screen preview
 app.get('/api/preview.png', async (req, res) => {
   const d = load(), page = d.pages.find(p => p.id === req.query.page); if (!page) return res.status(404).end();
-  const l = labelForGroup(page, groupByDrawer(page, M.populated(page)).find(g => g.includes(req.query.key)) || [req.query.key]);
+  const l = labelForGroup(page, groupByDrawer(page, M.populated(page)).find(g => g.some(pt => pt.key === req.query.key)) || groupByDrawer(page, [req.query.key])[0]);
   res.setHeader('Content-Type', 'image/png'); res.send(await L.renderPng(L.labelSvg('drawer', l)));
 });
 const port = +process.env.PORT || 8093;
