@@ -365,7 +365,7 @@ async function printKeys(keys, body) {
   status(`${n} label${n == 1 ? '' : 's'} → ${name}`);
 }
 // head types a class can have at all; a cell shows the page's primary list plus whatever else is ticked, and "…" offers the rest
-const HEAD_UNIVERSE = { machine: ['flat', 'oval', 'pan', 'button', 'truss', 'socket', 'hex', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew'],
+const HEAD_UNIVERSE = { machine: ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew'],
                         tapping: ['wood', 'sheetmetal', 'buttonsm', 'trusssm', 'hexsm', 'flangesm', 'trim'], wood: ['wood', 'trim', 'flangesm', 'sheetmetal', 'buttonsm', 'trusssm'] };
 function placePop(x, y) { const pop = $('#pop'); pop.style.display = 'block'; pop.style.left = Math.min(x, window.innerWidth - 320) + 'px'; pop.style.top = Math.min(y, window.innerHeight - Math.min(pop.offsetHeight, window.innerHeight * .8) - 10) + 'px'; }
 function closePop() { $('#pop').style.display = 'none'; }
@@ -413,7 +413,7 @@ const MAT_SCREW = [['aluminum', 'Aluminum'], ['steel', 'Steel, plain'], ['steel-
 const MAT_WASHER = [...MAT_SCREW, ['fiber', 'Fiber'], ['copper', 'Copper'], ['bronze', 'Bronze'], ['ptfe', 'PTFE'], ['phenolic', 'Phenolic']];
 // hardware columns: [page list, cell key suffix, per row or per diameter, label]
 const HW = [['locknuts', 'locknut', 'row', 'Lock Nut'], ['nuts', 'nut', 'row', 'Nut'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer'], ['washers', 'washer', 'dia', 'Washer']];
-const GROUPS = [['heads', 'Heads', ['flat', 'oval', 'pan', 'button', 'truss', 'socket', 'hex', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew', 'wood', 'sheetmetal', 'buttonsm', 'trusssm', 'trim', 'flangesm', 'hexsm']], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'undersized', 'fender', 'thinw', 'cup', 'sleeved']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed']]];
+const GROUPS = [['heads', 'Heads', ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew', 'wood', 'sheetmetal', 'buttonsm', 'trusssm', 'trim', 'flangesm', 'hexsm']], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'undersized', 'fender', 'thinw', 'cup', 'sleeved']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed']]];
 function renderTypes() {
   const p = page();
   $('#types').innerHTML = GROUPS.map(([k, title, all]) => `<h3>${title}</h3>` + all.map(t => `<label><input type="checkbox" data-group="${k}" data-type="${t}" ${p[k].includes(t) ? 'checked' : ''}>${icons.svg[t]}${icons.labels[t] || t}</label>`).join('')).join('');

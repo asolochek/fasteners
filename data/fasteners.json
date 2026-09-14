@@ -1015,7 +1015,8 @@
     "1/4|washer": {
      "types": [
       "washer",
-      "fender"
+      "fender",
+      "undersized"
      ],
      "drawer": "66",
      "half": "front",
@@ -1023,6 +1024,11 @@
       "fender": {
        "drawer": "67",
        "half": "front",
+       "materials": [
+        "steel-zinc"
+       ]
+      },
+      "undersized": {
        "materials": [
         "steel-zinc"
        ]
@@ -1036,6 +1042,14 @@
      "types": [
       "carriage"
      ]
+    },
+    "10-24|3": {
+     "types": [
+      "flat",
+      "button"
+     ],
+     "drawer": "54",
+     "half": ""
     }
    },
    "locknuts": [
@@ -1286,5 +1300,5 @@
    "cells": {}
   }
  ],
- "rev": 288
+ "rev": 294
 }
