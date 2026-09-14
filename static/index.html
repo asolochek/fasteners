@@ -407,8 +407,8 @@ function openDetail(key, type, x, y) {
 }
 // which head / nut / washer types this page shows (types ticked in cells but hidden here still print)
 // drive and material vocabularies for the per-head detail (right-click / long-press on a ticked icon)
-const DRIVES = [['slotted', 'Slotted'], ['phillips', 'Phillips'], ['pozidriv', 'Pozidriv'], ['jis', 'JIS'], ['torx', 'Torx'], ['hex', 'Hex'], ['square', 'Square']];
-const FIXED_DRIVE = { socket: 'hex', shoulder: 'hex', setscrew: 'hex', hex: 'hex', hexsm: 'hex', thumb: 'none', carriage: 'none' };   // heads whose drive is a given
+const DRIVES = [['slotted', 'Slotted'], ['phillips', 'Phillips'], ['combo', 'Slotted + Phillips combo'], ['pozidriv', 'Pozidriv'], ['jis', 'JIS'], ['torx', 'Torx'], ['hex', 'Hex'], ['square', 'Square']];
+const FIXED_DRIVE = { socket: 'hex', shoulder: 'hex', setscrew: 'hex', hex: 'hex', hexsm: 'hex', thumb: 'none' };   // carriage bolts: usually none, but some carry a slot, so the normal list applies   // heads whose drive is a given
 const MAT_SCREW = [['aluminum', 'Aluminum'], ['steel', 'Steel, plain'], ['steel-blackoxide', 'Steel, black oxide'], ['steel-zinc', 'Steel, zinc'], ['steel-cadmium', 'Steel, cadmium'], ['stainless', 'Stainless steel'], ['brass', 'Brass'], ['nylon', 'Nylon'], ['plastic', 'Plastic, other']];
 const MAT_WASHER = [...MAT_SCREW, ['fiber', 'Fiber'], ['copper', 'Copper'], ['bronze', 'Bronze'], ['ptfe', 'PTFE'], ['phenolic', 'Phenolic']];
 // hardware columns: [page list, cell key suffix, per row or per diameter, label]

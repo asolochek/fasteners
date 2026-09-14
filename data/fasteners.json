@@ -21,7 +21,8 @@
      0.078125,
      0.5625,
      1.75,
-     2.5
+     2.5,
+     2.25
     ],
     "skip": [
      null,
@@ -909,39 +910,145 @@
       "socket"
      ],
      "drawer": "58",
-     "half": "back"
+     "half": "back",
+     "detail": {
+      "socket": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      }
+     }
     },
     "1/4-20|0.5": {
      "types": [
-      "pan"
+      "button",
+      "socket",
+      "flat"
      ],
      "drawer": "58",
-     "half": "front"
+     "half": "front",
+     "detail": {
+      "socket": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      },
+      "pan": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      },
+      "button": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      },
+      "flat": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      }
+     }
     },
     "1/4-20|0.625": {
      "types": [
       "pan",
-      "button"
+      "truss"
      ],
      "drawer": "59",
-     "half": "back"
+     "half": "front",
+     "detail": {
+      "truss": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "pan": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
     },
     "1/4-20|0.75": {
      "types": [
-      "hex"
+      "hex",
+      "socket",
+      "pan"
      ],
-     "drawer": "59",
-     "half": "front"
+     "drawer": "60",
+     "half": "",
+     "detail": {
+      "socket": {
+       "drives": {
+        "hex": [
+         "steel-blackoxide"
+        ]
+       }
+      },
+      "pan": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      },
+      "hex": {
+       "drives": {
+        "hex": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
     },
     "1/4-20|1": {
      "types": [
       "pan",
-      "socket"
+      "socket",
+      "button"
      ],
-     "drawer": "61",
+     "drawer": "62",
      "half": "",
      "detail": {
-      "pan": {}
+      "pan": {
+       "drives": {
+        "hex": [
+         "steel-blackoxide"
+        ]
+       }
+      },
+      "socket": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      },
+      "button": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ],
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
      }
     },
     "1/4-20|0.875": {
@@ -949,38 +1056,125 @@
       "pan",
       "socket"
      ],
-     "drawer": "60",
-     "half": ""
+     "drawer": "61",
+     "half": "",
+     "detail": {
+      "pan": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      },
+      "socket": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      }
+     }
     },
     "1/4-20|1.25": {
      "types": [
-      "button",
-      "flat"
+      "oval",
+      "pan"
      ],
-     "drawer": "62",
-     "half": "back"
+     "drawer": "63",
+     "half": "front",
+     "detail": {
+      "flat": {
+       "drives": {
+        "phillips": []
+       }
+      },
+      "oval": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      },
+      "button": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "pan": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
     },
     "1/4-20|1.75": {
      "types": [
       "hex",
       "pan"
      ],
-     "drawer": "63",
-     "half": "back"
+     "drawer": "65",
+     "half": "back",
+     "detail": {
+      "hex": {
+       "drives": {
+        "hex": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "pan": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
     },
     "1/4-20|2": {
      "types": [
       "pan"
      ],
-     "drawer": "63",
-     "half": "front"
+     "drawer": "65",
+     "half": "front",
+     "detail": {
+      "pan": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      }
+     }
     },
     "1/4-20|1.5": {
      "types": [
-      "socket"
+      "socket",
+      "pan"
      ],
-     "drawer": "62",
-     "half": "front"
+     "drawer": "64",
+     "half": "front",
+     "detail": {
+      "socket": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      },
+      "pan": {
+       "drives": {
+        "phillips": [
+         "steel-zinc",
+         "stainless"
+        ]
+       }
+      }
+     }
     },
     "1/4-20|locknut": {
      "types": [],
@@ -1050,6 +1244,77 @@
      ],
      "drawer": "54",
      "half": ""
+    },
+    "5/16-18|1.125": {
+     "types": []
+    },
+    "1/4-20|0.3125": {
+     "types": [
+      "pan"
+     ],
+     "detail": {
+      "pan": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      }
+     },
+     "drawer": "57",
+     "half": "front"
+    },
+    "1/4-20|1.375": {
+     "types": [
+      "pan"
+     ],
+     "detail": {
+      "pan": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      }
+     },
+     "drawer": "64",
+     "half": "back"
+    },
+    "1/4-20|0.4375": {
+     "types": []
+    },
+    "1/4-20|0.5625": {
+     "types": [
+      "socket"
+     ],
+     "drawer": "59",
+     "half": "back",
+     "detail": {
+      "socket": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      }
+     }
+    },
+    "1/4-20|2.25": {
+     "types": [
+      "carriage"
+     ],
+     "detail": {
+      "carriage": {
+       "materials": [
+        "steel-zinc"
+       ]
+      }
+     }
+    },
+    "1/4-20|3": {
+     "types": [
+      "hex"
+     ]
     }
    },
    "locknuts": [
@@ -1300,5 +1565,5 @@
    "cells": {}
   }
  ],
- "rev": 294
+ "rev": 391
 }
