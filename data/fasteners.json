@@ -53,8 +53,7 @@
     "fender",
     "thinw",
     "cup",
-    "sleeved",
-    "nylonw"
+    "sleeved"
    ],
    "rows": [
     {
@@ -183,7 +182,10 @@
       "split"
      ],
      "drawer": "8",
-     "half": "back"
+     "half": "back",
+     "detail": {
+      "split": {}
+     }
     },
     "6-32|0.125": {
      "types": [
@@ -278,7 +280,10 @@
       "pan"
      ],
      "drawer": "36",
-     "half": "front"
+     "half": "front",
+     "detail": {
+      "pan": {}
+     }
     },
     "6-32|1": {
      "types": [
@@ -320,12 +325,23 @@
     },
     "#6|washer": {
      "types": [
-      "nylonw",
       "washer",
       "sleeved"
      ],
      "drawer": "40",
-     "half": "front"
+     "half": "front",
+     "detail": {
+      "sleeved": {
+       "materials": [
+        "nylon"
+       ]
+      },
+      "washer": {
+       "materials": [
+        "plastic"
+       ]
+      }
+     }
     },
     "4-40|nut": {
      "types": [
@@ -367,7 +383,10 @@
       "pan"
      ],
      "drawer": "28",
-     "half": "front"
+     "half": "front",
+     "detail": {
+      "pan": {}
+     }
     },
     "4-40|0.625": {
      "types": [
@@ -380,11 +399,22 @@
     "#4|washer": {
      "types": [
       "washer",
-      "nylonw",
       "sleeved"
      ],
      "drawer": "32",
-     "half": "front"
+     "half": "front",
+     "detail": {
+      "sleeved": {
+       "materials": [
+        "nylon"
+       ]
+      },
+      "washer": {
+       "materials": [
+        "plastic"
+       ]
+      }
+     }
     },
     "4-40|locknut": {
      "types": [
@@ -487,7 +517,10 @@
       "pan"
      ],
      "drawer": "22",
-     "half": "front"
+     "half": "front",
+     "detail": {
+      "pan": {}
+     }
     },
     "3-56|0.25": {
      "types": [
@@ -530,7 +563,15 @@
       "washer"
      ],
      "drawer": "2",
-     "half": "front"
+     "half": "front",
+     "detail": {
+      "washer": {
+       "materials": [
+        "aluminum",
+        "brass"
+       ]
+      }
+     }
     },
     "0-80|nut": {
      "types": [
@@ -952,7 +993,7 @@
      "half": "front",
      "detail": {
       "fender": {
-       "drawer": "66",
+       "drawer": "67",
        "half": "back"
       }
      }
@@ -1014,8 +1055,7 @@
     "fender",
     "thinw",
     "cup",
-    "sleeved",
-    "nylonw"
+    "sleeved"
    ],
    "rows": [
     {
@@ -1156,8 +1196,7 @@
    "locknuts": [],
    "washers": [
     "washer",
-    "fender",
-    "nylonw"
+    "fender"
    ],
    "lockwashers": [],
    "rows": [
@@ -1207,5 +1246,5 @@
    "cells": {}
   }
  ],
- "rev": 255
+ "rev": 271
 }
