@@ -20,7 +20,7 @@ npm install
 node server.js          # http://127.0.0.1:8093/
 ```
 
-It binds to localhost. Put a reverse proxy with authentication in front of it (`apache-vhost.conf` is an example with
+It binds to localhost. Put a reverse proxy with authentication in front of it (`apache-vhost.example.conf` is an example with
 HTTP basic auth) or reach it through an SSH tunnel: `ssh -L 8093:127.0.0.1:8093 host`. `fasteners.service` is a systemd unit.
 
 The model lives in `data/fasteners.json` and is edited entirely through the page; keep it in git. `data/printed.json`
