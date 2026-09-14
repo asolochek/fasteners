@@ -1,3 +1,4 @@
+// Copyright (C) 2026 Aaron Solochek. Licensed under the GNU GPL v3; see LICENSE.
 // Fastener grid: a small web app for the fastener cabinets. Serves the grid, stores the JSON model, renders drawer labels as PDF.
 // Run:  node server.js            (port 8093 unless PORT is set; bind to localhost, Apache proxies and authenticates)
 // Label rendering reuses ~/binner-docs/plan-src/labels.js (Futura, 360 dpi, 9 mm drawer format).

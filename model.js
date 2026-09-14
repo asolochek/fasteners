@@ -1,3 +1,4 @@
+// Copyright (C) 2026 Aaron Solochek. Licensed under the GNU GPL v3; see LICENSE.
 // Fastener grid model helpers shared by the server and the labels. Rows are thread sizes (diameter + pitch); columns are lengths.
 // Cell keys: `${row.id}|${length}` for screws, `${row.id}|nut` for nuts, `${dia}|washer` for washers (washers span the rows of a diameter).
 function lengthText(page, len) {

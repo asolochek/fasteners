@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Copyright (C) 2026 Aaron Solochek. Licensed under the GNU GPL v3; see LICENSE.
 """Print helper for the label printer. Runs on the Windows PC the Epson LW-PX900 is attached to and prints PDFs that the
 fastener page (or anything else on the LAN) POSTs to it, silently, on a named printer queue using that queue's saved defaults
 (tape width, auto length, cut per label - set once in the queue's Printing Preferences, one queue per tape width).

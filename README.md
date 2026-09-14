@@ -59,3 +59,8 @@ records what has been printed.
 `server.js` Express app · `model.js` length series, cell keys, label text, drawer portions · `icons.js` head, nut and
 washer icons · `static/index.html` the grid · `static/cabinet.html` the drawer map · `helper/` the Windows print helper ·
 `data/` the model.
+
+## License
+
+Copyright © 2026 Aaron Solochek. Released under the GNU General Public License, version 3 — see `LICENSE`. You may use,
+modify and redistribute it, provided that distributed versions carry the same license and their source.

@@ -1,3 +1,4 @@
+// Copyright (C) 2026 Aaron Solochek. Licensed under the GNU GPL v3; see LICENSE.
 // Side-profile icons for fastener heads, nuts and washers. Same line weight and feel as the pinout glyphs.
 // Each icon is drawn in a 100 × 100 box; icons(list) sets several side by side for a label glyph.
 const K = '#000', SW = 5;
