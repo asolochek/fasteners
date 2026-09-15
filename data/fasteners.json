@@ -1425,12 +1425,71 @@
       },
       "fender": {
        "materials": [
-        "steel-zinc"
+        "steel-zinc",
+        "pei"
        ],
        "loc": {
         "kind": "drawer",
         "drawer": "80",
         "half": "back"
+       },
+       "items": {
+        "|pei": {
+         "loc": {
+          "kind": "drawer",
+          "drawer": "80",
+          "half": "front"
+         }
+        }
+       }
+      },
+      "undersized": {
+       "materials": [
+        "stainless",
+        "steel-zinc",
+        "phenolic"
+       ],
+       "items": {
+        "|stainless": {
+         "loc": {
+          "kind": "drawer",
+          "drawer": "79",
+          "half": "front"
+         }
+        },
+        "|steel-zinc": {
+         "loc": {
+          "kind": "drawer",
+          "drawer": "79",
+          "half": "front"
+         }
+        },
+        "|phenolic": {
+         "loc": {
+          "kind": "drawer",
+          "drawer": "80",
+          "half": "front"
+         }
+        }
+       }
+      },
+      "sleeved": {
+       "materials": [
+        "ptfe",
+        "nylon"
+       ],
+       "loc": {
+        "kind": "drawer",
+        "drawer": "80",
+        "half": "front"
+       },
+       "items": {
+        "|nylon": {
+         "loc": {
+          "kind": "bin",
+          "bin": "B3"
+         }
+        }
        }
       }
      }
@@ -1485,8 +1544,18 @@
       },
       "undersized": {
        "materials": [
-        "stainless"
-       ]
+        "stainless",
+        "polycarbonate"
+       ],
+       "items": {
+        "|polycarbonate": {
+         "loc": {
+          "kind": "drawer",
+          "drawer": "80",
+          "half": "front"
+         }
+        }
+       }
       },
       "washer": {
        "materials": [
@@ -1805,5 +1874,5 @@
    "cells": {}
   }
  ],
- "rev": 463
+ "rev": 479
 }
