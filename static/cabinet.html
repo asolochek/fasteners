@@ -20,6 +20,21 @@ main { display:flex; gap:16px; padding:14px; align-items:flex-start; }
 .cabinet { border:2px solid var(--ink2); border-radius:10px; padding:10px; margin-bottom:16px; }
 .cabinet h2 { margin:0 0 8px; }
 .grid { display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; }
+.grid.k4x4 { grid-template-columns:repeat(4, 1fr); max-width:700px; }
+.grid.k4x4w { grid-template-columns:2fr repeat(4, 1fr) 2fr; grid-template-rows:repeat(12, auto); max-width:1000px; }
+.grid.k4x4w .drawer { grid-row:span 3; }
+.grid.k4x4w .drawer.wide { grid-row:span 4; }
+.grid.kbins6x4 { grid-template-columns:repeat(6, 1fr); }
+.tabs { display:flex; gap:6px; flex-wrap:wrap; }
+.tab { padding:5px 10px; border:1px solid var(--line); background:#fff; cursor:pointer; border-radius:4px; font-size:13px; }
+.tab.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+#settings { position:fixed; top:56px; right:14px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:12px 14px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; z-index:15; width:440px; font-size:13.5px; max-height:85vh; overflow:auto; }
+#settings h3 { margin:8px 0 4px; font-size:13px; color:var(--ink2); }
+#settings table { border-collapse:collapse; width:100%; }
+#settings td { padding:3px 4px; }
+#settings input, #settings select { font:inherit; padding:3px 5px; border:1px solid var(--line); border-radius:4px; }
+#settings .row { display:flex; gap:8px; margin-top:10px; align-items:center; }
+#settings .note { color:var(--ink2); font-size:12px; }
 .drawer .n { background:var(--cab, var(--ink2)); color:#fff; padding:1px 5px; border-radius:8px; }
 .drawer.none { background:#efeeea; }
 .legend .cab { display:inline-block; width:14px; height:14px; border-radius:7px; vertical-align:-2px; margin-right:4px; }
@@ -59,7 +74,9 @@ main { display:flex; gap:16px; padding:14px; align-items:flex-start; }
 </head>
 <body>
 <header><h1>Fastener cabinet</h1>
+  <span class="tabs" id="tabs"></span>
   <button id="undo" disabled title="undo the last move or shift">Undo</button>
+  <button id="setupBtn" title="cabinets and how many drawers each category has">Cabinets…</button>
   <span id="status"></span>
   <span class="legend" id="cablegend"></span>
   <span class="legend"><span><i style="background:var(--none)"></i>empty</span><span><i style="background:var(--have)"></i>a label</span><span><i style="background:var(--bad);border-color:var(--bad2)"></i>lengths not contiguous</span><span>drag cards between halves, bins and the unassigned list · right-click a card or a half for more</span></span>
@@ -67,14 +84,15 @@ main { display:flex; gap:16px; padding:14px; align-items:flex-start; }
 <main>
   <div id="left">
     <div id="cabinets"></div>
-    <h2>Bins (18 mm labels)</h2><div class="bins" id="bins"></div>
+    <h2 id="binsTitle">Bins (18 mm labels)</h2><div class="bins" id="bins"></div>
   </div>
   <div id="right"><h2 style="margin-top:0">Unassigned</h2><div id="unassigned"></div></div>
 </main>
 <div id="menu"></div>
+<div id="settings"></div>
 <script src="/model.js"></script>
 <script>
-let data, cab, labels = {}, undoStack = [];
+let data, cab, labels = {}, undoStack = [], view = 'all';
 const $ = s => document.querySelector(s);
 const status = t => { $('#status').textContent = t; };
 // per-slot display split: 'cell' | 'type' | 'item' (session only; nothing in the data changes until a piece is dragged)
@@ -150,7 +168,7 @@ function cardsOf(entries, loc) {
   return out;
 }
 // ---- slots: rear/front halves in order; a whole-drawer card takes both halves of its drawer ----
-const N = c => M.cabinetById(c.id).count;   // a category's drawers are a fixed run of physical positions
+const N = c => (M.positions(data).ranges.find(r => r.id === c.id) || { count: 0 }).count;   // a category's drawers are a run of physical positions
 const idx = (drawer, half) => (drawer - 1) * 2 + (half === 'front' ? 1 : 0);
 const locAt = (cabId, i, whole) => ({ kind: 'drawer', cabinet: cabId, drawer: String(Math.floor(i / 2) + 1), half: whole ? '' : (i % 2 ? 'front' : 'back') });
 // units of one cabinet: the cards that share a slot move together; size 2 = a whole drawer
@@ -301,43 +319,90 @@ function halfMenu(cabId, i, x, y) {
 }
 
 // ---- rendering ----
+function binEl(id, entries) {
+  const el = document.createElement('div'); el.className = 'bin'; el.innerHTML = `<span class="n">${id}</span>`;
+  for (const card of cardsOf(entries, { kind: 'bin', bin: id })) el.appendChild(makeCard(card));
+  dropZone(el, card => dropOnBin(card, id)); return el;
+}
+// ---- settings: the physical cabinets and the categories' drawer counts ----
+function renderSettings() {
+  const lay = M.layoutOf(data), P = M.positions(data);
+  let h = `<b>Cabinets</b><div class="note">In physical order; drawer numbering runs across them, category by category.</div><table>` +
+    lay.cabinets.map((c, i) => `<tr><td><input class="sTitle" data-i="${i}" value="${c.title}" style="width:130px"></td><td><select class="sKind" data-i="${i}">${Object.entries(M.KINDS).map(([k, v]) => `<option value="${k}" ${c.kind === k ? 'selected' : ''}>${v.title}</option>`).join('')}</select></td>` +
+      `<td><button type="button" class="sUp" data-i="${i}" title="move up">↑</button><button type="button" class="sDn" data-i="${i}" title="move down">↓</button><button type="button" class="sRm" data-i="${i}" title="remove">×</button></td></tr>`).join('') + `</table>
+    <div class="row"><button type="button" id="sAdd">Add cabinet</button></div>
+    <h3>Drawers per category</h3><table>` +
+    M.CABINETS.map((c, i) => { const r = P.ranges.find(r => r.id === c.id); return `<tr><td><i class="cab" style="display:inline-block;width:12px;height:12px;border-radius:6px;background:${c.color};margin-right:6px"></i>${c.title}</td><td>${i === M.CABINETS.length - 1 ? `<span class="note">the rest: ${r.count}</span>` : `<input type="number" min="0" class="sCount" data-id="${c.id}" value="${lay.counts[c.id] || 0}" style="width:70px">`}</td><td class="note">positions ${r.count ? `${r.start}–${r.start + r.count - 1}` : '(none)'}</td></tr>`; }).join('') + `</table>
+    <div class="note">${P.drawers.length} drawer positions, ${P.bins.length} bin positions in all.</div>
+    <div class="row"><button type="button" id="sSave">Save</button><button type="button" id="sClose">Close</button></div>`;
+  const el = $('#settings'); el.innerHTML = h;
+  const read = () => { const l = M.layoutOf(data); l.cabinets = [...el.querySelectorAll('.sTitle')].map((t, i) => ({ ...l.cabinets[i], title: t.value.trim() || l.cabinets[i].title, kind: el.querySelector(`.sKind[data-i="${i}"]`).value })); el.querySelectorAll('.sCount').forEach(x => l.counts[x.dataset.id] = +x.value || 0); return l; };
+  const restage = l => { data.layout = l; renderSettings(); };
+  el.querySelectorAll('.sUp').forEach(b => b.onclick = () => { const l = read(), i = +b.dataset.i; if (i > 0) [l.cabinets[i - 1], l.cabinets[i]] = [l.cabinets[i], l.cabinets[i - 1]]; restage(l); });
+  el.querySelectorAll('.sDn').forEach(b => b.onclick = () => { const l = read(), i = +b.dataset.i; if (i < l.cabinets.length - 1) [l.cabinets[i + 1], l.cabinets[i]] = [l.cabinets[i], l.cabinets[i + 1]]; restage(l); });
+  el.querySelectorAll('.sRm').forEach(b => b.onclick = () => { const l = read(); l.cabinets.splice(+b.dataset.i, 1); restage(l); });
+  $('#sAdd').onclick = () => { const l = read(); const n = l.cabinets.length + 1; l.cabinets.push({ id: 'c' + Date.now().toString(36), title: `Cabinet ${n}`, kind: '8x8' }); restage(l); };
+  el.querySelectorAll('.sKind, .sCount').forEach(x => x.onchange = () => restage(read()));
+  $('#sSave').onclick = async () => { data.layout = read(); snapshot(); if (await commit('layout saved')) { $('#settings').style.display = 'none'; } };
+  $('#sClose').onclick = () => { $('#settings').style.display = 'none'; load(); };
+}
+$('#setupBtn').onclick = () => { const t = $('#settings'); if (t.style.display === 'block') { t.style.display = 'none'; load(); } else { renderSettings(); t.style.display = 'block'; } };
+function drawerZones(el, c, n, d) {
+  // a whole-drawer card fills the drawer; older undivided assignments that share a drawer with half entries show all three zones
+  const whole = d && d.whole.length, halvesUsed = d && (d.back.length || d.front.length);
+  const halves = whole && !halvesUsed ? [['', 'whole']] : whole ? [['', 'whole'], ['back', 'rear'], ['front', 'front']] : [['back', 'rear'], ['front', 'front']];
+  for (const [h, name] of halves) {
+    const z = document.createElement('div'); z.className = 'half' + (h === '' ? ' whole' : ''); z.dataset.h = name;
+    const entries = d ? d[h || 'whole'] : [];
+    if (entries.some(e => e.gap)) z.classList.add('gap');
+    const loc = { kind: 'drawer', cabinet: c.id, drawer: String(n), half: h };
+    for (const card of cardsOf(entries, loc)) z.appendChild(makeCard(card));
+    const i = idx(n, h || 'back');
+    dropZone(z, (card, e) => dropOnHalf(card, c.id, i, e.clientX, e.clientY));
+    z.oncontextmenu = e => { if (e.target.closest('.card')) return; e.preventDefault(); halfMenu(c.id, i, e.clientX, e.clientY); };
+    el.appendChild(z);
+  }
+}
 function render() {
-  $('#cablegend').innerHTML = cab.cabinets.map(c => `<span><i class="cab" style="background:${c.color}"></i>${c.title} ${c.count ? `(${c.count} drawers)` : ''}</span>`).join('');
+  const P = M.positions(data), lay = P.layout;
+  $('#cablegend').innerHTML = cab.cabinets.map(c => { const r = P.ranges.find(r => r.id === c.id); return `<span><i class="cab" style="background:${c.color}"></i>${c.title} (${r ? r.count : 0} drawers)</span>`; }).join('');
+  $('#tabs').innerHTML = [['all', 'All'], ...lay.cabinets.map(c => [c.id, c.title])].map(([id, t]) => `<span class="tab${view === id ? ' on' : ''}" data-v="${id}">${t}</span>`).join('');
+  $('#tabs').querySelectorAll('.tab').forEach(t => t.onclick = () => { view = t.dataset.v; render(); });
   const wrap = $('#cabinets'); wrap.innerHTML = '';
-  // three physical 8 × 8 cabinets; each position belongs to the category whose numbering covers it
-  for (let k = 0; k < M.PHYSICAL.cabinets; k++) {
-  const box = document.createElement('section'); box.className = 'cabinet';
-  box.innerHTML = `<h2>Cabinet ${k + 1}</h2>`; const g = document.createElement('div'); g.className = 'grid'; box.appendChild(g); wrap.appendChild(box);
-  for (let pos = k * M.PHYSICAL.perCabinet + 1; pos <= (k + 1) * M.PHYSICAL.perCabinet; pos++) {
-    const at = M.atPosition(pos), el = document.createElement('div');
-    if (!at) { el.className = 'drawer none'; el.innerHTML = `<span class="n">${pos}</span>`; g.appendChild(el); continue; }
-    const c = cabOf(at.cabinet), n = at.drawer, d = c.drawers[String(n)];
-    el.className = 'drawer'; el.style.setProperty('--cab', c.color); el.title = `${c.title} drawer ${n} (position ${pos})`;
-    el.innerHTML = `<span class="n">${n}</span>`;
-    // a whole-drawer card fills the drawer; older undivided assignments that share a drawer with half entries show all three zones
-    const whole = d && d.whole.length, halvesUsed = d && (d.back.length || d.front.length);
-    const halves = whole && !halvesUsed ? [['', 'whole']] : whole ? [['', 'whole'], ['back', 'rear'], ['front', 'front']] : [['back', 'rear'], ['front', 'front']];
-    for (const [h, name] of halves) {
-      const z = document.createElement('div'); z.className = 'half' + (h === '' ? ' whole' : ''); z.dataset.h = name;
-      const entries = d ? d[h || 'whole'] : [];
-      if (entries.some(e => e.gap)) z.classList.add('gap');
-      const loc = { kind: 'drawer', cabinet: c.id, drawer: String(n), half: h };
-      for (const card of cardsOf(entries, loc)) z.appendChild(makeCard(card));
-      const i = idx(n, h || 'back');
-      dropZone(z, (card, e) => dropOnHalf(card, c.id, i, e.clientX, e.clientY));
-      z.oncontextmenu = e => { if (e.target.closest('.card')) return; e.preventDefault(); halfMenu(c.id, i, e.clientX, e.clientY); };
-      el.appendChild(z);
+  lay.cabinets.forEach((pc, cabIx) => {
+    if (view !== 'all' && view !== pc.id) return;
+    const kind = M.KINDS[pc.kind] || M.KINDS['8x8'];
+    const box = document.createElement('section'); box.className = 'cabinet';
+    box.innerHTML = `<h2>${pc.title} <span class="note" style="font-weight:400;color:var(--ink2);font-size:12px">${kind.title}</span></h2>`;
+    const g = document.createElement('div'); g.className = 'grid k' + pc.kind; box.appendChild(g); wrap.appendChild(box);
+    if (kind.bins) {   // a cabinet of bins: bin B(n) positions
+      for (const b of P.bins.filter(b => b.cabIx === cabIx)) g.appendChild(binEl(b.bin, cab.bins[b.bin] || []));
+      return;
     }
-    g.appendChild(el);
-  }
-  }
+    // drawers: the standard grid in reading order; a 4x4w's wide drawers are placed down the sides afterwards
+    const slots = P.drawers.filter(x => x.cabIx === cabIx), std = slots.filter(x => !x.wide), wide = slots.filter(x => x.wide);
+    const make = x => {
+      const at = M.atPosition(data, x.pos), el = document.createElement('div');
+      el.className = 'drawer' + (x.wide ? ' wide' : '');
+      if (!at) { el.classList.add('none'); el.innerHTML = `<span class="n">–</span>`; el.title = `position ${x.pos}: no category reaches here`; return el; }
+      const c = cabOf(at.cabinet), n = at.drawer, d = c.drawers[String(n)];
+      el.style.setProperty('--cab', c.color); el.title = `${c.title} drawer ${n} (position ${x.pos})`;
+      el.innerHTML = `<span class="n">${n}</span>`;
+      drawerZones(el, c, n, d); return el;
+    };
+    if (!kind.wide) { for (const x of std) g.appendChild(make(x)); return; }
+    // 4x4w: 6 columns; wide drawers occupy column 1 and 6, three per side, each spanning 4 of 12 row units
+    const left = wide.slice(0, 3), right = wide.slice(3, 6), cells = [];
+    for (let r = 0; r < 4; r++) for (let cc = 0; cc < 4; cc++) { const el = make(std[r * 4 + cc]); el.style.gridColumn = String(cc + 2); cells.push(el); }
+    left.forEach((x, i) => { const el = make(x); el.style.gridColumn = '1'; el.style.gridRow = `${i * 4 + 1} / span 4`; g.appendChild(el); });
+    right.forEach((x, i) => { const el = make(x); el.style.gridColumn = '6'; el.style.gridRow = `${i * 4 + 1} / span 4`; g.appendChild(el); });
+    cells.forEach((el, i) => { el.style.gridRow = `${Math.floor(i / 4) * 3 + 1} / span 3`; g.appendChild(el); });
+  });
   const bg = $('#bins'); bg.innerHTML = '';
-  const ids = Object.keys(cab.bins).sort((a, b) => (parseInt(a.slice(1)) - parseInt(b.slice(1))) || a.localeCompare(b));
-  for (const id of ids) {
-    const el = document.createElement('div'); el.className = 'bin'; el.innerHTML = `<span class="n">${id}</span>`;
-    for (const card of cardsOf(cab.bins[id], { kind: 'bin', bin: id })) el.appendChild(makeCard(card));
-    dropZone(el, card => dropOnBin(card, id)); bg.appendChild(el);
-  }
+  const inCab = new Set(P.bins.map(b => b.bin));
+  const ids = Object.keys(cab.bins).filter(id => !inCab.has(id)).sort((a, b) => (parseInt(a.slice(1)) - parseInt(b.slice(1))) || a.localeCompare(b));
+  $('#binsTitle').textContent = inCab.size ? 'Loose bins (not in a bin cabinet)' : 'Bins (18 mm labels)';
+  for (const id of ids) bg.appendChild(binEl(id, cab.bins[id]));
   const nb = document.createElement('div'); nb.className = 'bin new'; nb.textContent = 'drop here for a new bin';
   dropZone(nb, card => { const v = prompt('Bin id (a number)', String((ids.length ? Math.max(...ids.map(x => parseInt(x.slice(1)) || 0)) : 0) + 1)); if (!v) return; const l = M.parseLoc(/^b/i.test(v) ? v : 'B' + v); if (!l || l.kind !== 'bin') return alert('Use a number, e.g. 4'); dropOnBin(card, l.bin); });
   bg.appendChild(nb);

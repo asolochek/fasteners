@@ -54,14 +54,35 @@ function populated(page) {
 // ---- cabinets ----
 // Drawers are numbered per category, each from 1; a page belongs to a category (page.cabinet) and a bare drawer number
 // means that category. A location may name another category explicitly (loc.cabinet), with its prefix letter: I12R, M3, W40F.
-// Physically the drawers sit in three fixed 8 × 8 cabinets (192 positions) and a category's numbering runs on across them:
-// `start` is the physical position of that category's drawer 1, `count` how many drawers it has.
-const CABINETS = [{ id: 'imperial', prefix: 'I', title: 'Imperial machine screws', color: '#2e9e4f', start: 1, count: 88 },
-                  { id: 'metric', prefix: 'M', title: 'Metric machine screws', color: '#2f6db5', start: 89, count: 40 },
-                  { id: 'wood', prefix: 'W', title: 'Wood & sheet metal screws', color: '#c0392b', start: 129, count: 64 }];
-const PHYSICAL = { cabinets: 3, perCabinet: 64 };
-const positionOf = (id, n) => { const c = cabinetById(id); return c ? c.start + (+n) - 1 : NaN; };   // 1-based physical position
-const atPosition = pos => { const c = CABINETS.find(c => pos >= c.start && pos < c.start + c.count); return c ? { cabinet: c.id, drawer: pos - c.start + 1 } : null; };
+// Physically the drawers sit in a row of cabinets (data.layout.cabinets, each of a KIND) and a category's numbering runs
+// on across them in category order: data.layout.counts says how many drawers each category has (the last takes the rest).
+const CABINETS = [{ id: 'imperial', prefix: 'I', title: 'Imperial machine screws', color: '#2e9e4f' },
+                  { id: 'metric', prefix: 'M', title: 'Metric machine screws', color: '#2f6db5' },
+                  { id: 'wood', prefix: 'W', title: 'Wood & sheet metal screws', color: '#c0392b' }];
+// cabinet kinds: a grid of standard drawers, or of bins; '4x4w' adds three double-wide drawers down each side (positions 17–22)
+const KINDS = {
+  '8x8':     { title: '8 × 8 drawers', cols: 8, rows: 8, drawers: 64 },
+  '4x4':     { title: '4 × 4 drawers', cols: 4, rows: 4, drawers: 16 },
+  '4x4w':    { title: '4 × 4 drawers with 3 wide drawers each side', cols: 4, rows: 4, drawers: 22, wide: 6 },
+  'bins6x4': { title: '6 × 4 bins', cols: 6, rows: 4, drawers: 0, bins: 24 },
+};
+const DEFAULT_LAYOUT = { cabinets: [{ id: 'c1', title: 'Cabinet 1', kind: '8x8' }, { id: 'c2', title: 'Cabinet 2', kind: '8x8' }, { id: 'c3', title: 'Cabinet 3', kind: '8x8' }], counts: { imperial: 88, metric: 64 } };
+const layoutOf = d => ({ ...DEFAULT_LAYOUT, ...(d?.layout || {}), cabinets: (d?.layout?.cabinets || DEFAULT_LAYOUT.cabinets), counts: { ...DEFAULT_LAYOUT.counts, ...(d?.layout?.counts || {}) } });
+// the physical positions: drawers numbered 1.. across the drawer cabinets in order, bins 1.. across the bin cabinets
+function positions(d) {
+  const lay = layoutOf(d), out = [], bins = []; let pos = 0, bin = 0;
+  lay.cabinets.forEach((c, cabIx) => {
+    const k = KINDS[c.kind] || KINDS['8x8'];
+    for (let i = 1; i <= k.drawers; i++) out.push({ pos: ++pos, cabIx, index: i, wide: !!k.wide && i > k.drawers - k.wide });
+    for (let i = 1; i <= (k.bins || 0); i++) bins.push({ bin: `B${++bin}`, cabIx, index: i });
+  });
+  // categories take their counts in order; the last one takes whatever is left
+  const ranges = []; let start = 1;
+  CABINETS.forEach((c, i) => { const count = i === CABINETS.length - 1 ? Math.max(0, out.length - start + 1) : (+lay.counts[c.id] || 0); ranges.push({ id: c.id, start, count }); start += count; });
+  return { layout: lay, drawers: out, bins, ranges };
+}
+const positionOf = (d, id, n) => { const r = positions(d).ranges.find(r => r.id === id); return r ? r.start + (+n) - 1 : NaN; };
+const atPosition = (d, pos) => { const r = positions(d).ranges.find(r => pos >= r.start && pos < r.start + r.count); return r ? { cabinet: r.id, drawer: pos - r.start + 1 } : null; };
 const cabinetById = id => CABINETS.find(c => c.id === id);
 const cabinetByPrefix = ch => CABINETS.find(c => c.prefix === String(ch || '').toUpperCase());
 // ---- locations ----
@@ -146,6 +167,6 @@ function drawerOrder(page, groups) {
   const key = g => { const c = g[0]; return c.kind === 'drawer' ? [0, cabIx(c.cabinet), +c.drawer, c.half === 'front' ? 1 : 0] : c.kind === 'bin' ? [1, 0, 0, 0] : [2, 0, 0, 0]; };
   return groups.map((g, i) => [g, key(g), i]).sort((a, b) => (a[1][0] - b[1][0]) || (a[1][1] - b[1][1]) || (a[1][2] - b[1][2]) || (a[1][3] - b[1][3]) || (a[2] - b[2])).map(x => x[0]);
 }
-const api = { CABINETS, PHYSICAL, positionOf, atPosition, cabinetById, cabinetByPrefix, inCabinet, isList, listItem, lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, items, portions, portionSlot, slotOf, locOf, overflowOf, locText, locLong, parseLoc, parseLocs, bins, drawerOrder, HW, MAT_SHORT, DRIVE_SHORT };
+const api = { CABINETS, KINDS, DEFAULT_LAYOUT, layoutOf, positions, positionOf, atPosition, cabinetById, cabinetByPrefix, inCabinet, isList, listItem, lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, items, portions, portionSlot, slotOf, locOf, overflowOf, locText, locLong, parseLoc, parseLocs, bins, drawerOrder, HW, MAT_SHORT, DRIVE_SHORT };
 if (typeof module !== 'undefined') module.exports = api; else window.M = api;   // the same file is served to the browser
 })();
