@@ -44,6 +44,8 @@ main { display:flex; gap:16px; padding:14px; align-items:flex-start; }
 .half[data-h="front"] { border-top:1px dashed var(--line); }   /* rear above the line, front below, like the drawer */
 .half.whole { border-top:0; }
 .half.over { background:var(--drop); outline:2px solid #8fcf8f; }
+.half.ins { box-shadow:inset 0 4px 0 var(--accent); }   /* insertion bar: drop here to insert at this half, shifting what is in it along */
+.card.over { outline:2px solid #8fcf8f; background:var(--drop); }   /* drop on a card: merge into its label */
 .half.gap { background:var(--bad); }
 .card { background:var(--have); border:1px solid var(--line); border-radius:5px; padding:3px 6px; font-size:12.5px; cursor:grab; box-shadow:0 1px 2px rgba(0,0,0,.06); position:relative; }
 .card:active { cursor:grabbing; }
@@ -104,7 +106,16 @@ const cabOf = id => cab.cabinets.find(c => c.id === id);
 // ---- loading ----
 async function load() {
   const [d, c, ic] = await Promise.all([fetch('/api/data').then(r => r.json()), fetch('/api/cabinet').then(r => r.json()), fetch('/api/icons').then(r => r.json())]);
-  data = d; cab = c; labels = ic.labels || {}; render();
+  data = d; cab = normalize(c); labels = ic.labels || {}; render();
+}
+// an undivided assignment (no rear/front recorded) that is not flagged as needing the whole drawer is shown, and shifted,
+// as the rear half; only flagged cards take the whole drawer
+function normalize(c) {
+  for (const cabinet of c.cabinets) for (const dr of Object.values(cabinet.drawers)) {
+    const legacy = dr.whole.filter(e => !e.whole); if (!legacy.length) continue;
+    dr.whole = dr.whole.filter(e => e.whole); dr.back.push(...legacy.map(e => ({ ...e, undivided: true })));
+  }
+  return c;
 }
 async function commit(what) {
   status('saving…');
@@ -112,7 +123,7 @@ async function commit(what) {
   if (r.status === 409) { undoStack.length = 0; $('#undo').disabled = true; alert('The data changed elsewhere; reloading. Please redo that change.'); await load(); return false; }
   if (!r.ok) { status('save failed'); alert('Save failed'); return false; }
   data.rev = (await r.json()).rev;
-  cab = await (await fetch('/api/cabinet')).json(); render(); status(what || 'saved'); return true;
+  cab = normalize(await (await fetch('/api/cabinet')).json()); render(); status(what || 'saved'); return true;
 }
 function snapshot() { undoStack.push(JSON.stringify(data)); if (undoStack.length > 30) undoStack.shift(); $('#undo').disabled = false; }
 $('#undo').onclick = async () => { if (!undoStack.length) return; const prev = JSON.parse(undoStack.pop()); prev.rev = data.rev; data = prev; $('#undo').disabled = !undoStack.length; await commit('undone'); };
@@ -135,7 +146,7 @@ function setCardLoc(card, loc) {
     const level = RANK[part.level] > RANK[card.grain] ? part.level : card.grain;
     const o = objectAt(card.pageId, part, level || 'cell'); if (!o) continue;
     if (part.overflow) {
-      const old = card.from ? slotKey(card.from) : null;
+      const old = card.from ? slotKey(card.undivided ? { ...card.from, half: '' } : card.from) : null;
       o.overflow = (o.overflow || []).filter(l => !old || slotKey(M.locOf({ loc: l }) || {}) !== old);
       if (loc) { const l = { ...loc }; if (l.cabinet === (pageOf(card.pageId).cabinet || '')) delete l.cabinet; o.overflow.push(l); } if (!o.overflow.length) delete o.overflow;
     } else {
@@ -152,7 +163,7 @@ function cardsOf(entries, loc) {
   const mode = loc ? splitMode[slotKey(loc)] : '';
   const out = [];
   for (const e of entries) {
-    const base = { from: loc, overflow: e.overflow, whole: e.whole, gap: e.gap, page: e.page, pageId: e.pageId, list: M.isList(pageOf(e.pageId)) };
+    const base = { from: loc, overflow: e.overflow, whole: e.whole, gap: e.gap, page: e.page, pageId: e.pageId, list: M.isList(pageOf(e.pageId)), undivided: !!e.undivided };
     if (!mode) { out.push({ ...base, grain: '', text: e.text, parts: e.parts }); continue; }
     const p = pageOf(e.pageId), groups = new Map();
     for (const part of e.parts) {
@@ -245,18 +256,34 @@ function dropZone(el, onDrop) {
   el.ondragleave = () => el.classList.remove('over');
   el.ondrop = e => { e.preventDefault(); el.classList.remove('over'); if (dragging) onDrop(dragging, e); };
 }
+// a drawer half: empty → place; occupied → the top edge is an insertion bar (insert, shifting what is there), anywhere else
+// highlights the card under the pointer and drops as a merge into that label
+function halfZone(z, occupied, onDrop) {
+  const modeAt = e => { if (!occupied) return 'place'; const r = z.getBoundingClientRect(); return (e.clientY - r.top) < Math.max(12, r.height * 0.3) ? 'insert' : 'merge'; };
+  const clear = () => { z.classList.remove('ins', 'over'); z.querySelectorAll('.card.over').forEach(c => c.classList.remove('over')); };
+  z.ondragover = e => {
+    if (!dragging) return; e.preventDefault(); const mode = modeAt(e); clear();
+    if (mode === 'insert') z.classList.add('ins');
+    else if (mode === 'merge') (e.target.closest('.card') || z.querySelector('.card')).classList.add('over');
+    else z.classList.add('over');
+  };
+  z.ondragleave = e => { if (!z.contains(e.relatedTarget)) clear(); };
+  z.ondrop = e => { e.preventDefault(); const mode = modeAt(e); clear(); if (dragging) onDrop(dragging, mode, e); };
+}
 const sameCard = (a, b) => a.from && b.from && slotKey(a.from) === slotKey(b.from) && a.text === b.text && a.grain === b.grain;
-// dropping on a drawer half
-function dropOnHalf(card, cabId, i, x, y) {
+// dropping on a drawer half; mode = 'place' | 'merge' | 'insert' from where the drop landed
+function dropOnHalf(card, cabId, i, mode, x, y) {
   const size = card.whole ? 2 : 1, start = card.whole ? i - (i % 2) : i, loc = locAt(cabId, start, card.whole);
   if (card.from && card.from.kind === 'drawer' && slotKey(card.from) === slotKey(loc)) return;
   // the card leaves its own unit first, so a chain it was part of does not carry it along
   const live = units(cabId).map(u => ({ ...u, cards: u.cards.filter(c => !sameCard(c, card)) })).filter(u => u.cards.length);
   const occupied = live.some(u => u.start < start + size && start < u.start + u.size);
-  const place = () => setCardLoc(card, loc);
+  // an undivided card already in this half is pinned to the half on merge, so both become one label
+  const place = () => { setCardLoc(card, loc); for (const u of live) if (covers(u, start)) for (const c of u.cards) if (c.undivided) setCardLoc(c, loc); };
   if (!occupied) { snapshot(); place(); return commit('moved'); }
+  if (mode === 'merge' && !card.whole) { snapshot(); place(); return commit('merged'); }
   menu(x, y, [
-    ...(card.whole ? [] : [['Merge into this label', () => { snapshot(); place(); commit('merged'); }]]),
+    ...(card.whole || mode === 'insert' ? [] : [['Merge into this label', () => { snapshot(); place(); commit('merged'); }]]),
     ['hd', 'Insert here, shifting…'],
     ['…to the next gap', () => apply(cabId, planInsert(live, start, 'gap', size, N(cabOf(cabId)) * 2), place, 'inserted')],
     ['…the rest of the row', () => apply(cabId, planInsert(live, start, 'row', size, N(cabOf(cabId)) * 2), place, 'inserted')],
@@ -360,7 +387,7 @@ function drawerZones(el, c, n, d) {
     const loc = { kind: 'drawer', cabinet: c.id, drawer: String(n), half: h };
     for (const card of cardsOf(entries, loc)) z.appendChild(makeCard(card));
     const i = idx(n, h || 'back');
-    dropZone(z, (card, e) => dropOnHalf(card, c.id, i, e.clientX, e.clientY));
+    halfZone(z, entries.length > 0, (card, mode, e) => dropOnHalf(card, c.id, i, mode, e.clientX, e.clientY));
     z.oncontextmenu = e => { if (e.target.closest('.card')) return; e.preventDefault(); halfMenu(c.id, i, e.clientX, e.clientY); };
     el.appendChild(z);
   }

@@ -762,7 +762,7 @@
       "socket"
      ],
      "drawer": "42",
-     "half": ""
+     "half": "back"
     },
     "8-32|0.5": {
      "types": [
@@ -906,7 +906,7 @@
       "socket"
      ],
      "drawer": "53",
-     "half": ""
+     "half": "back"
     },
     "10-24|locknut": {
      "types": [
@@ -1030,7 +1030,7 @@
       "pan"
      ],
      "drawer": "60",
-     "half": "",
+     "half": "back",
      "detail": {
       "socket": {
        "drives": {
@@ -1062,7 +1062,7 @@
       "button"
      ],
      "drawer": "62",
-     "half": "",
+     "half": "back",
      "detail": {
       "pan": {
        "drives": {
@@ -1096,7 +1096,7 @@
       "socket"
      ],
      "drawer": "61",
-     "half": "",
+     "half": "back",
      "detail": {
       "pan": {
        "drives": {
@@ -1234,7 +1234,7 @@
       "thin"
      ],
      "drawer": "68",
-     "half": "",
+     "half": "back",
      "detail": {
       "thin": {
        "materials": [
@@ -1297,7 +1297,7 @@
       "carriage"
      ],
      "drawer": "73",
-     "half": ""
+     "half": "back"
     },
     "10-24|3": {
      "types": [
@@ -1305,7 +1305,7 @@
       "button"
      ],
      "drawer": "54",
-     "half": ""
+     "half": "back"
     },
     "5/16-18|1.125": {
      "types": []
@@ -1379,7 +1379,7 @@
       }
      },
      "drawer": "66",
-     "half": ""
+     "half": "back"
     },
     "1/4-20|3": {
      "types": [
@@ -1395,7 +1395,7 @@
       }
      },
      "drawer": "66",
-     "half": ""
+     "half": "back"
     },
     "3/8-16|nut": {
      "types": [
@@ -1412,7 +1412,7 @@
      "loc": {
       "kind": "drawer",
       "drawer": "78",
-      "half": ""
+      "half": "back"
      },
      "overflow": [
       {
@@ -1728,7 +1728,7 @@
      "loc": {
       "kind": "drawer",
       "drawer": "81",
-      "half": ""
+      "half": "back"
      }
     },
     "7/16|washer": {
@@ -2740,5 +2740,5 @@
    ]
   }
  ],
- "rev": 793
+ "rev": 794
 }
