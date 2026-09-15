@@ -1,6 +1,7 @@
 // Copyright (C) 2026 Aaron Solochek. Licensed under the GNU GPL v3; see LICENSE.
 // Fastener grid model helpers shared by the server and the labels. Rows are thread sizes (diameter + pitch); columns are lengths.
 // Cell keys: `${row.id}|${length}` for screws, `${row.id}|nut` for nuts, `${dia}|washer` for washers (washers span the rows of a diameter).
+(function () {   // one scope, so the page's own globals (HW, lengths, …) are untouched when this file is loaded as a script
 function lengthText(page, len) {
   if (page.units === 'mm') return `${+len}mm`;
   const whole = Math.floor(len + 1e-9), frac = +(len - whole).toFixed(6);
@@ -118,3 +119,4 @@ function drawerOrder(page, groups) {
 }
 const api = { lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, items, portions, portionSlot, slotOf, locOf, overflowOf, locText, locLong, parseLoc, parseLocs, bins, drawerOrder, HW, MAT_SHORT, DRIVE_SHORT };
 if (typeof module !== 'undefined') module.exports = api; else window.M = api;   // the same file is served to the browser
+})();
