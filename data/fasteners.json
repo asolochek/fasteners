@@ -671,8 +671,18 @@
     },
     "4-40|0.1875": {
      "types": [
-      "pan"
-     ]
+      "pan",
+      "flat"
+     ],
+     "detail": {
+      "flat": {
+       "drives": {
+        "phillips": [
+         "aluminum"
+        ]
+       }
+      }
+     }
     },
     "1-64|nut": {
      "types": [
@@ -2716,5 +2726,5 @@
    ]
   }
  ],
- "rev": 787
+ "rev": 790
 }

@@ -5,6 +5,7 @@ fastener page (or anything else on the LAN) POSTs to it, silently, on a named pr
 (tape width, auto length, cut per label - set once in the queue's Printing Preferences, one queue per tape width).
 
     python print-helper.py [--port 8094] [--token SECRET] [--backend acrobat|gs|sumatra] [--exe "C:\\path\\to\\program.exe"] [--bind 0.0.0.0]
+Runs fine under pythonw.exe (no console, e.g. from a logon task): it then logs to print-helper.log beside the script.
 
 Backends, tried in this order unless --backend is given:
     acrobat  Adobe Acrobat / Reader  "/t file printer" - prints exactly like File > Print with the queue defaults (what works by hand)
@@ -78,6 +79,13 @@ def printers():
         except Exception:
             return []
 
+# under pythonw.exe (no console) sys.stderr is None: log to print-helper.log beside the script instead
+def log(line):
+    if sys.stderr is not None:
+        sys.stderr.write(line + '\n'); sys.stderr.flush(); return
+    try:
+        with open(os.path.join(HERE, 'print-helper.log'), 'a', encoding='utf-8') as f: f.write(line + '\n')
+    except OSError: pass
 def count_pages(data):
     return max(1, data.count(b'/Type /Page') - data.count(b'/Type /Pages')) if b'/Type /Page' in data else 0
 
@@ -121,7 +129,7 @@ class H(BaseHTTPRequestHandler):
         finally:
             try: time.sleep(3); os.remove(path)
             except OSError: pass
-    def log_message(self, fmt, *a): sys.stderr.write('%s %s\n' % (time.strftime('%H:%M:%S'), fmt % a))
+    def log_message(self, fmt, *a): log('%s %s' % (time.strftime('%H:%M:%S'), fmt % a))
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -131,5 +139,15 @@ if __name__ == '__main__':
     ap.add_argument('--exe', default='', help='path to that program, if it is not found automatically')
     ARGS = ap.parse_args()
     name, exe = backend()
-    print(f'label print helper on http://{ARGS.bind}:{ARGS.port}/  backend: {name or "NONE FOUND"} ({exe})  printers: {printers() or "(none)"}', flush=True)
-    ThreadingHTTPServer((ARGS.bind, ARGS.port), H).serve_forever()
+    log(f'label print helper on http://{ARGS.bind}:{ARGS.port}/  backend: {name or "NONE FOUND"} ({exe})  printers: {printers() or "(none)"}')
+    if ARGS.bind == '0.0.0.0':
+        # listen on IPv6 and IPv4 at once, so http://localhost:8094/ works whichever the browser tries first
+        import socket
+        class DualStack(ThreadingHTTPServer):
+            address_family = socket.AF_INET6
+            def server_bind(self):
+                self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0); super().server_bind()
+        try: DualStack(('::', ARGS.port), H).serve_forever()
+        except OSError: ThreadingHTTPServer((ARGS.bind, ARGS.port), H).serve_forever()
+    else:
+        ThreadingHTTPServer((ARGS.bind, ARGS.port), H).serve_forever()
