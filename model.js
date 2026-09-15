@@ -118,7 +118,7 @@ function bins(page) {
 }
 // short names for the label qualifiers (an item that is only part of its cell's stock says what sets it apart)
 const MAT_SHORT = { aluminum: 'Al', steel: 'steel', 'steel-blackoxide': 'blk oxide', 'steel-zinc': 'zinc', 'steel-cadmium': 'cad', stainless: 'SS', brass: 'brass', nylon: 'nylon', plastic: 'plastic', fiber: 'fiber', copper: 'Cu', bronze: 'bronze', ptfe: 'PTFE', phenolic: 'phenolic', pei: 'PEI', polycarbonate: 'PC' };
-const DRIVE_SHORT = { slotted: 'slotted', phillips: 'Phillips', combo: 'combo', pozidriv: 'Pozi', jis: 'JIS', torx: 'Torx', hex: 'hex', square: 'square' };
+const DRIVE_SHORT = { slotted: 'slotted', phillips: 'Phillips', combo: 'combo', hexslot: 'hex+slot', pozidriv: 'Pozi', jis: 'JIS', torx: 'Torx', hex: 'hex', square: 'square' };
 // print order: labels with a drawer first, by drawer number then rear before front; the rest in reading order
 function drawerOrder(page, groups) {
   const key = g => { const c = g[0]; return c.kind === 'drawer' ? [0, +c.drawer, c.half === 'front' ? 1 : 0] : c.kind === 'bin' ? [1, 0, 0] : [2, 0, 0]; };
