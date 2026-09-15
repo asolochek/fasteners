@@ -46,10 +46,13 @@ records what has been printed.
 - **Rows** are thread sizes (`#4-40`, `1/4-28`, `M6`, `M6x0.75`, or a bare gauge like `#6` on wood and sheet metal pages);
   **Add row…** inserts one in order, × on an empty row removes it. Lengths likewise: **Add length…** takes `7/16`, `0.4375`,
   `1-1/2` or `22`; × on an empty column removes it. **Types…** chooses which head, nut and washer types a page shows.
-- **Cabinets**: there are three 8 × 8 cabinets, each numbered from 1: Imperial machine screws (green), Metric machine
-  screws (blue), Wood & sheet metal screws (red). A page belongs to one, so a bare drawer number means that cabinet; a
-  prefix reaches another (`I12R`, `M3`, `W40F`), and a list page with no cabinet of its own always needs the prefix.
-- **Cabinet** opens the drawer map, all pages at once (each cabinet framed in its colour, more rows of 8 as drawers beyond 64 are used): every label
+- **Cabinets**: drawers are numbered per category, each from 1: Imperial machine screws (green), Metric machine screws
+  (blue), Wood & sheet metal screws (red). Physically they fill three fixed 8 × 8 cabinets in that order, a category's
+  numbering running on across cabinets (Imperial 65–88 are the top rows of cabinet 2); where each category starts and how
+  many drawers it has is the `CABINETS` table in `model.js`. A page belongs to a category, so a bare drawer number means
+  that category; a prefix reaches another (`I12R`, `M3`, `W40F`), and a list page with no category of its own always
+  needs the prefix.
+- **Cabinet** opens the drawer map, all pages at once: the three physical cabinets framed, each drawer badged with its category colour and number: every label
   is a card in its drawer half, bin, or the Unassigned column on the right. Drag a card to a half, a bin, "drop here for a
   new bin", or back to Unassigned. Dropping on an occupied half offers **Merge** (both become one label) or **Insert**,
   shifting what is there along by one half: to the next gap, the rest of the row (refused if the row's last half is in

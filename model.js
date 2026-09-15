@@ -52,9 +52,16 @@ function populated(page) {
   return out;
 }
 // ---- cabinets ----
-// three 8 × 8 cabinets, each numbered from 1; a page belongs to one (page.cabinet) and a bare drawer number means that
-// cabinet. A location may name another cabinet explicitly (loc.cabinet), written with the prefix letter: I12R, M3, W40F.
-const CABINETS = [{ id: 'imperial', prefix: 'I', title: 'Imperial machine screws', color: '#2e9e4f' }, { id: 'metric', prefix: 'M', title: 'Metric machine screws', color: '#2f6db5' }, { id: 'wood', prefix: 'W', title: 'Wood & sheet metal screws', color: '#c0392b' }];
+// Drawers are numbered per category, each from 1; a page belongs to a category (page.cabinet) and a bare drawer number
+// means that category. A location may name another category explicitly (loc.cabinet), with its prefix letter: I12R, M3, W40F.
+// Physically the drawers sit in three fixed 8 × 8 cabinets (192 positions) and a category's numbering runs on across them:
+// `start` is the physical position of that category's drawer 1, `count` how many drawers it has.
+const CABINETS = [{ id: 'imperial', prefix: 'I', title: 'Imperial machine screws', color: '#2e9e4f', start: 1, count: 88 },
+                  { id: 'metric', prefix: 'M', title: 'Metric machine screws', color: '#2f6db5', start: 89, count: 40 },
+                  { id: 'wood', prefix: 'W', title: 'Wood & sheet metal screws', color: '#c0392b', start: 129, count: 64 }];
+const PHYSICAL = { cabinets: 3, perCabinet: 64 };
+const positionOf = (id, n) => { const c = cabinetById(id); return c ? c.start + (+n) - 1 : NaN; };   // 1-based physical position
+const atPosition = pos => { const c = CABINETS.find(c => pos >= c.start && pos < c.start + c.count); return c ? { cabinet: c.id, drawer: pos - c.start + 1 } : null; };
 const cabinetById = id => CABINETS.find(c => c.id === id);
 const cabinetByPrefix = ch => CABINETS.find(c => c.prefix === String(ch || '').toUpperCase());
 // ---- locations ----
@@ -139,6 +146,6 @@ function drawerOrder(page, groups) {
   const key = g => { const c = g[0]; return c.kind === 'drawer' ? [0, cabIx(c.cabinet), +c.drawer, c.half === 'front' ? 1 : 0] : c.kind === 'bin' ? [1, 0, 0, 0] : [2, 0, 0, 0]; };
   return groups.map((g, i) => [g, key(g), i]).sort((a, b) => (a[1][0] - b[1][0]) || (a[1][1] - b[1][1]) || (a[1][2] - b[1][2]) || (a[1][3] - b[1][3]) || (a[2] - b[2])).map(x => x[0]);
 }
-const api = { CABINETS, cabinetById, cabinetByPrefix, inCabinet, isList, listItem, lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, items, portions, portionSlot, slotOf, locOf, overflowOf, locText, locLong, parseLoc, parseLocs, bins, drawerOrder, HW, MAT_SHORT, DRIVE_SHORT };
+const api = { CABINETS, PHYSICAL, positionOf, atPosition, cabinetById, cabinetByPrefix, inCabinet, isList, listItem, lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, items, portions, portionSlot, slotOf, locOf, overflowOf, locText, locLong, parseLoc, parseLocs, bins, drawerOrder, HW, MAT_SHORT, DRIVE_SHORT };
 if (typeof module !== 'undefined') module.exports = api; else window.M = api;   // the same file is served to the browser
 })();
