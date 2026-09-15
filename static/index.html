@@ -101,6 +101,24 @@ td.cell:not(.have) .print, .card:not(.have) .print { visibility:hidden; }
 #preview { position:fixed; right:14px; bottom:14px; background:#fff; border:1px solid var(--line); padding:6px; border-radius:6px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; pointer-events:none; max-height:calc(100vh - 28px); overflow:hidden; }
 #preview img { display:block; width:430px; height:auto; }   /* 50 mm at the same scale for both tapes: 9 mm labels short, 18 mm labels tall */
 #preview img + img { margin-top:6px; }
+/* list pages: one line per label */
+table.list { border-spacing:0 4px; }
+table.list th { position:static; text-align:left; padding:2px 6px; }
+table.list td { padding:2px 6px; vertical-align:middle; background:var(--none); }
+table.list tr.have td { background:var(--have); }
+table.list td:first-child { border-radius:6px 0 0 6px; } table.list td:last-child { border-radius:0 6px 6px 0; }
+table.list input[type=text] { font:inherit; padding:4px 6px; border:1px solid var(--line); border-radius:4px; background:#fff; width:100%; box-sizing:border-box; }
+table.list td.txt { min-width:220px; } table.list td.det { min-width:140px; }
+table.list .gl { width:40px; height:40px; padding:2px; background:#fff; border:1px solid var(--line); border-radius:4px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink2); }
+table.list .gl svg { width:34px; height:34px; }
+table.list img.lpv { display:block; width:215px; height:auto; background:#fff; border:1px solid var(--line); }
+table.list .drawer { white-space:nowrap; }
+#pop .glyphs { display:grid; grid-template-columns:repeat(6, 44px); gap:4px; }
+#pop .glyphs .g { width:44px; height:44px; border:1px solid var(--line); border-radius:4px; background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+#pop .glyphs .g.on { outline:2px solid var(--accent); }
+#pop .glyphs .g svg { width:38px; height:38px; }
+#pop.wide { width:330px; }
+.mobile table.list td.det, .mobile table.list td.pv, .mobile table.list th.det, .mobile table.list th.pv { display:none; }
 </style>
 </head>
 <body>
@@ -112,6 +130,9 @@ td.cell:not(.have) .print, .card:not(.have) .print { visibility:hidden; }
   <button id="typesBtn">Types…</button>
   <button id="addRow">Add row…</button>
   <button id="addLen">Add length…</button>
+  <button id="addLine">Add line</button>
+  <button id="printSel" title="labels for the ticked lines">PDF: selected</button>
+  <button id="addPage" title="a new page of free-form labels (connectors, test leads, …)">Add list page…</button>
   <button id="printDrawers">PDF: drawers…</button>
   <button id="printBins" title="18 mm labels for the bins">PDF: bins…</button>
   <button id="printNew">PDF: unprinted</button>
@@ -141,6 +162,7 @@ function lengthText(page, len) {
   return (whole ? (f ? `${whole}-${f}` : String(whole)) : f) + '″';
 }
 function lengths(page) {
+  if (!page.lengths) return [];
   const L = page.lengths, out = new Set();
   for (let x = L.start; x <= L.stop + 1e-9; x = +(x + L.step).toFixed(6)) out.add(+x.toFixed(6));
   for (const e of L.extra || []) out.add(+e);
@@ -154,7 +176,7 @@ function save() {
   saveTimer = setTimeout(async () => {
     const r = await fetch('/api/data', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     if (r.status === 409) { data = (await r.json()).data; render(); status('reloaded'); alert('The data had changed on the server (another tab, or an update). Reloaded it — please redo your last change.'); return; }
-    if (r.ok) { data.rev = (await r.json()).rev; status('saved'); } else { status('save failed'); alert('Save failed'); }
+    if (r.ok) { data.rev = (await r.json()).rev; status('saved'); refreshPreviews(); } else { status('save failed'); alert('Save failed'); }
   }, 400);
 }
 function cell(key) { const p = page(); return p.cells[key] || (p.cells[key] = { types: [] }); }
@@ -174,7 +196,7 @@ function locSummary(o, fallback = '') {
 // the editor: primary and overflow locations of `target` (a cell, a head type's detail, or one drive+material's item)
 function openLoc(key, target, title, x, y, back) {
   $('#pop').innerHTML = `<h3>Location · ${title}</h3>
-    <h4>Primary</h4><input type="text" id="popLoc" placeholder="${target === cell(key) ? 'e.g. 12, 12R, 12F or B3' : 'blank = as the level above; e.g. 12R or B3'}" value="${M.locText(M.locOf(target))}">
+    <h4>Primary</h4><input type="text" id="popLoc" placeholder="${target === page().cells?.[key] || M.isList(page()) ? 'e.g. 12, 12R, 12F or B3' : 'blank = as the level above; e.g. 12R or B3'}" value="${M.locText(M.locOf(target))}">
     <h4>Overflow</h4><input type="text" id="popOver" placeholder="e.g. B2, 13F" value="${M.overflowOf(target).map(M.locText).join(', ')}">
     <div class="note">Drawers: number, then R (rear) or F (front) if divided. Bins: B and a number. Overflow: a list.</div>
     <div class="row"><button type="button" id="popGo">Save</button><button type="button" id="popClose">Cancel</button></div>`;
@@ -237,6 +259,10 @@ function render() {
   $('#pageSel').innerHTML = data.pages.map(x => `<option value="${x.id}" ${x.id === pageId ? 'selected' : ''}>${x.title}</option>`).join('');
   $('#pageSel').onchange = e => { pageId = e.target.value; mobileRow = null; render(); };
   $('#pageSel').style.display = isMobile() ? 'block' : 'none';
+  const list = M.isList(p);
+  for (const id of ['typesBtn', 'addRow', 'addLen']) $('#' + id).style.display = list ? 'none' : '';
+  for (const id of ['addLine', 'printSel']) $('#' + id).style.display = list ? '' : 'none';
+  if (list) return renderList(p);
   if (isMobile()) return renderMobile(p, lens);
   $('#legend').innerHTML = [...p.heads, ...HW.flatMap(([list]) => p[list] || [])].map(t => `<span>${icons.svg[t]}${icons.labels[t] || t}</span>`).join('');
   const tbl = document.createElement('table');
@@ -335,6 +361,49 @@ function renderMobile(p, lens) {
     g.appendChild(card);
   }
 }
+// list pages: a line per label — tick box, text, detail, glyph, location, preview, print, remove
+function renderList(p) {
+  $('#legend').innerHTML = '';
+  p.items = p.items || [];
+  const tbl = document.createElement('table'); tbl.className = 'list';
+  tbl.innerHTML = `<thead><tr><th><input type="checkbox" id="lAll" title="tick / untick all"></th><th>Label text</th><th class="det">Detail (small line)</th><th>Glyph</th><th>Location</th><th class="pv">Preview</th><th></th><th></th></tr></thead>`;
+  const tb = document.createElement('tbody'); tbl.appendChild(tb);
+  for (const it of p.items) {
+    const tr = document.createElement('tr'); tr.className = (it.text || '').trim() ? 'have' : ''; tr.dataset.id = it.id;
+    const td = (cls, el) => { const d = document.createElement('td'); if (cls) d.className = cls; if (typeof el === 'string') d.innerHTML = el; else d.appendChild(el); tr.appendChild(d); return d; };
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!it.checked; cb.onchange = () => { it.checked = cb.checked; save(); }; td('', cb);
+    const tx = document.createElement('input'); tx.type = 'text'; tx.value = it.text || ''; tx.placeholder = 'e.g. Banana plugs'; tx.oninput = () => { it.text = tx.value; tr.className = it.text.trim() ? 'have' : ''; save(); }; td('txt', tx);
+    const dt = document.createElement('input'); dt.type = 'text'; dt.value = it.detail || ''; dt.placeholder = 'optional'; dt.oninput = () => { it.detail = dt.value; save(); }; td('det', dt);
+    const gl = document.createElement('button'); gl.type = 'button'; gl.className = 'gl'; gl.innerHTML = it.glyph && icons.svg[it.glyph] ? icons.svg[it.glyph] : 'none'; gl.title = it.glyph ? (icons.labels[it.glyph] || it.glyph) : 'choose a glyph'; gl.onclick = e => openGlyph(it, e.clientX, e.clientY); td('', gl);
+    const dr = document.createElement('span'); dr.className = 'drawer' + (M.locOf(it) ? ' set' : ''); dr.textContent = locSummary(it, 'location?'); dr.onclick = e => openLoc(it.id, it, it.text || 'this line', e.clientX, e.clientY); td('', dr);
+    const img = document.createElement('img'); img.className = 'lpv'; img.alt = ''; img.dataset.src = `/api/preview.png?page=${encodeURIComponent(p.id)}&key=${encodeURIComponent(it.id)}`; img.src = img.dataset.src + '&t=' + Date.now(); if (!(it.text || '').trim()) img.style.visibility = 'hidden'; td('pv', img);
+    const pr = document.createElement('span'); pr.className = 'print'; pr.textContent = '⎙'; pr.title = 'PDF for this label'; pr.onclick = e => printCell(it.id, e.clientX, e.clientY); pr.onmouseenter = () => showPreview(it.id); pr.onmouseleave = hidePreview; td('', pr);
+    const rm = document.createElement('span'); rm.className = 'del'; rm.textContent = '×'; rm.title = 'remove this line'; rm.onclick = () => { if (!(it.text || '').trim() || confirm(`Remove "${it.text}"?`)) { p.items = p.items.filter(x => x !== it); save(); render(); } }; td('', rm);
+    tb.appendChild(tr);
+  }
+  $('#grid').innerHTML = ''; $('#grid').appendChild(tbl);
+  $('#lAll').onchange = e => { p.items.forEach(it => it.checked = e.target.checked); save(); render(); };
+}
+// the label previews on a list page are drawn by the server from saved data, so they refresh once a save has landed
+function refreshPreviews() { document.querySelectorAll('img.lpv').forEach(i => { const it = M.listItem(page(), i.closest('tr')?.dataset.id); if (!it) return; i.style.visibility = (it.text || '').trim() ? '' : 'hidden'; i.src = i.dataset.src + '&t=' + Date.now(); }); }
+function openGlyph(it, x, y) {
+  const groups = icons.groups || { All: Object.keys(icons.svg) };
+  $('#pop').innerHTML = `<h3>Glyph · ${it.text || 'this line'}</h3>` + Object.entries(groups).map(([title, names]) => `<h4>${title}</h4><div class="glyphs">` +
+    (title === Object.keys(groups)[0] ? `<button type="button" class="g${!it.glyph ? ' on' : ''}" data-g="" title="no glyph">none</button>` : '') +
+    names.map(n => `<button type="button" class="g${it.glyph === n ? ' on' : ''}" data-g="${n}" title="${icons.labels[n] || n}">${icons.svg[n]}</button>`).join('') + `</div>`).join('') +
+    `<div class="row"><button type="button" id="popClose">Close</button></div>`;
+  $('#pop').classList.add('wide');
+  $('#pop').querySelectorAll('.g').forEach(b => b.onclick = () => { it.glyph = b.dataset.g; save(); render(); closePop(); });
+  $('#popClose').onclick = closePop; placePop(x, y);
+}
+$('#addLine').onclick = () => { const p = page(); p.items = p.items || []; p.items.push({ id: 'l' + Date.now().toString(36), text: '', glyph: '', checked: false }); save(); render(); const last = $('#grid').querySelector('tbody tr:last-child input[type=text]'); if (last) last.focus(); };
+$('#printSel').onclick = () => { const ids = (page().items || []).filter(it => it.checked && (it.text || '').trim()).map(it => it.id); if (!ids.length) return alert('Tick the lines to print first.'); printKeys(ids); };
+$('#addPage').onclick = () => {
+  const name = prompt('Name of the new list page (e.g. Connectors)'); if (!name) return;
+  const id = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'list';
+  if (data.pages.some(p => p.id === id)) return alert('A page with that name exists');
+  data.pages.push({ id, title: name.trim(), kind: 'list', items: [] }); pageId = id; save(); render();
+};
 function canSkip(p, l) { return !p.rows.some(r => (p.cells[`${r.id}|${l}`]?.types || []).length); }
 function removeLength(l) {
   const p = page();
@@ -421,7 +490,7 @@ async function deliver(r) {
 const HEAD_UNIVERSE = { machine: ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew'],
                         tapping: ['wood', 'sheetmetal', 'buttonsm', 'trusssm', 'hexsm', 'flangesm', 'trim'], wood: ['wood', 'trim', 'flangesm', 'sheetmetal', 'buttonsm', 'trusssm'] };
 function placePop(x, y) { const pop = $('#pop'); pop.style.display = 'block'; pop.style.left = Math.min(x, window.innerWidth - 320) + 'px'; pop.style.top = Math.min(y, window.innerHeight - Math.min(pop.offsetHeight, window.innerHeight * .8) - 10) + 'px'; }
-function closePop() { $('#pop').style.display = 'none'; }
+function closePop() { $('#pop').style.display = 'none'; $('#pop').classList.remove('wide'); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
 function openMore(key, universe, x, y) {
   const c = cell(key), p = page();
@@ -429,7 +498,7 @@ function openMore(key, universe, x, y) {
   $('#pop').querySelectorAll('input').forEach(i => i.onchange = () => { toggle(key, i.dataset.t); });
   $('#popClose').onclick = closePop; placePop(x, y);
 }
-function cellTextClient(p, key) { const [a, b] = key.split('|'); const hw = HW.find(h => h[1] === b); if (hw && hw[2] === 'dia') return `${a} ${hw[3]}`; const r = p.rows.find(x => x.id === a); if (!r) return key; if (hw) return `${r.label} ${hw[3]}`; return `${r.label} × ${lengthText(p, +b)}`; }
+function cellTextClient(p, key) { if (M.isList(p)) return M.cellText(p, key); const [a, b] = key.split('|'); const hw = HW.find(h => h[1] === b); if (hw && hw[2] === 'dia') return `${a} ${hw[3]}`; const r = p.rows.find(x => x.id === a); if (!r) return key; if (hw) return `${r.label} ${hw[3]}`; return `${r.label} × ${lengthText(p, +b)}`; }
 // per-head detail: own drawer, drive types, materials per drive (washers and nuts: materials only)
 function openDetail(key, type, x, y) {
   const c = cell(key), p = page(); c.detail = c.detail || {}; const info = c.detail[type] = c.detail[type] || {};

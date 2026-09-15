@@ -45,6 +45,14 @@ records what has been printed.
 - **Cabinet** opens an 8 × 8 map of the drawers for the page (more rows of 8 when drawers beyond 64 are used): grey unassigned, red where a drawer half holds lengths that
   skip one in between. The bins are listed under the grid; overflow stock shows in italics.
 
+## List pages
+
+**Add list page…** makes a page of free-form labels for anything else that lives in a drawer: connectors, test leads,
+shunts, binding posts. Each line has a tick box, the label text, an optional small detail line, a glyph picked from the
+icon library (banana plugs, mini grabbers, alligator clips, DB9, flat flex ends, XT60/XT30, Deans, JST-XH, EC3, Tamiya,
+plus every fastener icon), a location, a live preview and its own ⎙. **PDF: selected** prints the ticked lines; lines
+print one label each. Locations, bins, the cabinet map and PDF: drawers… work the same as on the grid pages.
+
 ## Labels
 
 - ⎙ on a cell prints that cell's label; on a row header, every label in the row. **PDF: all** prints the page,

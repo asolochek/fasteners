@@ -75,9 +75,48 @@ const WASHERS = {
   // internal + external tooth: outer ring r36 with teeth out to 46, bore r16 with teeth in to 8
   inextooth: `<circle cx="50" cy="50" r="36" fill="none" stroke="${K}" stroke-width="${SW}"/><circle cx="50" cy="50" r="17" fill="none" stroke="${K}" stroke-width="${SW}"/>${Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6, c = Math.cos(a), s = Math.sin(a); return `<line x1="${(50 + 36 * c).toFixed(1)}" y1="${(50 + 36 * s).toFixed(1)}" x2="${(50 + 46 * c).toFixed(1)}" y2="${(50 + 46 * s).toFixed(1)}" stroke="${K}" stroke-width="4"/><line x1="${(50 + 17 * c).toFixed(1)}" y1="${(50 + 17 * s).toFixed(1)}" x2="${(50 + 9 * c).toFixed(1)}" y2="${(50 + 9 * s).toFixed(1)}" stroke="${K}" stroke-width="4"/>`; }).join('')}`,
 };
-const ALL = { ...HEADS, ...NUTS, ...WASHERS };
+// other hardware that lives in drawers: connectors, test leads, jumpers. Face or side views, same weight as the fastener icons.
+const dot = (x, y, r = 4) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${K}"/>`;
+const ring = (x, y, r, sw = SW) => `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${K}" stroke-width="${sw}"/>`;
+const box = (x, y, w, h, rx = 4, sw = SW) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="none" stroke="${K}" stroke-width="${sw}"/>`;
+const bananaPin = (x, y0, y1) => `<path d="M${x - 6} ${y0} Q${x - 15} ${(y0 + y1) / 2} ${x - 6} ${y1 - 6} L${x} ${y1} L${x + 6} ${y1 - 6} Q${x + 15} ${(y0 + y1) / 2} ${x + 6} ${y0} Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="${x}" y1="${y0 + 2}" x2="${x}" y2="${y1 - 8}" stroke="${K}" stroke-width="3"/>`;
+const MISC = {
+  // banana plug: insulated handle on top, sprung pin below
+  banana:      `${box(34, 6, 32, 38, 5)}<line x1="50" y1="44" x2="50" y2="50" stroke="${K}" stroke-width="${SW}"/>${bananaPin(50, 50, 94)}`,
+  // stackable: the handle has a jack in its top
+  bananastack: `${box(34, 6, 32, 38, 5)}<ellipse cx="50" cy="6" rx="9" ry="3.5" fill="none" stroke="${K}" stroke-width="3.5"/>${ring(50, 22, 7, 4)}<line x1="50" y1="44" x2="50" y2="50" stroke="${K}" stroke-width="${SW}"/>${bananaPin(50, 50, 94)}`,
+  // dual banana: one block, two pins at 3/4" spacing
+  bananadual:  `${box(12, 8, 76, 34, 5)}<line x1="18" y1="20" x2="18" y2="30" stroke="${K}" stroke-width="3"/><line x1="32" y1="42" x2="32" y2="48" stroke="${K}" stroke-width="${SW}"/><line x1="68" y1="42" x2="68" y2="48" stroke="${K}" stroke-width="${SW}"/>${bananaPin(32, 48, 92)}${bananaPin(68, 48, 92)}`,
+  // banana jack: a panel bushing with the hole on top
+  bananajack:  `<ellipse cx="50" cy="20" rx="17" ry="6" fill="none" stroke="${K}" stroke-width="${SW}"/><ellipse cx="50" cy="20" rx="6" ry="2.5" fill="${K}"/><line x1="33" y1="20" x2="33" y2="60" stroke="${K}" stroke-width="${SW}"/><line x1="67" y1="20" x2="67" y2="60" stroke="${K}" stroke-width="${SW}"/>${box(18, 60, 64, 12, 2)}<line x1="42" y1="72" x2="42" y2="92" stroke="${K}" stroke-width="${SW}"/><line x1="58" y1="72" x2="58" y2="92" stroke="${K}" stroke-width="${SW}"/>${threads(50, 74, 92)}`,
+  // binding post: knurled cap, cross-drilled stem, base
+  bindingpost: `${box(30, 8, 40, 26, 5)}${[36, 42, 48, 54, 60, 66].map(x => `<line x1="${x}" y1="12" x2="${x}" y2="30" stroke="${K}" stroke-width="2.5"/>`).join('')}<line x1="40" y1="34" x2="40" y2="70" stroke="${K}" stroke-width="${SW}"/><line x1="60" y1="34" x2="60" y2="70" stroke="${K}" stroke-width="${SW}"/>${ring(50, 52, 6, 4)}${box(20, 70, 60, 14, 2)}<line x1="50" y1="84" x2="50" y2="94" stroke="${K}" stroke-width="${SW * 2}"/>`,
+  // barrier terminal strip: four screw terminals
+  terminalstrip: `${box(4, 30, 92, 40, 3)}${[27, 50, 73].map(x => `<line x1="${x}" y1="30" x2="${x}" y2="70" stroke="${K}" stroke-width="3.5"/>`).join('')}${[15.5, 38.5, 61.5, 84.5].map(x => ring(x, 50, 7, 4) + `<line x1="${x - 4}" y1="46" x2="${x + 4}" y2="54" stroke="${K}" stroke-width="3"/>`).join('')}`,
+  // 100 mil shunt: the jumper block on two header pins
+  shunt:       `${box(28, 30, 44, 30, 4)}<line x1="50" y1="30" x2="50" y2="22" stroke="${K}" stroke-width="${SW}"/><line x1="44" y1="22" x2="56" y2="22" stroke="${K}" stroke-width="${SW}"/><line x1="39" y1="60" x2="39" y2="92" stroke="${K}" stroke-width="${SW * 1.4}"/><line x1="61" y1="60" x2="61" y2="92" stroke="${K}" stroke-width="${SW * 1.4}"/>${box(28, 84, 44, 10, 2, 4)}`,
+  // mini grabber: slim body, hook out the tip, plunger on the back
+  minigrabber: `${box(40, 34, 20, 50, 6)}<line x1="46" y1="84" x2="46" y2="94" stroke="${K}" stroke-width="3.5"/><line x1="54" y1="84" x2="54" y2="94" stroke="${K}" stroke-width="3.5"/><line x1="50" y1="34" x2="50" y2="22" stroke="${K}" stroke-width="3.5"/><path d="M50 22 Q50 8 60 8 Q68 8 68 16 Q68 22 62 22" fill="none" stroke="${K}" stroke-width="3.5" stroke-linecap="round"/><line x1="50" y1="40" x2="50" y2="76" stroke="${K}" stroke-width="2.5"/>`,
+  // alligator clip: serrated jaws, spring, sleeve
+  alligator:   `<path d="M26 50 L82 20 L78 34 L48 50 L78 66 L82 80 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/>${[56, 64, 72].map(x => `<line x1="${x}" y1="${50 - (x - 48) * 0.53}" x2="${x + 2}" y2="${50 - (x - 48) * 0.53 - 6}" stroke="${K}" stroke-width="3"/><line x1="${x}" y1="${50 + (x - 48) * 0.53}" x2="${x + 2}" y2="${50 + (x - 48) * 0.53 + 6}" stroke="${K}" stroke-width="3"/>`).join('')}${box(6, 38, 20, 24, 4)}${ring(20, 50, 4, 3)}`,
+  // DB9 face: D shell, 5 over 4
+  db9:         `<path d="M14 30 H86 Q92 30 90 36 L82 66 Q80 70 76 70 H24 Q20 70 18 66 L10 36 Q8 30 14 30 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/>${[28, 39, 50, 61, 72].map(x => dot(x, 44)).join('')}${[33.5, 44.5, 55.5, 66.5].map(x => dot(x, 57)).join('')}`,
+  // flat flex cable end: the ribbon with its exposed fingers
+  ffc:         `${box(30, 6, 40, 88, 3)}<line x1="30" y1="56" x2="70" y2="56" stroke="${K}" stroke-width="3.5"/>${[37, 43.5, 50, 56.5, 63].map(x => `<line x1="${x}" y1="62" x2="${x}" y2="90" stroke="${K}" stroke-width="3"/>`).join('')}`,
+  // RC power connectors, face on
+  xt60:        `<path d="M20 30 L30 14 H70 L80 30 V86 H20 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/>${ring(37, 56, 9)}${ring(63, 56, 9)}<text x="50" y="30" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" fill="${K}">XT60</text>`,
+  xt30:        `<path d="M28 36 L36 24 H64 L72 36 V80 H28 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/>${ring(41, 60, 6, 4)}${ring(59, 60, 6, 4)}<text x="50" y="45" font-family="sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="${K}">XT30</text>`,
+  deans:       `${box(20, 14, 60, 72, 8)}<rect x="30" y="28" width="40" height="9" fill="${K}"/><rect x="45.5" y="46" width="9" height="30" fill="${K}"/>`,
+  jstxh:       `${box(22, 26, 56, 50, 3)}<rect x="40" y="18" width="20" height="8" fill="none" stroke="${K}" stroke-width="4"/>${box(31, 40, 14, 22, 1, 4)}${box(55, 40, 14, 22, 1, 4)}`,
+  ec3:         `${box(28, 12, 44, 76, 6)}${ring(50, 34, 9)}${ring(50, 66, 9)}<text x="50" y="96" font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="${K}"></text>`,
+  tamiya:      `${box(20, 28, 60, 48, 4)}<rect x="42" y="18" width="16" height="10" fill="none" stroke="${K}" stroke-width="4"/>${box(28, 38, 18, 26, 2, 4)}${box(54, 38, 18, 26, 2, 4)}`,
+};
+const ALL = { ...HEADS, ...NUTS, ...WASHERS, ...MISC };
+// icon groups for the glyph picker (list pages)
+const GROUPS = { 'Connectors & test': Object.keys(MISC), Heads: Object.keys(HEADS).filter(k => !['nylon'].includes(k)), Nuts: Object.keys(NUTS), Washers: Object.keys(WASHERS).filter(k => !['nylonw'].includes(k)) };
 const LABELS = { flat: 'Flat', oval: 'Oval', pan: 'Pan', socket: 'Socket cap', button: 'Button', hex: 'Hex', flange: 'Flange', thumb: 'Thumb', carriage: 'Carriage bolt', cheese: 'Cheese', fillister: 'Fillister', setscrew: 'Set screw', shoulder: 'Shoulder', sems: 'Captive lock washer', truss: 'Truss', wood: 'Flat, pointed', sheetmetal: 'Pan, pointed', buttonsm: 'Button, pointed', trusssm: 'Truss, pointed', trim: 'Trim head', flangesm: 'Flange head', hexsm: 'Hex washer, pointed',
-  nut: 'Nut', thin: 'Jam nut (thin)', lock: 'Lock nut (prevailing torque)', nylock: 'Nylon insert', toothednut: 'Toothed flange', pressfit: 'Press-fit nut', square: 'Square nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', undersized: 'Undersized (small OD)', cup: 'Cup', sleeved: 'Sleeved', split: 'Split', spring: 'Spring', inttooth: 'Internal tooth', toothed: 'External tooth', inextooth: 'Internal + external tooth' };
+  nut: 'Nut', thin: 'Jam nut (thin)', lock: 'Lock nut (prevailing torque)', nylock: 'Nylon insert', toothednut: 'Toothed flange', pressfit: 'Press-fit nut', square: 'Square nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', undersized: 'Undersized (small OD)', cup: 'Cup', sleeved: 'Sleeved', split: 'Split', spring: 'Spring', inttooth: 'Internal tooth', toothed: 'External tooth', inextooth: 'Internal + external tooth',
+  banana: 'Banana plug', bananastack: 'Stackable banana plug', bananadual: 'Dual banana plug', bananajack: 'Banana jack', bindingpost: 'Binding post', terminalstrip: 'Terminal strip', shunt: '100 mil shunt', minigrabber: 'Mini grabber', alligator: 'Alligator clip', db9: 'DB9', ffc: 'Flat flex cable end', xt60: 'XT60', xt30: 'XT30', deans: 'Deans / T-plug', jstxh: 'JST-XH', ec3: 'EC3', tamiya: 'Tamiya' };
 // one icon as a standalone SVG
 const icon = name => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${ALL[name] || ''}</svg>`;
 // several icons for the label glyph slot, in one or two rows (rows = 2 puts ceil(n/2) per row, the second row left-aligned)
@@ -92,4 +131,4 @@ function layout(names, w, h) {
   const rows = two > one ? 2 : 1, cols = Math.ceil(n / rows);
   return { rows, size: rows === 2 ? two : one, maxW: Math.max(0.01, (cols / rows) * Math.min(1, (rows === 2 ? two * 2 : one) / h)) };
 }
-module.exports = { HEADS, NUTS, WASHERS, ALL, LABELS, icon, icons, layout };
+module.exports = { HEADS, NUTS, WASHERS, MISC, ALL, LABELS, GROUPS, icon, icons, layout };

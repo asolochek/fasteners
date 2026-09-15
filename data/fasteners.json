@@ -1570,21 +1570,41 @@
      "detail": {
       "fender": {
        "materials": [
-        "steel-zinc"
-       ]
+        "steel-zinc",
+        "stainless"
+       ],
+       "loc": {
+        "kind": "drawer",
+        "drawer": "86",
+        "half": "back"
+       }
       },
       "undersized": {
        "materials": [
-        "stainless",
-        "polycarbonate"
+        "stainless"
        ],
-       "items": {}
+       "items": {},
+       "loc": {
+        "kind": "drawer",
+        "drawer": "86",
+        "half": "front"
+       }
       },
       "washer": {
        "materials": [
-        "stainless"
-       ]
+        "steel-zinc"
+       ],
+       "loc": {
+        "kind": "drawer",
+        "drawer": "86",
+        "half": "back"
+       }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "86",
+      "half": "front"
      }
     },
     "1/2-13|0.875": {
@@ -1602,7 +1622,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "81",
+      "drawer": "84",
       "half": "back"
      }
     },
@@ -1659,7 +1679,7 @@
      ],
      "loc": {
       "kind": "drawer",
-      "drawer": "82",
+      "drawer": "85",
       "half": "front"
      }
     },
@@ -1675,6 +1695,88 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "71",
+      "half": "back"
+     }
+    },
+    "7/16-14|3": {
+     "types": [
+      "hex"
+     ],
+     "detail": {
+      "hex": {
+       "drives": {
+        "hex": [
+         "steel-cadmium"
+        ]
+       }
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "81",
+      "half": ""
+     }
+    },
+    "7/16|washer": {
+     "types": [
+      "washer"
+     ],
+     "detail": {
+      "washer": {
+       "materials": [
+        "steel-cadmium",
+        "steel-zinc"
+       ]
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "83",
+      "half": "front"
+     }
+    },
+    "7/16|lockwasher": {
+     "types": [],
+     "loc": {
+      "kind": "drawer",
+      "drawer": "83",
+      "half": "back"
+     }
+    },
+    "7/16-14|nut": {
+     "types": [],
+     "loc": {
+      "kind": "drawer",
+      "drawer": "82",
+      "half": "front"
+     }
+    },
+    "7/16-14|locknut": {
+     "types": [],
+     "loc": {
+      "kind": "drawer",
+      "drawer": "82",
+      "half": "back"
+     }
+    },
+    "1/2|lockwasher": {
+     "types": [],
+     "loc": {
+      "kind": "drawer",
+      "drawer": "86",
+      "half": "back"
+     }
+    },
+    "1/2-13|locknut": {
+     "types": [],
+     "loc": {
+      "kind": "drawer",
+      "drawer": "85",
+      "half": "back"
      }
     }
    },
@@ -1925,7 +2027,13 @@
     }
    ],
    "cells": {}
+  },
+  {
+   "id": "other",
+   "title": "Other hardware",
+   "kind": "list",
+   "items": []
   }
  ],
- "rev": 496
+ "rev": 522
 }

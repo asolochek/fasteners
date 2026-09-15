@@ -27,7 +27,7 @@ app.put('/api/data', (req, res) => {
   fs.writeFileSync(DATA + '.tmp', JSON.stringify(d, null, 1)); fs.renameSync(DATA + '.tmp', DATA);
   res.json({ ok: true, rev: d.rev });
 });
-app.get('/api/icons', (req, res) => res.json({ svg: Object.fromEntries(Object.keys(I.ALL).map(k => [k, I.icon(k)])), labels: I.LABELS }));
+app.get('/api/icons', (req, res) => res.json({ svg: Object.fromEntries(Object.keys(I.ALL).map(k => [k, I.icon(k)])), labels: I.LABELS, groups: I.GROUPS }));
 app.get('/api/printed', (req, res) => res.json(loadPrinted()));
 
 // ---- what a location holds ----
@@ -35,7 +35,7 @@ app.get('/api/printed', (req, res) => res.json(loadPrinted()));
 function groupBySlot(page, keys) {
   const groups = new Map(), singles = [];
   for (const pt of M.portions(page, keys)) {
-    const s = M.portionSlot(pt); if (!s) { singles.push([pt]); continue; }
+    const s = M.portionSlot(pt); if (!s || M.isList(page)) { singles.push([pt]); continue; }   // list lines print one label each
     if (!groups.has(s)) groups.set(s, []); groups.get(s).push(pt);
   }
   return [...singles, ...groups.values()];
@@ -68,7 +68,7 @@ function groupQual(page, group) {
 function groupText(page, group) {
   const types = [...new Set(group.flatMap(pt => pt.types || []))];
   const qual = groupQual(page, group);
-  if (group.length === 1) { const pn = M.cellText(page, group[0].key); return { pn, value: '', qual, types, sig: `${pn}||${qual}|${types.join(',')}` }; }
+  if (group.length === 1) { const pn = M.cellText(page, group[0].key), value = M.isList(page) ? (M.listItem(page, group[0].key)?.detail || '') : ''; return { pn, value, qual, types, sig: `${pn}|${value}|${qual}|${types.join(',')}` }; }
   const cells = group.map(pt => ({ k: pt.key, types: pt.types, suffix: pt.key.split('|')[1], base: pt.key.split('|')[0] }));
   // reading order inside the label: rows in page order, lengths ascending, hardware after the lengths
   const rowIx = id => page.rows.findIndex(r => r.id === id);
@@ -115,8 +115,8 @@ function drawerLabel(page, group) {
   let pick = null;
   for (const c of cands) { c.lay = I.layout(t.types, freeFor(c.lines, c.sp ?? S.spec), S.glyphH); if (!pick || c.lay.size > pick.lay.size + 1e-6) pick = c; if (c.lay.size >= Math.min(3.0, S.glyphH / 2)) { pick = c; break; } }
   const extra = pick.lines.length ? { spec: pick.sp, detX, detCenter: pick.lines.length === 1 } : {};
-  return { kind: 'drawer', pn: t.pn, value: pick.lines[0] || '', specs: pick.lines[1] || '', pinout: null, glyphSvg: I.icons(t.types, pick.lay.rows), glyphMaxW: pick.lay.maxW, ...extra,
-           generic: true, _n: t.types.length, _sig: t.sig, _slot: groupSlot(group) };
+  return { kind: 'drawer', pn: t.pn, value: pick.lines[0] || '', specs: pick.lines[1] || '', pinout: null, glyphSvg: t.types.length ? I.icons(t.types, pick.lay.rows) : null, glyphMaxW: pick.lay.maxW, ...extra,
+           generic: true, _n: t.types.length || (M.isList(page) ? 1 : 0), _sig: t.sig, _slot: groupSlot(group) };
 }
 // an 18 mm bin label: everything in the bin, from every page. One entry: the size big with its details under it; several:
 // one line per entry at a size that fits (up to six lines)
@@ -125,7 +125,7 @@ function binEntries(d, bin) {
   for (const page of d.pages) for (const g of groupBySlot(page, M.populated(page))) {
     if (groupSlot(g) !== `B:${bin}`) continue;
     // one entry per diameter, so each line of the label reads "size × lengths"
-    const diaOf = pt => { const [a, b] = pt.key.split('|'); return b.endsWith('washer') ? a : (page.rows.find(r => r.id === a)?.dia || a); };
+    const diaOf = pt => { const [a, b = ''] = pt.key.split('|'); return M.isList(page) ? pt.key : b.endsWith('washer') ? a : (page.rows.find(r => r.id === a)?.dia || a); };
     const byDia = new Map(); for (const pt of g) { const k = diaOf(pt); if (!byDia.has(k)) byDia.set(k, []); byDia.get(k).push(pt); }
     for (const sub of byDia.values()) out.push({ page, group: sub, ...groupText(page, sub) });
   }
@@ -145,7 +145,7 @@ function binLabel(d, bin) {
   const freeFor = () => S.len - S.pad - 1.5 - Math.max(lab.pn ? S.pnX + L.textWidth(lab.pn, S.pn) : 0, ...all().map(l => S.detX + L.textWidth(l, lab.spec ?? S.spec)));
   let lay = I.layout(types, freeFor(), S.glyphH);
   while (lay.size < 3.0 && (lab.spec ?? S.spec) > 2.0) { lab.spec = +(((lab.spec ?? S.spec) - 0.3).toFixed(1)); lay = I.layout(types, freeFor(), S.glyphH); }
-  return { kind: 'bin', ...lab, pinout: null, glyphSvg: I.icons(types, lay.rows), glyphMaxW: lay.maxW, generic: true, _n: types.length,
+  return { kind: 'bin', ...lab, pinout: null, glyphSvg: types.length ? I.icons(types, lay.rows) : null, glyphMaxW: lay.maxW, generic: true, _n: types.length || entries.length,
            _sig: entries.map(e => e.sig).join(';'), _slot: `B:${bin}`, _bin: bin, _entries: entries };
 }
 const allBins = d => [...new Set(d.pages.flatMap(p => M.bins(p)))].sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
