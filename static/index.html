@@ -496,7 +496,7 @@ async function deliver(r) {
 // screws are a head shape plus properties: tip (blunt / pointed), cutting tip (thread-forming or self-drilling) and captive
 // washers. A variant key names the combination ("pan", "pan:p", "pan:p:c", "pan:wfs"); the cell's types list holds variant keys.
 const vParse = name => { const [shape, ...f] = String(name).split(':'); const w = f.find(x => x[0] === 'w') || ''; return { shape, pointed: f.includes('p'), cutting: f.includes('c'), washers: [...w.slice(1)] }; };
-const vKey = ({ shape, pointed = false, cutting = false, washers = [] }) => shape + (pointed ? ':p' : '') + (cutting ? ':c' : '') + (washers.length ? ':w' + ['f', 's', 'e', 'i'].filter(c => washers.includes(c)).join('') : '');
+const vKey = ({ shape, pointed = false, cutting = false, washers = [] }) => shape + (pointed ? ':p' : '') + (cutting ? ':c' : '') + (washers.length ? ':w' + ['k', 'f', 's', 'e', 'i'].filter(c => washers.includes(c)).join('') : '');
 const WHOLE = ['shoulder', 'setscrew'];   // shapes with no tip or washer options
 // the variant one click on a shape gives on this page: pointed on the wood and sheet metal pages, blunt on the machine pages
 const defVariant = (p, shape) => vKey({ shape, pointed: p.class !== 'machine' && !WHOLE.includes(shape) });
@@ -530,7 +530,7 @@ function openDetail(key, type, x, y) {
   if (isHead && !WHOLE.includes(v.shape)) {
     h += `<h4>Tip</h4><label><input type="radio" name="tip" value="blunt" ${!v.pointed ? 'checked' : ''}>Blunt</label><label><input type="radio" name="tip" value="pointed" ${v.pointed ? 'checked' : ''}>Pointed</label>
       <label><input type="checkbox" id="popCut" ${v.cutting ? 'checked' : ''}>Cutting tip (${v.pointed ? 'self-drilling' : 'thread-forming'})</label>
-      <h4>Captive washer</h4>` + [['f', 'Flat'], ['s', 'Split lock'], ['e', 'External tooth'], ['i', 'Internal tooth']].map(([c, l]) => `<label><input type="checkbox" class="popW" value="${c}" ${v.washers.includes(c) ? 'checked' : ''}>${l}</label>`).join('');
+      <h4>Captive washer</h4>` + [['k', 'Countersunk (finishing cup)'], ['f', 'Flat'], ['s', 'Split lock'], ['e', 'External tooth'], ['i', 'Internal tooth']].map(([c, l]) => `<label><input type="checkbox" class="popW" value="${c}" ${v.washers.includes(c) ? 'checked' : ''}>${l}</label>`).join('');
   }
   h += `<h4>Location</h4><div class="loc"><span>${locSummary(info, '') || `as the cell (${locSummary(c, 'unset')})`}</span>${locBtn(info, '', '')}</div>`;
   if (drives.length) {
@@ -575,7 +575,7 @@ function openDetail(key, type, x, y) {
 const DRIVES = [['slotted', 'Slotted'], ['phillips', 'Phillips'], ['combo', 'Slotted + Phillips combo'], ['hexslot', 'Hex + slotted'], ['pozidriv', 'Pozidriv'], ['jis', 'JIS'], ['torx', 'Torx'], ['hex', 'Hex'], ['square', 'Square']];
 const FIXED_DRIVE = { socket: 'hex', shoulder: 'hex', setscrew: 'hex', thumb: 'none' };   // by shape
 const DRIVES_FOR = { hex: ['hex', 'hexslot'], hexwasher: ['hex', 'hexslot'] };   // shapes with a restricted drive choice   // carriage bolts: usually none, but some carry a slot, so the normal list applies   // heads whose drive is a given
-const MAT_SCREW = [['aluminum', 'Aluminum'], ['steel', 'Steel, plain'], ['steel-blackoxide', 'Steel, black oxide'], ['steel-zinc', 'Steel, zinc'], ['steel-cadmium', 'Steel, cadmium'], ['stainless', 'Stainless steel'], ['brass', 'Brass'],
+const MAT_SCREW = [['aluminum', 'Aluminum'], ['steel', 'Steel, plain'], ['steel-blackoxide', 'Steel, black oxide'], ['steel-zinc', 'Steel, zinc'], ['steel-cadmium', 'Steel, cadmium'], ['steel-chrome', 'Steel, chrome'], ['steel-nickel', 'Steel, nickel'], ['stainless', 'Stainless steel'], ['brass', 'Brass'], ['brass-chrome', 'Brass, chrome'], ['brass-nickel', 'Brass, nickel'],
                    ['nylon', 'Nylon'], ['ptfe', 'PTFE'], ['phenolic', 'Phenolic'], ['pei', 'PEI (Ultem)'], ['polycarbonate', 'Polycarbonate'], ['plastic', 'Plastic, other']];
 const MAT_WASHER = [...MAT_SCREW, ['fiber', 'Fiber'], ['copper', 'Copper'], ['bronze', 'Bronze']];
 // hardware columns: [page list, cell key suffix, per row or per diameter, label]

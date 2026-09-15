@@ -29,9 +29,11 @@ const SHAPES = {
   setscrew: { whole: `<rect x="38" y="14" width="24" height="78" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 32, 92)}` },
 };
 // captive washers under the head, each 6 units tall: f flat, s split lock, e external tooth, i internal tooth
-const WASHER_CODES = { f: 'flat', s: 'split', e: 'exttooth', i: 'inttooth' };
-const WASHER_NAMES = { flat: 'flat', split: 'split lock', exttooth: 'external tooth', inttooth: 'internal tooth' };
+const WASHER_CODES = { k: 'countersunk', f: 'flat', s: 'split', e: 'exttooth', i: 'inttooth' };
+const WASHER_NAMES = { countersunk: 'countersunk', flat: 'flat', split: 'split lock', exttooth: 'external tooth', inttooth: 'internal tooth' };
 function washerUnder(code, y) {
+  // countersunk (finishing cup) washer: a cup the head sits in, so the profile reads like a flange; it starts up beside the head
+  if (code === 'k') return `<path d="M14 ${y - 12} H86 L78 ${y + 6} H22 Z" ${HEAD.border}/>`;
   const r = `<path d="M18 ${y} H82 V${y + 6} H18 Z" ${HEAD.border}/>`;
   if (code === 'f') return r;
   if (code === 's') return r + `<line x1="66" y1="${y}" x2="72" y2="${y + 6}" stroke="${K}" stroke-width="3"/>`;
@@ -47,7 +49,7 @@ function shankFor(pointed, cutting, y0) {
 }
 // variant keys
 const parse = name => { const [shape, ...f] = String(name).split(':'); const w = f.find(x => x[0] === 'w') || ''; return { shape, pointed: f.includes('p'), cutting: f.includes('c'), washers: [...w.slice(1)] }; };
-const key = ({ shape, pointed = false, cutting = false, washers = [] }) => shape + (pointed ? ':p' : '') + (cutting ? ':c' : '') + (washers.length ? ':w' + ['f', 's', 'e', 'i'].filter(c => washers.includes(c)).join('') : '');
+const key = ({ shape, pointed = false, cutting = false, washers = [] }) => shape + (pointed ? ':p' : '') + (cutting ? ':c' : '') + (washers.length ? ':w' + ['k', 'f', 's', 'e', 'i'].filter(c => washers.includes(c)).join('') : '');
 function screw(name) {
   const v = parse(name), h = SHAPES[v.shape]; if (!h) return null;
   if (h.whole) return h.whole;
