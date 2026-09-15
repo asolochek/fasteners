@@ -31,15 +31,12 @@ app.get('/api/icons', (req, res) => res.json({ svg: Object.fromEntries(Object.ke
 app.get('/api/printed', (req, res) => res.json(loadPrinted()));
 
 // ---- what a location holds ----
-// portions of the given cells grouped by location (drawer half or bin) and diameter: cells of one diameter that share a
-// location print as one label; a second diameter in the same location gets a label of its own. A portion without a
-// location is a group of its own.
-const diaOf = (page, pt) => { const [a, b] = pt.key.split('|'); return b.endsWith('washer') ? a : (page.rows.find(r => r.id === a)?.dia || a); };
+// portions of the given cells grouped by location (drawer half or bin); a portion without a location is a group of its own
 function groupBySlot(page, keys) {
   const groups = new Map(), singles = [];
   for (const pt of M.portions(page, keys)) {
     const s = M.portionSlot(pt); if (!s) { singles.push([pt]); continue; }
-    const g = `${s}\n${diaOf(page, pt)}`; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(pt);
+    if (!groups.has(s)) groups.set(s, []); groups.get(s).push(pt);
   }
   return [...singles, ...groups.values()];
 }
@@ -119,7 +116,10 @@ function binEntries(d, bin) {
   const out = [];
   for (const page of d.pages) for (const g of groupBySlot(page, M.populated(page))) {
     if (groupSlot(g) !== `B:${bin}`) continue;
-    out.push({ page, group: g, ...groupText(page, g) });   // groups are already one diameter each: one line per size
+    // one entry per diameter, so each line of the label reads "size × lengths"
+    const diaOf = pt => { const [a, b] = pt.key.split('|'); return b.endsWith('washer') ? a : (page.rows.find(r => r.id === a)?.dia || a); };
+    const byDia = new Map(); for (const pt of g) { const k = diaOf(pt); if (!byDia.has(k)) byDia.set(k, []); byDia.get(k).push(pt); }
+    for (const sub of byDia.values()) out.push({ page, group: sub, ...groupText(page, sub) });
   }
   return out;
 }

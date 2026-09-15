@@ -55,9 +55,9 @@ records what has been printed.
   bin from every page: one size big with its lengths under it, or one line per size.
 - A label for part of a cell says what sets that part apart: the drive or material (`pan SS`, `Phillips zinc`) and
   `overflow` for an overflow location.
-- Cells of one diameter that share a drawer half print as one label: `#10 Washer` with all the washer icons, `#4-40 Nut`, `#8-32/36 × 1/2″`
+- Cells that share a drawer half print as one label: `#10 Washer` with all the washer icons, `#4-40 Nut`, `#8-32/36 × 1/2″`
   when two pitches of one diameter share a drawer, or the size with the lengths listed after it. A cell split over several
-  drawers asks which to print. A second diameter in the same drawer half gets its own label.
+  drawers asks which to print.
 - Order is by drawer number, rear before front, then the unassigned cells in reading order.
 - Without the helper the PDF downloads; print it from Acrobat at actual size on a queue whose defaults are set to 9 mm tape,
   auto length, cut per label. With the helper (`helper/`, see its README) the **Printer…** panel sends labels straight to
