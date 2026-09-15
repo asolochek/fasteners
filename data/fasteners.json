@@ -2032,8 +2032,15 @@
    "id": "other",
    "title": "Other hardware",
    "kind": "list",
-   "items": []
+   "items": [
+    {
+     "id": "lmu27tgvf",
+     "text": "Banana Plugs",
+     "glyph": "",
+     "checked": false
+    }
+   ]
   }
  ],
- "rev": 522
+ "rev": 525
 }

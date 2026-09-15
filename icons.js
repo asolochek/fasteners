@@ -84,7 +84,8 @@ const MISC = {
   // banana plug: insulated handle on top, sprung pin below
   banana:      `${box(34, 6, 32, 38, 5)}<line x1="50" y1="44" x2="50" y2="50" stroke="${K}" stroke-width="${SW}"/>${bananaPin(50, 50, 94)}`,
   // stackable: the handle has a jack in its top
-  bananastack: `${box(34, 6, 32, 38, 5)}<ellipse cx="50" cy="6" rx="9" ry="3.5" fill="none" stroke="${K}" stroke-width="3.5"/>${ring(50, 22, 7, 4)}<line x1="50" y1="44" x2="50" y2="50" stroke="${K}" stroke-width="${SW}"/>${bananaPin(50, 50, 94)}`,
+  // stacking banana plug (Pomona style): body lying flat, jack in the back end, cable stub down, pin to the right
+  bananastack: `${box(4, 24, 48, 30, 6)}<ellipse cx="10" cy="39" rx="3" ry="8" fill="none" stroke="${K}" stroke-width="3.5"/><line x1="16" y1="30" x2="48" y2="30" stroke="${K}" stroke-width="2.5"/><path d="M24 54 L22 84 Q22 90 28 90 H40 Q46 90 46 84 L44 54" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="52" y1="39" x2="60" y2="39" stroke="${K}" stroke-width="${SW}"/><path d="M60 34 H68 Q84 28 92 34 L97 39 L92 44 Q84 50 68 44 H60 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="70" y1="39" x2="90" y2="39" stroke="${K}" stroke-width="2.5"/>`,
   // dual banana: one block, two pins at 3/4" spacing
   bananadual:  `${box(12, 8, 76, 34, 5)}<line x1="18" y1="20" x2="18" y2="30" stroke="${K}" stroke-width="3"/><line x1="32" y1="42" x2="32" y2="48" stroke="${K}" stroke-width="${SW}"/><line x1="68" y1="42" x2="68" y2="48" stroke="${K}" stroke-width="${SW}"/>${bananaPin(32, 48, 92)}${bananaPin(68, 48, 92)}`,
   // banana jack: a panel bushing with the hole on top
