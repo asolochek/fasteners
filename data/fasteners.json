@@ -1929,13 +1929,17 @@
     "start": 0.5,
     "stop": 3,
     "step": 0.25,
-    "extra": []
+    "extra": [
+     5.5,
+     0.625
+    ],
+    "skip": []
    },
    "heads": [
-    "flange",
     "flat",
     "pan",
-    "button",
+    "hex",
+    "hexwasher",
     "trim"
    ],
    "nuts": [],
@@ -1969,6 +1973,12 @@
      "pitch": 0
     },
     {
+     "id": "#7",
+     "label": "#7",
+     "dia": "#7",
+     "pitch": 0
+    },
+    {
      "id": "#8",
      "label": "#8",
      "dia": "#8",
@@ -1991,6 +2001,12 @@
      "label": "1/4",
      "dia": "1/4",
      "pitch": 0
+    },
+    {
+     "id": "5/16",
+     "label": "5/16",
+     "dia": "5/16",
+     "pitch": 0
     }
    ],
    "cells": {
@@ -2003,6 +2019,7 @@
       "flat:p": {
        "drives": {
         "phillips": [
+         "steel-blackoxide",
          "steel-zinc"
         ]
        }
@@ -2113,7 +2130,8 @@
     "#8|1": {
      "types": [
       "flat:p",
-      "button:p"
+      "button:p",
+      "flange:p:c"
      ],
      "detail": {
       "flat:p": {
@@ -2127,6 +2145,13 @@
        "drives": {
         "slotted": [
          "steel-zinc"
+        ]
+       }
+      },
+      "flange:p:c": {
+       "drives": {
+        "torx": [
+         "steel-cadmium"
         ]
        }
       }
@@ -2262,6 +2287,209 @@
         "slotted": [
          "steel-zinc"
         ]
+       }
+      }
+     }
+    },
+    "1/4|0.5": {
+     "types": []
+    },
+    "1/4|0.75": {
+     "types": [
+      "hexwasher:p"
+     ],
+     "detail": {
+      "hexwasher:p": {
+       "drives": {
+        "hexslot": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "1/4|2.5": {
+     "types": [
+      "flat:p",
+      "hexwasher:p:c"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "phillips": []
+       }
+      },
+      "hexwasher:p:c": {
+       "drives": {
+        "hex": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "5/16|1.5": {
+     "types": [
+      "hex:p"
+     ],
+     "detail": {
+      "hex:p": {
+       "drives": {
+        "hex": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "5/16|5.5": {
+     "types": [
+      "hex:p"
+     ],
+     "detail": {
+      "hex:p": {
+       "drives": {
+        "hex": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "5/16|2.75": {
+     "types": [
+      "hex:p"
+     ],
+     "detail": {
+      "hex:p": {
+       "drives": {
+        "hex": [
+         "steel-blackoxide"
+        ]
+       }
+      }
+     }
+    },
+    "1/4|2.75": {
+     "types": [
+      "hex:p"
+     ],
+     "detail": {
+      "hex:p": {
+       "drives": {
+        "hex": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "1/4|1.25": {
+     "types": [
+      "truss:p"
+     ],
+     "detail": {
+      "truss:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "5/16|2": {
+     "types": [
+      "hex:p"
+     ],
+     "detail": {
+      "hex:p": {
+       "drives": {
+        "hex": [
+         "steel"
+        ]
+       }
+      }
+     }
+    },
+    "1/4|1": {
+     "types": [
+      "hex:p"
+     ],
+     "detail": {
+      "hex:p": {
+       "drives": {
+        "hex": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#8|2": {
+     "types": [
+      "flat:p"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "torx": [
+         "steel-cadmium"
+        ]
+       }
+      }
+     }
+    },
+    "#8|0.625": {
+     "types": [
+      "oval:p:wk"
+     ],
+     "detail": {
+      "oval:p:wk": {
+       "drives": {
+        "phillips": [
+         "steel-chrome"
+        ]
+       }
+      }
+     }
+    },
+    "#8|1.5": {
+     "types": [
+      "flange:p:c"
+     ],
+     "detail": {
+      "flange:p:c": {
+       "drives": {
+        "torx": [
+         "steel-cadmium"
+        ]
+       }
+      }
+     }
+    },
+    "1/4|1.5": {
+     "types": [
+      "flange:p"
+     ],
+     "detail": {
+      "flange:p": {
+       "drives": {
+        "torx": [
+         "steel-cadmium"
+        ]
+       }
+      }
+     }
+    },
+    "#8|2.5": {
+     "types": [
+      "flat:p:c"
+     ],
+     "detail": {
+      "flat:p:c": {
+       "drives": {
+        "torx": []
        }
       }
      }
@@ -2425,5 +2653,5 @@
    ]
   }
  ],
- "rev": 689
+ "rev": 766
 }
