@@ -1932,10 +1932,12 @@
     "extra": []
    },
    "heads": [
+    "flange",
     "wood",
+    "sheetmetal",
+    "buttonsm",
     "trim",
-    "flangesm",
-    "sheetmetal"
+    "flangesm"
    ],
    "nuts": [],
    "washers": [
@@ -1968,7 +1970,241 @@
      "pitch": 0
     }
    ],
-   "cells": {},
+   "cells": {
+    "#8|0.75": {
+     "types": [
+      "wood",
+      "buttonsm"
+     ],
+     "detail": {
+      "wood": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "buttonsm": {
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#4|0.5": {
+     "types": [
+      "wood",
+      "buttonsm"
+     ],
+     "detail": {
+      "wood": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "buttonsm": {
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#6|0.5": {
+     "types": [
+      "wood",
+      "buttonsm"
+     ],
+     "detail": {
+      "wood": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "buttonsm": {
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#6|0.75": {
+     "types": [
+      "wood",
+      "buttonsm"
+     ],
+     "detail": {
+      "wood": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "buttonsm": {
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#6|1": {
+     "types": [
+      "buttonsm"
+     ],
+     "detail": {
+      "buttonsm": {
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#8|0.5": {
+     "types": [
+      "wood"
+     ],
+     "detail": {
+      "wood": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#8|1": {
+     "types": [
+      "wood",
+      "buttonsm"
+     ],
+     "detail": {
+      "wood": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "buttonsm": {
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#8|1.25": {
+     "types": [
+      "wood",
+      "buttonsm"
+     ],
+     "detail": {
+      "sheetmetal": {
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "wood": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "buttonsm": {
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#10|0.75": {
+     "types": [
+      "wood",
+      "buttonsm"
+     ],
+     "detail": {
+      "wood": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "buttonsm": {
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#10|1": {
+     "types": [
+      "wood",
+      "buttonsm"
+     ],
+     "detail": {
+      "wood": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "buttonsm": {
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#10|1.5": {
+     "types": [
+      "wood",
+      "buttonsm"
+     ],
+     "detail": {
+      "wood": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "buttonsm": {
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    }
+   },
    "locknuts": [],
    "lockwashers": []
   },
@@ -2055,77 +2291,77 @@
      "id": "lmu27tgvf",
      "text": "Banana Plugs",
      "glyph": "bananastack",
-     "checked": false,
+     "checked": true,
      "detail": ""
     },
     {
      "id": "lmu27z8ru",
      "text": "Banana Plugs",
      "glyph": "banana",
-     "checked": false
+     "checked": true
     },
     {
      "id": "lmu27zj51",
      "text": "Binding Posts",
      "glyph": "bindingpost",
-     "checked": false
+     "checked": true
     },
     {
      "id": "lmu27zvja",
      "text": "Banana Jacks",
      "glyph": "bananajack",
-     "checked": false
+     "checked": true
     },
     {
      "id": "lmu2805cz",
      "text": "Double Banana",
      "glyph": "bananadual",
-     "checked": false
+     "checked": true
     },
     {
      "id": "lmu280djj",
      "text": "DB9",
      "glyph": "db9",
-     "checked": false
+     "checked": true
     },
     {
      "id": "lmu281v29",
      "text": "Alligator Clips",
      "glyph": "alligator",
-     "checked": false
+     "checked": true
     },
     {
      "id": "lmu28h8cx",
      "text": "GPIB Plugs",
      "glyph": "gpib",
-     "checked": false
+     "checked": true
     },
     {
      "id": "lmu28iz2m",
      "text": "100mil Headers",
      "glyph": "header100",
-     "checked": false
+     "checked": true
     },
     {
      "id": "lmu28jbhf",
      "text": "2mm Headers",
      "glyph": "header2mm",
-     "checked": false
+     "checked": true
     },
     {
      "id": "lmu28jld0",
      "text": "100mil Sockets",
      "glyph": "socket100",
-     "checked": false
+     "checked": true
     },
     {
      "id": "lmu28jqys",
      "text": "2mm Sockets",
      "glyph": "socket2mm",
-     "checked": false
+     "checked": true
     }
    ]
   }
  ],
- "rev": 588
+ "rev": 658
 }
