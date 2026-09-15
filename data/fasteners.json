@@ -22,7 +22,8 @@
      0.5625,
      1.75,
      2.5,
-     2.25
+     2.25,
+     3.25
     ],
     "skip": [
      null,
@@ -148,6 +149,18 @@
      "label": "5/16-18",
      "dia": "5/16",
      "pitch": 18
+    },
+    {
+     "id": "3/8-16",
+     "label": "3/8-16",
+     "dia": "3/8",
+     "pitch": 16
+    },
+    {
+     "id": "1/2-13",
+     "label": "1/2-13",
+     "dia": "1/2",
+     "pitch": 13
     }
    ],
    "cells": {
@@ -898,12 +911,16 @@
     "12-24|0.5": {
      "types": [
       "pan"
-     ]
+     ],
+     "drawer": "57",
+     "half": "back"
     },
     "12-24|0.625": {
      "types": [
       "pan"
-     ]
+     ],
+     "drawer": "57",
+     "half": "back"
     },
     "1/4-20|0.375": {
      "types": [
@@ -1178,18 +1195,22 @@
     },
     "1/4-20|locknut": {
      "types": [],
-     "drawer": "65",
-     "half": "back"
+     "drawer": "67",
+     "half": "front"
     },
     "1/4-20|nut": {
      "types": [
       "nut",
       "thin"
      ],
-     "drawer": "66",
+     "drawer": "68",
      "half": "",
      "detail": {
-      "thin": {},
+      "thin": {
+       "materials": [
+        "steel-zinc"
+       ]
+      },
       "nut": {
        "materials": [
         "steel-zinc",
@@ -1204,7 +1225,7 @@
       "split"
      ],
      "drawer": "67",
-     "half": "back"
+     "half": "front"
     },
     "1/4|washer": {
      "types": [
@@ -1212,20 +1233,29 @@
       "fender",
       "undersized"
      ],
-     "drawer": "66",
+     "drawer": "70",
      "half": "front",
      "detail": {
       "fender": {
        "drawer": "67",
-       "half": "front",
+       "half": "back",
        "materials": [
-        "steel-zinc"
+        "steel-zinc",
+        "fiber"
        ]
       },
       "undersized": {
        "materials": [
         "steel-zinc"
        ]
+      },
+      "washer": {
+       "materials": [
+        "stainless",
+        "steel-zinc"
+       ],
+       "drawer": "69",
+       "half": "back"
       }
      }
     },
@@ -1235,7 +1265,9 @@
     "5/16-18|2.5": {
      "types": [
       "carriage"
-     ]
+     ],
+     "drawer": "73",
+     "half": ""
     },
     "10-24|3": {
      "types": [
@@ -1301,20 +1333,208 @@
     },
     "1/4-20|2.25": {
      "types": [
-      "carriage"
+      "carriage",
+      "shoulder"
      ],
      "detail": {
       "carriage": {
+       "materials": [
+        "steel-zinc"
+       ],
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
+     },
+     "drawer": "66",
+     "half": ""
+    },
+    "1/4-20|3": {
+     "types": [
+      "hex"
+     ],
+     "detail": {
+      "hex": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      }
+     },
+     "drawer": "66",
+     "half": ""
+    },
+    "3/8-16|nut": {
+     "types": [
+      "nut"
+     ],
+     "detail": {
+      "nut": {
+       "materials": [
+        "steel-cadmium",
+        "steel-zinc"
+       ]
+      }
+     },
+     "drawer": "78",
+     "half": ""
+    },
+    "3/8|lockwasher": {
+     "types": [
+      "split",
+      "toothed"
+     ],
+     "detail": {
+      "split": {
        "materials": [
         "steel-zinc"
        ]
       }
      }
     },
-    "1/4-20|3": {
+    "3/8|washer": {
+     "types": [
+      "washer",
+      "fender",
+      "undersized"
+     ],
+     "detail": {
+      "washer": {
+       "materials": [
+        "stainless",
+        "steel-zinc"
+       ]
+      },
+      "fender": {
+       "materials": [
+        "steel-zinc"
+       ]
+      }
+     }
+    },
+    "5/16|lockwasher": {
+     "types": [
+      "toothed"
+     ],
+     "drawer": "75",
+     "half": "back"
+    },
+    "5/16|washer": {
+     "types": [
+      "washer",
+      "fender",
+      "sleeved"
+     ],
+     "drawer": "75",
+     "half": "front",
+     "detail": {
+      "fender": {
+       "materials": [
+        "stainless"
+       ]
+      },
+      "washer": {
+       "materials": [
+        "steel-zinc",
+        "stainless"
+       ]
+      },
+      "sleeved": {
+       "drawer": "76",
+       "half": "back",
+       "materials": [
+        "nylon"
+       ]
+      }
+     }
+    },
+    "1/2|washer": {
+     "types": [
+      "fender",
+      "undersized",
+      "washer"
+     ],
+     "detail": {
+      "fender": {
+       "materials": [
+        "steel-zinc"
+       ]
+      },
+      "undersized": {
+       "materials": [
+        "stainless"
+       ]
+      },
+      "washer": {
+       "materials": [
+        "stainless"
+       ]
+      }
+     }
+    },
+    "1/2-13|0.875": {
+     "types": [
+      "socket"
+     ],
+     "detail": {
+      "socket": {
+       "drives": {
+        "hex": [
+         "steel-blackoxide"
+        ]
+       }
+      }
+     }
+    },
+    "1/2-13|3.25": {
      "types": [
       "hex"
-     ]
+     ],
+     "detail": {
+      "hex": {
+       "drives": {
+        "hex": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "3/8-16|locknut": {
+     "types": [
+      "nylock"
+     ],
+     "drawer": "77",
+     "half": "front"
+    },
+    "3/8-16|2": {
+     "types": [
+      "hex"
+     ],
+     "detail": {
+      "hex": {
+       "drives": {
+        "hex": [
+         "steel-cadmium"
+        ]
+       }
+      }
+     },
+     "drawer": "77",
+     "half": "back"
+    },
+    "5/16-18|locknut": {
+     "types": [],
+     "drawer": "74",
+     "half": "back"
+    },
+    "5/16-18|nut": {
+     "types": [],
+     "drawer": "74",
+     "half": "front"
     }
    },
    "locknuts": [
@@ -1565,5 +1785,5 @@
    "cells": {}
   }
  ],
- "rev": 391
+ "rev": 459
 }

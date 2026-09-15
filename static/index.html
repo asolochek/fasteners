@@ -35,6 +35,12 @@ td.washer { background:var(--none); }
 .icons.dense .ic { width:32px; height:32px; }
 .ic { position:relative; }
 .ic .badge { position:absolute; right:-3px; bottom:-3px; background:var(--accent); color:#fff; font-size:9px; line-height:1; padding:2px 3px; border-radius:6px; font-weight:600; pointer-events:none; }
+.ic .badge.bin { background:#2f6db5; }
+.ic .badge.mixed { background:var(--ink2); }
+#pop .locbtn { font-size:11px; padding:1px 5px; margin-left:auto; border-radius:8px; }
+#pop .locbtn.set { background:var(--accent); color:#fff; border-color:var(--accent); }
+#pop .locbtn.bin { background:#2f6db5; color:#fff; border-color:#2f6db5; }
+#pop .loc { display:flex; align-items:center; gap:8px; }
 .ic.hasinfo::after { content:''; position:absolute; left:2px; top:2px; width:6px; height:6px; border-radius:3px; background:var(--ink2); }
 .more { width:28px; height:44px; display:flex; align-items:center; justify-content:center; color:var(--ink2); cursor:pointer; border-radius:3px; font-weight:600; }
 .more:hover { background:#fff; color:var(--ink); }
@@ -105,6 +111,7 @@ td.cell:not(.have) .print, .card:not(.have) .print { visibility:hidden; }
   <button id="addRow">Add row…</button>
   <button id="addLen">Add length…</button>
   <button id="printDrawers">PDF: drawers…</button>
+  <button id="printBins" title="18 mm labels for the bins">PDF: bins…</button>
   <button id="printNew">PDF: unprinted</button>
   <button id="printAll">PDF: all</button>
   <button id="markPrinted">Mark all printed</button>
@@ -120,6 +127,7 @@ td.cell:not(.have) .print, .card:not(.have) .print { visibility:hidden; }
 <div id="types"></div>
 <div id="helper"></div>
 <div id="pop"></div>
+<script src="/model.js"></script>
 <script>
 let data, icons, printed = {}, pageId, saveTimer;
 const $ = s => document.querySelector(s);
@@ -153,21 +161,47 @@ function toggle(key, type) {
   if (i >= 0) c.types.splice(i, 1); else c.types.push(type);
   save(); render();
 }
-// drawer number with an optional half: "12" (undivided), "12R" / "12 rear", "12F" / "12 front"
+// locations: a drawer half ("12", "12R", "12F") or a bin ("B3"); each of a cell, a head type and a drive+material of a head
+// can have its own primary location plus overflow locations, the most specific one winning (see model.js)
 const halfText = h => h === 'back' ? 'rear' : h === 'front' ? 'front' : '';
-function setDrawer(key) {
-  const c = cell(key); const v = prompt(`Drawer for ${key.replace('|', ' ')} — number, then R (rear) or F (front) if the drawer is divided, e.g. 12, 12R, 12F`, (c.drawer || '') + (c.half === 'back' ? 'R' : c.half === 'front' ? 'F' : ''));
-  if (v === null) return;
-  const m = /^\s*([^\s]*?)\s*(r|rear|b|back|f|front)?\s*$/i.exec(v) || [];
-  c.drawer = (m[1] || '').trim(); const h = (m[2] || '').toLowerCase();
-  c.half = /^(r|rear|b|back)$/.test(h) ? 'back' : /^(f|front)$/.test(h) ? 'front' : '';
-  save(); render();
+// summary of what is set on an object holding loc/overflow: "drawer 12 rear +B3", "bin B2", or the fallback text
+function locSummary(o, fallback = '') {
+  const l = M.locOf(o), over = M.overflowOf(o);
+  return (l ? M.locLong(l) : fallback) + (over.length ? ' +' + over.map(M.locText).join(',') : '');
+}
+// the editor: primary and overflow locations of `target` (a cell, a head type's detail, or one drive+material's item)
+function openLoc(key, target, title, x, y, back) {
+  $('#pop').innerHTML = `<h3>Location · ${title}</h3>
+    <h4>Primary</h4><input type="text" id="popLoc" placeholder="${target === cell(key) ? 'e.g. 12, 12R, 12F or B3' : 'blank = as the level above; e.g. 12R or B3'}" value="${M.locText(M.locOf(target))}">
+    <h4>Overflow</h4><input type="text" id="popOver" placeholder="e.g. B2, 13F" value="${M.overflowOf(target).map(M.locText).join(', ')}">
+    <div class="note">Drawers: number, then R (rear) or F (front) if divided. Bins: B and a number. Overflow: a list.</div>
+    <div class="row"><button type="button" id="popGo">Save</button><button type="button" id="popClose">Cancel</button></div>`;
+  const done = () => { closePop(); if (back) back(); };
+  $('#popGo').onclick = () => {
+    const prim = M.parseLoc($('#popLoc').value), over = M.parseLocs($('#popOver').value);
+    if (prim === undefined || over.some(l => l === undefined)) return alert('Could not read a location. Use 12, 12R, 12F or B3.');
+    delete target.drawer; delete target.half;   // the old fields
+    if (prim) target.loc = prim; else delete target.loc;
+    if (over.length) target.overflow = over; else delete target.overflow;
+    save(); render(); done();
+  };
+  $('#popClose').onclick = done; placePop(x, y);
+  $('#popLoc').focus();
+  $('#pop').querySelectorAll('input').forEach(i => i.onkeydown = e => { if (e.key === 'Enter') $('#popGo').click(); });
+}
+// the per-type badge on an icon: its own location, "…" when its drives/materials are split over locations, "+" for overflow
+function typeBadge(info) {
+  const l = M.locOf(info), over = M.overflowOf(info), items = Object.values(info.items || {}).filter(it => M.locOf(it) || M.overflowOf(it).length);
+  if (!l && !over.length && !items.length) return null;
+  const b = document.createElement('span'); b.className = 'badge' + (l?.kind === 'bin' ? ' bin' : !l ? ' mixed' : '');
+  b.textContent = (l ? M.locText(l) : '…') + (over.length ? '+' : '');
+  return b;
 }
 function iconEl(type, on, key) {
   const c = page().cells[key] || {}, info = (c.detail || {})[type] || {};
-  const d = document.createElement('div'); d.className = 'ic' + (on ? ' on' : '') + (on && (info.drives || info.materials) ? ' hasinfo' : ''); d.title = (icons.labels[type] || type) + (on ? ' — right-click / long-press for drive, material, own drawer' : '');
+  const d = document.createElement('div'); d.className = 'ic' + (on ? ' on' : '') + (on && (info.drives || info.materials) ? ' hasinfo' : ''); d.title = (icons.labels[type] || type) + (on ? ' — right-click / long-press for drive, material, location' : '');
   d.innerHTML = icons.svg[type]; d.onclick = () => toggle(key, type);
-  if (on && info.drawer) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = info.drawer + (info.half === 'back' ? 'R' : info.half === 'front' ? 'F' : ''); d.appendChild(b); }
+  if (on) { const b = typeBadge(info); if (b) d.appendChild(b); }
   d.oncontextmenu = e => { e.preventDefault(); if (on) openDetail(key, type, e.clientX, e.clientY); };
   return d;
 }
@@ -184,7 +218,7 @@ function cellTd(key, types, extraClass = '', universe = null) {
   if (universe && universe.some(t => !shown.includes(t))) { const m = document.createElement('div'); m.className = 'more'; m.textContent = '…'; m.title = 'other head types'; m.onclick = e => openMore(key, universe, e.clientX, e.clientY); ic.appendChild(m); }
   td.appendChild(ic);
   const meta = document.createElement('div'); meta.className = 'meta';
-  const dr = document.createElement('span'); dr.className = 'drawer' + (c.drawer ? ' set' : ''); dr.textContent = c.drawer ? `drawer ${c.drawer}${c.half ? ' ' + halfText(c.half) : ''}` : 'drawer?'; dr.onclick = () => setDrawer(key);
+  const dr = document.createElement('span'); dr.className = 'drawer' + (M.locOf(c) ? ' set' : ''); dr.textContent = locSummary(c, 'location?'); dr.title = 'where this cell lives (a head type or a drive+material can override it: right-click the icon)'; dr.onclick = e => openLoc(key, cell(key), cellTextClient(page(), key), e.clientX, e.clientY);
   const pr = document.createElement('span'); pr.className = 'print'; pr.textContent = '⎙'; pr.title = 'PDF for this label'; pr.onclick = e => printCell(key, e.clientX, e.clientY);
   pr.onmouseenter = () => showPreview(key); pr.onmouseleave = hidePreview;
   meta.appendChild(dr); meta.appendChild(pr); td.appendChild(meta);
@@ -293,7 +327,7 @@ function renderMobile(p, lens) {
     if (universe && universe.some(x => !shown.includes(x))) { const m = document.createElement('div'); m.className = 'more'; m.textContent = '…'; m.onclick = e => openMore(key, universe, e.clientX, e.clientY); ic.appendChild(m); }
     card.appendChild(ic);
     const meta = document.createElement('div'); meta.className = 'meta';
-    const dr = document.createElement('span'); dr.className = 'drawer' + (c.drawer ? ' set' : ''); dr.textContent = c.drawer ? `drawer ${c.drawer}${c.half ? ' ' + halfText(c.half) : ''}` : 'drawer?'; dr.onclick = () => setDrawer(key);
+    const dr = document.createElement('span'); dr.className = 'drawer' + (M.locOf(c) ? ' set' : ''); dr.textContent = locSummary(c, 'location?'); dr.onclick = e => openLoc(key, cell(key), cellTextClient(p, key), e.clientX, e.clientY);
     const pr = document.createElement('span'); pr.className = 'print'; pr.textContent = '⎙'; pr.onclick = e => printCell(key, e.clientX, e.clientY);
     meta.appendChild(dr); meta.appendChild(pr); card.appendChild(meta);
     g.appendChild(card);
@@ -323,46 +357,57 @@ $('#addLen').onclick = () => {
 // print helper (helper/print-helper.py on the PC with the printer): settings live in this browser
 const HS = { get() { try { return JSON.parse(localStorage.getItem('helper') || '{}'); } catch (e) { return {}; } }, set(v) { try { localStorage.setItem('helper', JSON.stringify(v)); } catch (e) {} } };
 function helperUrl(path, extra = '') { const h = HS.get(); const base = (h.url || '').replace(/\/+$/, ''); return base ? `${base}${path}?token=${encodeURIComponent(h.token || '')}${extra}` : null; }
-async function sendToPrinter(blob, n) {
-  const h = HS.get(), url = helperUrl('/print', `&printer=${encodeURIComponent(h.printer || '')}`);
-  if (!url || !h.printer) return false;
-  status(`sending ${n} label${n == 1 ? '' : 's'} to ${h.printer}…`);
+async function sendToPrinter(blob, n, tape = '9') {
+  const h = HS.get(), printer = tape === '18' ? h.printerBin : h.printer, url = helperUrl('/print', `&printer=${encodeURIComponent(printer || '')}`);
+  if (!url || !printer) { if (tape === '18') alert('No printer queue is set for 18 mm bin labels (Printer…). Downloading the PDF instead.'); return false; }
+  status(`sending ${n} label${n == 1 ? '' : 's'} to ${printer}…`);
   try {
     const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: blob });
     const j = await r.json();
     if (!r.ok) { alert('Print helper: ' + (j.error || r.status)); status('print failed'); return true; }
-    status(`printed ${j.pages} label${j.pages == 1 ? '' : 's'} on ${h.printer}`); return true;
+    status(`printed ${j.pages} label${j.pages == 1 ? '' : 's'} on ${printer}`); return true;
   } catch (e) { alert(`Could not reach the print helper at ${h.url}. Downloading the PDF instead.`); return false; }
 }
-// the drawer halves a cell's ticked types live in (per-head overrides included): [{ slot, label, types }]
+// the locations a cell's stock is split over: [{ slot, label, types }] (the unlocated part has slot '')
 function cellSlots(key) {
-  const c = page().cells[key] || {}, by = {};
-  for (const t of c.types || []) {
-    const o = (c.detail || {})[t] || {}; const drawer = o.drawer || c.drawer || '', half = o.drawer ? (o.half || '') : (c.half || '');
-    const slot = drawer ? `${drawer}|${half}` : ''; (by[slot] = by[slot] || { slot, label: drawer ? `drawer ${drawer}${half ? ' ' + halfText(half) : ''}` : 'no drawer', types: [] }).types.push(t);
+  const by = {};
+  for (const pt of M.portions(page(), [key])) {
+    const slot = M.portionSlot(pt), s = by[slot] = by[slot] || { slot, label: slot ? M.locLong(pt) : 'no location', types: [], overflow: true };
+    for (const t of pt.types) if (!s.types.includes(t)) s.types.push(t);
+    s.overflow = s.overflow && pt.overflow;
   }
   return Object.values(by);
 }
 function printCell(key, x, y) {
   const slots = cellSlots(key);
   if (slots.length < 2) return printKeys([key]);
-  $('#pop').innerHTML = `<h3>${cellTextClient(page(), key)} is split over ${slots.length} drawers — print which?</h3>` +
-    slots.map((s, i) => `<label><input type="checkbox" data-i="${i}" checked>${s.label} <span class="note">(${s.types.map(t => icons.labels[t] || t).join(', ')})</span></label>`).join('') +
+  $('#pop').innerHTML = `<h3>${cellTextClient(page(), key)} is split over ${slots.length} locations — print which?</h3>` +
+    slots.map((s, i) => `<label><input type="checkbox" data-i="${i}" checked>${s.label}${s.overflow ? ' (overflow)' : ''} <span class="note">(${s.types.map(t => icons.labels[t] || t).join(', ')})</span></label>`).join('') +
     `<div class="row"><button type="button" id="popGo">Print</button><button type="button" id="popClose">Cancel</button></div>`;
   $('#popGo').onclick = () => { const chosen = [...$('#pop').querySelectorAll('input:checked')].map(i => slots[+i.dataset.i].slot); closePop(); if (chosen.length) printKeys(null, { page: pageId, keys: [key], slots: chosen }); };
   $('#popClose').onclick = closePop; placePop(x, y);
 }
+// drawer labels (9 mm) come first; when the request also touches bins the server names them and their 18 mm labels follow
 async function printKeys(keys, body) {
   status('rendering…');
   const r = await fetch('/api/labels', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || { page: pageId, keys }) });
   if (!r.ok) { status(''); return alert((await r.json()).error || 'failed'); }
-  const n = r.headers.get('X-Label-Count'); const blob = await r.blob();
-  if (HS.get().direct && await sendToPrinter(blob, n)) return;
+  const bins = (r.headers.get('X-Bins') || '').split(',').filter(Boolean);
+  if (r.status !== 204) await deliver(r);
+  if (bins.length) {
+    const rb = await fetch('/api/labels', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bins, only: keys === 'new' ? 'new' : undefined }) });
+    if (!rb.ok) { status(''); return alert((await rb.json()).error || 'failed'); }
+    await deliver(rb);
+  }
+}
+async function deliver(r) {
+  const n = r.headers.get('X-Label-Count'), tape = r.headers.get('X-Tape') || '9'; const blob = await r.blob();
+  if (HS.get().direct && await sendToPrinter(blob, n, tape)) return;
   // download rather than open: a pop-up would be blocked, and the file is what gets printed anyway
   const name = (/filename="([^"]+)"/.exec(r.headers.get('Content-Disposition') || '') || [])[1] || 'labels.pdf';
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 60000);
-  status(`${n} label${n == 1 ? '' : 's'} → ${name}`);
+  status(`${n} ${tape} mm label${n == 1 ? '' : 's'} → ${name}`);
 }
 // head types a class can have at all; a cell shows the page's primary list plus whatever else is ticked, and "…" offers the rest
 const HEAD_UNIVERSE = { machine: ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew'],
@@ -383,17 +428,28 @@ function openDetail(key, type, x, y) {
   const isHead = (HEAD_UNIVERSE[p.class] || HEAD_UNIVERSE.machine).includes(type), isWasher = key.split('|')[1].endsWith('washer');
   const mats = isWasher ? MAT_WASHER : MAT_SCREW, fixed = isHead ? FIXED_DRIVE[type] : undefined;
   const drives = isHead && fixed === undefined ? DRIVES : (fixed && fixed !== 'none' ? [[fixed, DRIVES.find(d => d[0] === fixed)[1] + ' (always)']] : []);
-  const matList = (drive) => `<div class="sub">` + mats.map(([m, l]) => `<label><input type="checkbox" data-drive="${drive}" data-m="${m}" ${((drive ? (info.drives || {})[drive] : info.materials) || []).includes(m) ? 'checked' : ''}>${l}</label>`).join('') + `</div>`;
+  const matList = (drive) => `<div class="sub">` + mats.map(([m, l]) => { const on = ((drive ? (info.drives || {})[drive] : info.materials) || []).includes(m); return `<label><input type="checkbox" data-drive="${drive}" data-m="${m}" ${on ? 'checked' : ''}>${l}${on ? locBtn(itemOf(drive, m), drive, m) : ''}</label>`; }).join('') + `</div>`;
+  const locBtn = (o, d, m) => `<button type="button" class="locbtn${M.locOf(o) ? (M.locOf(o).kind === 'bin' ? ' bin' : ' set') : ''}" data-drive="${d}" data-m="${m}" title="location of this drive + material">${locSummary(o, '') || 'location'}</button>`;
+  const itemOf = (d, m) => ((info.items || {})[`${d}|${m}`] || {});
   let h = `<h3>${icons.svg[type]} ${icons.labels[type] || type} · ${cellTextClient(p, key)}</h3>
-    <h4>Own drawer</h4><input type="text" id="popDrawer" placeholder="blank = the cell's drawer; e.g. 41R" value="${info.drawer ? info.drawer + (info.half === 'back' ? 'R' : info.half === 'front' ? 'F' : '') : ''}">`;
+    <h4>Location</h4><div class="loc"><span>${locSummary(info, '') || `as the cell (${locSummary(c, 'unset')})`}</span>${locBtn(info, '', '')}</div>`;
   if (drives.length) {
-    h += `<h4>Drive</h4>` + drives.map(([d, l]) => `<label><input type="checkbox" data-drive="${d}" ${(info.drives || {})[d] ? 'checked' : ''} ${fixed ? 'disabled checked' : ''}>${l}</label>` + ((info.drives || {})[d] || fixed ? `<div class="note sub">materials</div>` + matList(d) : '')).join('');
+    // a drive with no material ticked is one item of its own, so it gets a location button of its own
+    h += `<h4>Drive</h4>` + drives.map(([d, l]) => `<label><input type="checkbox" data-drive="${d}" ${(info.drives || {})[d] ? 'checked' : ''} ${fixed ? 'disabled checked' : ''}>${l}${(info.drives || {})[d] && !info.drives[d].length ? locBtn(itemOf(d, ''), d, '') : ''}</label>` + ((info.drives || {})[d] || fixed ? `<div class="note sub">materials</div>` + matList(d) : '')).join('');
   } else if (isHead && fixed === 'none') h += `<h4>Drive</h4><div class="note">none</div>` + `<h4>Materials</h4>` + matList('');
   else h += `<h4>Materials</h4>` + matList('');
   h += `<div class="row"><button type="button" id="popClose">Close</button></div>`;
   $('#pop').innerHTML = h;
   if (fixed && fixed !== 'none') { info.drives = info.drives || {}; info.drives[fixed] = info.drives[fixed] || []; }
-  $('#popDrawer').onchange = e => { const m = /^\s*([^\s]*?)\s*(r|rear|b|back|f|front)?\s*$/i.exec(e.target.value) || []; info.drawer = (m[1] || '').trim(); const hh = (m[2] || '').toLowerCase(); info.half = /^(r|rear|b|back)$/.test(hh) ? 'back' : /^(f|front)$/.test(hh) ? 'front' : ''; if (!info.drawer) delete info.half; save(); render(); };
+  const here = () => openDetail(key, type, parseInt($('#pop').style.left), parseInt($('#pop').style.top));
+  $('#pop').querySelectorAll('.locbtn').forEach(b => b.onclick = e => {
+    e.preventDefault();
+    const d = b.dataset.drive, m = b.dataset.m, what = `${icons.labels[type] || type} · ${cellTextClient(p, key)}`;
+    if (!d && !m) return openLoc(key, info, what, e.clientX, e.clientY, here);
+    info.items = info.items || {}; const it = info.items[`${d}|${m}`] = info.items[`${d}|${m}`] || {};
+    const mat = (mats.find(x => x[0] === m) || [])[1] || '', drv = (DRIVES.find(x => x[0] === d) || [])[1] || '';
+    openLoc(key, it, `${what} · ${[drv, mat].filter(Boolean).join(', ')}`, e.clientX, e.clientY, () => { if (!Object.keys(it).length) delete info.items[`${d}|${m}`]; here(); });
+  });
   $('#pop').querySelectorAll('input[type=checkbox]').forEach(i => i.onchange = () => {
     if (i.dataset.m !== undefined) {   // a material
       const list = i.dataset.drive ? (info.drives = info.drives || {}, info.drives[i.dataset.drive] = info.drives[i.dataset.drive] || []) : (info.materials = info.materials || []);
@@ -401,7 +457,7 @@ function openDetail(key, type, x, y) {
     } else {   // a drive
       info.drives = info.drives || {}; if (i.checked) info.drives[i.dataset.drive] = info.drives[i.dataset.drive] || []; else delete info.drives[i.dataset.drive];
     }
-    save(); openDetail(key, type, parseInt($('#pop').style.left), parseInt($('#pop').style.top)); render();
+    save(); here(); render();
   });
   $('#popClose').onclick = closePop; placePop(x, y);
 }
@@ -431,26 +487,31 @@ function renderHelper() {
     <label>Helper address (the PC with the printer)</label><input id="hUrl" placeholder="http://192.168.1.20:8094" value="${h.url || ''}">
     <label>Token (if the helper was started with --token)</label><input id="hTok" value="${h.token || ''}">
     <label>Printer queue for 9 mm drawer labels</label><select id="hPrn"><option value="">(fetch printers first)</option></select>
+    <label>Printer queue for 18 mm bin labels</label><select id="hPrnB"><option value="">(fetch printers first)</option></select>
     <div class="row"><button id="hTest" type="button">Fetch printers</button><label style="margin:0"><input type="checkbox" id="hDirect" style="width:auto" ${h.direct ? 'checked' : ''}> print directly instead of downloading</label></div>
     <div class="msg" id="hMsg"></div>
     <div class="row"><button id="hSave" type="button">Save</button><button id="hClose" type="button">Close</button></div>`;
-  const sel = $('#hPrn'); if (h.printer) { sel.innerHTML = `<option value="${h.printer}">${h.printer}</option>`; }
+  const sel = $('#hPrn'), selB = $('#hPrnB');
+  if (h.printer) sel.innerHTML = `<option value="${h.printer}">${h.printer}</option>`;
+  selB.innerHTML = `<option value="">(none)</option>` + (h.printerBin ? `<option value="${h.printerBin}" selected>${h.printerBin}</option>` : '');
   $('#hTest').onclick = async () => {
     HS.set({ ...HS.get(), url: $('#hUrl').value.trim(), token: $('#hTok').value.trim() });
     const url = helperUrl('/printers'); if (!url) return ($('#hMsg').textContent = 'enter the helper address first');
     $('#hMsg').textContent = 'contacting helper…';
     try { const j = await (await fetch(url)).json(); if (j.error) throw new Error(j.error);
       sel.innerHTML = j.printers.map(pn => `<option ${pn === h.printer ? 'selected' : ''}>${pn}</option>`).join('') || '<option value="">(no printers found)</option>';
+      selB.innerHTML = '<option value="">(none)</option>' + j.printers.map(pn => `<option ${pn === h.printerBin ? 'selected' : ''}>${pn}</option>`).join('');
       $('#hMsg').textContent = `helper ok · print program: ${j.backend || 'NONE FOUND'} · ${j.printers.length} printers`;
     } catch (e) { $('#hMsg').textContent = 'no answer from the helper: ' + e.message; }
   };
-  $('#hSave').onclick = () => { HS.set({ url: $('#hUrl').value.trim(), token: $('#hTok').value.trim(), printer: sel.value, direct: $('#hDirect').checked }); $('#hMsg').textContent = 'saved'; };
+  $('#hSave').onclick = () => { HS.set({ url: $('#hUrl').value.trim(), token: $('#hTok').value.trim(), printer: sel.value, printerBin: selB.value, direct: $('#hDirect').checked }); $('#hMsg').textContent = 'saved'; };
   $('#hClose').onclick = () => { $('#helper').style.display = 'none'; };
 }
 $('#helperBtn').onclick = () => { const t = $('#helper'); if (t.style.display === 'block') t.style.display = 'none'; else { renderHelper(); t.style.display = 'block'; } };
 $('#cabinetBtn').onclick = () => window.open(`cabinet.html?page=${encodeURIComponent(pageId)}`, '_blank');
 $('#printAll').onclick = () => printKeys('all');
 $('#printDrawers').onclick = () => { const v = prompt('Drawers to print, across every page: a list or ranges, R/F for one half of a divided drawer. e.g. 12-16, 20, 30R'); if (v) printKeys(null, { drawers: v }); };
+$('#printBins').onclick = () => { const v = prompt('Bins to print (18 mm labels): a list or ranges, or "all". e.g. B1, B3-5'); if (v) printKeys(null, { bins: v.trim().toLowerCase() === 'all' ? 'all' : v }); };
 $('#printNew').onclick = () => printKeys('new');
 $('#markPrinted').onclick = async () => {
   if (!confirm('Record every populated cell on this page as printed with its current text?')) return;
