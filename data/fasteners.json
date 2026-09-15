@@ -1888,6 +1888,24 @@
      "label": "M6",
      "dia": "M6",
      "pitch": 1
+    },
+    {
+     "id": "M8",
+     "label": "M8",
+     "dia": "M8",
+     "pitch": 1.25
+    },
+    {
+     "id": "M10",
+     "label": "M10",
+     "dia": "M10",
+     "pitch": 1.5
+    },
+    {
+     "id": "M12",
+     "label": "M12",
+     "dia": "M12",
+     "pitch": 1.75
     }
    ],
    "cells": {},
@@ -2075,9 +2093,39 @@
      "text": "Alligator Clips",
      "glyph": "alligator",
      "checked": false
+    },
+    {
+     "id": "lmu28h8cx",
+     "text": "GPIB Plugs",
+     "glyph": "gpib",
+     "checked": false
+    },
+    {
+     "id": "lmu28iz2m",
+     "text": "100mil Headers",
+     "glyph": "header100",
+     "checked": false
+    },
+    {
+     "id": "lmu28jbhf",
+     "text": "2mm Headers",
+     "glyph": "header2mm",
+     "checked": false
+    },
+    {
+     "id": "lmu28jld0",
+     "text": "100mil Sockets",
+     "glyph": "socket100",
+     "checked": false
+    },
+    {
+     "id": "lmu28jqys",
+     "text": "2mm Sockets",
+     "glyph": "socket2mm",
+     "checked": false
     }
    ]
   }
  ],
- "rev": 561
+ "rev": 588
 }
