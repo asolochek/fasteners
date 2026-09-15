@@ -268,7 +268,7 @@ app.get('/api/cabinet', (req, res) => {
 app.get('/api/preview.png', async (req, res) => {
   const d = load(), page = d.pages.find(p => p.id === req.query.page); if (!page) return res.status(404).end();
   const mine = M.portions(page, [req.query.key]); if (!mine.length) return res.status(404).end();
-  const pt = (req.query.slot && mine.find(p => M.portionSlot(p) === req.query.slot)) || mine.find(p => !p.overflow) || mine[0];
+  const pt = ('slot' in req.query ? mine.find(p => M.portionSlot(p) === req.query.slot) : null) || mine.find(p => !p.overflow) || mine[0];
   const slot = M.portionSlot(pt);
   let lab;
   if (pt.kind === 'bin') lab = binLabel(d, pt.bin);

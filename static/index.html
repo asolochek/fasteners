@@ -98,7 +98,8 @@ td.cell:not(.have) .print, .card:not(.have) .print { visibility:hidden; }
 #pageSel { display:none; }
 .mobile #addLen, .mobile #addRow { display:none; }
 #preview { position:fixed; right:14px; bottom:14px; background:#fff; border:1px solid var(--line); padding:6px; border-radius:6px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; }
-#preview img { display:block; height:60px; }
+#preview img { display:block; width:430px; height:auto; }   /* 50 mm at the same scale for both tapes: 9 mm labels short, 18 mm labels tall */
+#preview img + img { margin-top:6px; }
 </style>
 </head>
 <body>
@@ -123,7 +124,7 @@ td.cell:not(.have) .print, .card:not(.have) .print { visibility:hidden; }
 <main>
   <div id="grid"></div>
 </main>
-<div id="preview"><img alt=""></div>
+<div id="preview"></div>
 <div id="types"></div>
 <div id="helper"></div>
 <div id="pop"></div>
@@ -525,7 +526,13 @@ $('#markPrinted').onclick = async () => {
   const r = await fetch('/api/printed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page: pageId, keys: 'all' }) });
   status(r.ok ? `${(await r.json()).marked} marked printed` : 'failed');
 };
-function showPreview(key) { const img = $('#preview img'); img.src = `/api/preview.png?page=${encodeURIComponent(pageId)}&key=${encodeURIComponent(key)}&t=${Date.now()}`; $('#preview').style.display = 'block'; }
+// every label the cell's ⎙ would print, one per location, stacked in print order (drawers, then bins, then no location)
+function showPreview(key) {
+  const slots = cellSlots(key).sort((a, b) => (a.slot.startsWith('D:') ? 0 : a.slot ? 1 : 2) - (b.slot.startsWith('D:') ? 0 : b.slot ? 1 : 2));
+  const pv = $('#preview'); pv.innerHTML = '';
+  for (const s of slots) { const img = document.createElement('img'); img.alt = s.label; img.src = `/api/preview.png?page=${encodeURIComponent(pageId)}&key=${encodeURIComponent(key)}&slot=${encodeURIComponent(s.slot)}&t=${Date.now()}`; pv.appendChild(img); }
+  pv.style.display = 'block';
+}
 function hidePreview() { $('#preview').style.display = 'none'; }
 async function reload() {
   const [d, ic] = await Promise.all([fetch('/api/data').then(r => r.json()), fetch('/api/icons').then(r => r.json())]);
