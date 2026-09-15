@@ -1492,6 +1492,11 @@
         }
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "79",
+      "half": "front"
      }
     },
     "5/16|lockwasher": {
@@ -1874,5 +1879,5 @@
    "cells": {}
   }
  ],
- "rev": 479
+ "rev": 480
 }

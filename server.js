@@ -53,11 +53,14 @@ function qualifier(page, pt) {
     if (ds.length && ds.length < u(whole, i => i.drive).length) q.push(ds.map(x => M.DRIVE_SHORT[x] || x).join('/'));
     if (ms.length && ms.length < u(whole, i => i.material).length) q.push(ms.map(x => M.MAT_SHORT[x] || x).join('/'));
     if (!q.length) continue;
-    out.push((pt.types.length > 1 ? (I.LABELS[t] || t).toLowerCase() + ' ' : '') + q.join(' '));
+    out.push((pt.types.length > 1 ? shortType(t) + ' ' : '') + q.join(' '));
   }
   const s = [...new Set(out)].join(' · ');
   return pt.overflow ? (s ? s + ' · overflow' : 'overflow') : s;
 }
+// a head / nut / washer type name for a label: the on-screen name without its parenthetical or ", pointed" tail ("jam nut", "flat")
+const SHORT_TYPE = { sems: 'sems', socket: 'socket', carriage: 'carriage', inextooth: 'int+ext tooth', trim: 'trim', flangesm: 'flange', hexsm: 'hex washer' };
+const shortType = t => SHORT_TYPE[t] || (I.LABELS[t] || t).replace(/\s*\(.*?\)/g, '').split(',')[0].trim().toLowerCase();
 // the text of one location's label: { pn, value, qual, types, sig }
 // cells that share a location print as ONE label: "#10 Washer" (washers + lock washers), "#4-40 Nut" (nuts + lock nuts),
 // or for screws the size in the big slot and the lengths on the detail line; the icons are the union of the cells'
