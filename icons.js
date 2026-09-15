@@ -4,54 +4,59 @@
 const K = '#000', SW = 5;
 const shank = (x, y0, y1) => `<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}" stroke="${K}" stroke-width="${SW * 2.2}" stroke-linecap="butt"/>`;
 const threads = (x, y0, y1) => { let g = ''; for (let y = y0 + 6; y < y1 - 2; y += 8) g += `<line x1="${x - 9}" y1="${y}" x2="${x + 9}" y2="${y + 3}" stroke="${K}" stroke-width="2.5"/>`; return g; };
-// a self-drilling shank: threads, then a plain drill point with a flute, chisel tip
-const drillShank = `<path d="M44 44 V70 L46 74 V84 L50 94 L54 84 V74 L56 70 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="46" y1="77" x2="54" y2="85" stroke="${K}" stroke-width="3"/>${threads(50, 50, 70)}`;
-// heads: the head sits at the top, shank goes down
-const HEADS = {
-  flat:   `<path d="M20 22 H80 L62 44 H38 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="50" y1="22" x2="50" y2="34" stroke="${K}" stroke-width="3.5"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
-  pan:    `<path d="M24 44 V32 Q24 18 40 18 H60 Q76 18 76 32 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="36" y1="22" x2="64" y2="22" stroke="${K}" stroke-width="3.5"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
-  socket: `<rect x="26" y="14" width="48" height="30" rx="3" fill="none" stroke="${K}" stroke-width="${SW}"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
-  button: `<path d="M22 44 Q22 16 50 16 Q78 16 78 44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
-  hex:    `<path d="M22 20 H78 V44 H22 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="40" y1="20" x2="40" y2="44" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="44" stroke="${K}" stroke-width="3"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
-  // hex heads with a slot across the top (hex + slotted drive)
-  hexslot: `<path d="M22 20 H78 V44 H22 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="40" y1="20" x2="40" y2="44" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="44" stroke="${K}" stroke-width="3"/><path d="M46 20 V26 H54 V20" fill="none" stroke="${K}" stroke-width="3.5"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
-  hexsmslot: `<path d="M22 20 H78 V38 H22 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="40" y1="20" x2="40" y2="38" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="38" stroke="${K}" stroke-width="3"/><path d="M46 20 V26 H54 V20" fill="none" stroke="${K}" stroke-width="3.5"/><line x1="16" y1="44" x2="84" y2="44" stroke="${K}" stroke-width="${SW}"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
-  hexdrillslot: `<path d="M22 20 H78 V38 H22 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="40" y1="20" x2="40" y2="38" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="38" stroke="${K}" stroke-width="3"/><path d="M46 20 V26 H54 V20" fill="none" stroke="${K}" stroke-width="3.5"/><line x1="16" y1="44" x2="84" y2="44" stroke="${K}" stroke-width="${SW}"/>${drillShank}`,
-  nylon:  `<path d="M24 44 V32 Q24 18 40 18 H60 Q76 18 76 32 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round" stroke-dasharray="7 5"/><line x1="36" y1="22" x2="64" y2="22" stroke="${K}" stroke-width="3.5"/><line x1="50" y1="44" x2="50" y2="92" stroke="${K}" stroke-width="${SW * 2.2}" stroke-dasharray="7 5"/>`,
-  setscrew: `<rect x="38" y="14" width="24" height="78" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 32, 92)}`,
-  // SEMS screw: pan head with a captive lock washer under it (drawn as a wider split ring below the head)
-  sems:   `<path d="M26 40 V30 Q26 18 40 18 H60 Q74 18 74 30 V40 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="36" y1="22" x2="64" y2="22" stroke="${K}" stroke-width="3.5"/><path d="M18 40 H82 V50 H62 M38 50 H18 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="18" y1="50" x2="38" y2="50" stroke="${K}" stroke-width="${SW}"/><line x1="62" y1="50" x2="82" y2="50" stroke="${K}" stroke-width="${SW}"/>${shank(50, 50, 92)}${threads(50, 52, 92)}`,
-  // shoulder screw: socket head, a wider plain shoulder, then a shorter thread
-  shoulder: `<rect x="30" y="10" width="40" height="24" rx="3" fill="none" stroke="${K}" stroke-width="${SW}"/><rect x="38" y="34" width="24" height="34" fill="none" stroke="${K}" stroke-width="${SW}"/>${shank(50, 68, 92)}${threads(50, 68, 92)}`,
-  // wood / self-tapping: pointed tip
-  wood:   `<path d="M20 22 H80 L62 44 H38 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="50" y1="22" x2="50" y2="34" stroke="${K}" stroke-width="3.5"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
-  // oval (raised countersunk): flat head with a domed top
-  oval:   `<path d="M20 30 Q50 8 80 30 L62 48 H38 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="50" y1="24" x2="50" y2="38" stroke="${K}" stroke-width="3.5"/>${shank(50, 48, 92)}${threads(50, 50, 92)}`,
-  // flange (washer) head machine screw
-  flange: `<path d="M30 36 V30 Q30 18 42 18 H58 Q70 18 70 30 V36 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><path d="M16 36 H84 V44 H16 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
-  // thumb screw: tall knurled head
-  thumb:  `<path d="M30 14 H70 V44 H30 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/>${[36, 43, 50, 57, 64].map(x => `<line x1="${x}" y1="18" x2="${x}" y2="40" stroke="${K}" stroke-width="2.5"/>`).join('')}${shank(50, 44, 92)}${threads(50, 46, 92)}`,
-  // carriage bolt: domed head over a square neck, no drive
-  carriage: `<path d="M20 30 Q50 6 80 30 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><rect x="40" y="30" width="20" height="14" fill="none" stroke="${K}" stroke-width="${SW}"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
-  // cheese head: cylindrical, flat top, slotted (DIN 84)
-  cheese: `<rect x="30" y="16" width="40" height="28" fill="none" stroke="${K}" stroke-width="${SW}"/><line x1="50" y1="16" x2="50" y2="30" stroke="${K}" stroke-width="3.5"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
-  // fillister head: cylindrical with a domed top
-  fillister: `<path d="M30 44 V26 Q30 14 50 14 Q70 14 70 26 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="50" y1="16" x2="50" y2="30" stroke="${K}" stroke-width="3.5"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
-  // truss: wide, low dome
-  truss:  `<path d="M14 44 Q14 24 50 22 Q86 24 86 44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
-  buttonsm: `<path d="M22 44 Q22 16 50 16 Q78 16 78 44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
-  trusssm:  `<path d="M14 44 Q14 24 50 22 Q86 24 86 44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
-  // trim (finish) head: a small head that sinks into the wood
-  trim:   `<path d="M38 22 H62 L56 36 H44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><path d="M44 36 V78 L50 94 L56 78 V36 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 42, 78)}`,
-  // flange (washer) head: pan head on a wide flat flange
-  flangesm: `<path d="M30 36 V30 Q30 18 42 18 H58 Q70 18 70 30 V36 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><path d="M16 36 H84 V44 H16 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
-  hexsm:  `<path d="M22 20 H78 V38 H22 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="40" y1="20" x2="40" y2="38" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="38" stroke="${K}" stroke-width="3"/><line x1="16" y1="44" x2="84" y2="44" stroke="${K}" stroke-width="${SW}"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
-  // self-drilling (Tek) tips: an unthreaded drill point with a flute below the threads
-  hexdrill: `<path d="M22 20 H78 V38 H22 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="40" y1="20" x2="40" y2="38" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="38" stroke="${K}" stroke-width="3"/><line x1="16" y1="44" x2="84" y2="44" stroke="${K}" stroke-width="${SW}"/>${drillShank}`,
-  pandrill: `<path d="M24 44 V32 Q24 18 40 18 H60 Q76 18 76 32 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="36" y1="22" x2="64" y2="22" stroke="${K}" stroke-width="3.5"/>${drillShank}`,
-  flatdrill: `<path d="M20 22 H80 L62 44 H38 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="50" y1="22" x2="50" y2="34" stroke="${K}" stroke-width="3.5"/>${drillShank}`,
-  sheetmetal: `<path d="M24 44 V32 Q24 18 40 18 H60 Q76 18 76 32 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="36" y1="22" x2="64" y2="22" stroke="${K}" stroke-width="3.5"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
+// ---- screws are composed: a head shape, then captive washers under it, then a shank whose tip is blunt or pointed and
+// cutting (thread-forming / self-drilling) or not. A variant key names the combination: "pan", "pan:p" (pointed),
+// "pan:p:c" (pointed, cutting = self-drilling), "pan:c" (blunt, cutting = thread-forming), "pan:wfs" (flat + split washers).
+const HEAD = { border: `fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"` };
+// head shapes: drawn from the top down to `base`, where the washers and shank start
+const SHAPES = {
+  flat:     { base: 44, svg: `<path d="M20 22 H80 L62 44 H38 Z" ${HEAD.border}/><line x1="50" y1="22" x2="50" y2="34" stroke="${K}" stroke-width="3.5"/>` },
+  oval:     { base: 48, svg: `<path d="M20 30 Q50 8 80 30 L62 48 H38 Z" ${HEAD.border}/><line x1="50" y1="24" x2="50" y2="38" stroke="${K}" stroke-width="3.5"/>` },
+  pan:      { base: 44, svg: `<path d="M24 44 V32 Q24 18 40 18 H60 Q76 18 76 32 V44 Z" ${HEAD.border}/><line x1="36" y1="22" x2="64" y2="22" stroke="${K}" stroke-width="3.5"/>` },
+  button:   { base: 44, svg: `<path d="M22 44 Q22 16 50 16 Q78 16 78 44 Z" ${HEAD.border}/>` },
+  truss:    { base: 44, svg: `<path d="M14 44 Q14 24 50 22 Q86 24 86 44 Z" ${HEAD.border}/>` },
+  cheese:   { base: 44, svg: `<rect x="30" y="16" width="40" height="28" fill="none" stroke="${K}" stroke-width="${SW}"/><line x1="50" y1="16" x2="50" y2="30" stroke="${K}" stroke-width="3.5"/>` },
+  fillister:{ base: 44, svg: `<path d="M30 44 V26 Q30 14 50 14 Q70 14 70 26 V44 Z" ${HEAD.border}/><line x1="50" y1="16" x2="50" y2="30" stroke="${K}" stroke-width="3.5"/>` },
+  socket:   { base: 44, svg: `<rect x="26" y="14" width="48" height="30" rx="3" fill="none" stroke="${K}" stroke-width="${SW}"/>` },
+  hex:      { base: 44, svg: `<path d="M22 20 H78 V44 H22 Z" ${HEAD.border}/><line x1="40" y1="20" x2="40" y2="44" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="44" stroke="${K}" stroke-width="3"/>` },
+  hexwasher:{ base: 44, svg: `<path d="M22 20 H78 V38 H22 Z" ${HEAD.border}/><line x1="40" y1="20" x2="40" y2="38" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="38" stroke="${K}" stroke-width="3"/><line x1="16" y1="44" x2="84" y2="44" stroke="${K}" stroke-width="${SW}"/><line x1="22" y1="38" x2="22" y2="44" stroke="${K}" stroke-width="${SW}"/><line x1="78" y1="38" x2="78" y2="44" stroke="${K}" stroke-width="${SW}"/>` },
+  flange:   { base: 44, svg: `<path d="M30 36 V30 Q30 18 42 18 H58 Q70 18 70 30 V36 Z" ${HEAD.border}/><path d="M16 36 H84 V44 H16 Z" ${HEAD.border}/>` },
+  thumb:    { base: 44, svg: `<path d="M30 14 H70 V44 H30 Z" ${HEAD.border}/>${[36, 43, 50, 57, 64].map(x => `<line x1="${x}" y1="18" x2="${x}" y2="40" stroke="${K}" stroke-width="2.5"/>`).join('')}` },
+  carriage: { base: 44, svg: `<path d="M20 30 Q50 6 80 30 Z" ${HEAD.border}/><rect x="40" y="30" width="20" height="14" fill="none" stroke="${K}" stroke-width="${SW}"/>` },
+  trim:     { base: 36, svg: `<path d="M38 22 H62 L56 36 H44 Z" ${HEAD.border}/>` },
+  // whole-body shapes: no washers or tips are composed onto these
+  shoulder: { whole: `<rect x="30" y="10" width="40" height="24" rx="3" fill="none" stroke="${K}" stroke-width="${SW}"/><rect x="38" y="34" width="24" height="34" fill="none" stroke="${K}" stroke-width="${SW}"/>${shank(50, 68, 92)}${threads(50, 68, 92)}` },
+  setscrew: { whole: `<rect x="38" y="14" width="24" height="78" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 32, 92)}` },
 };
+// captive washers under the head, each 6 units tall: f flat, s split lock, e external tooth, i internal tooth
+const WASHER_CODES = { f: 'flat', s: 'split', e: 'exttooth', i: 'inttooth' };
+const WASHER_NAMES = { flat: 'flat', split: 'split lock', exttooth: 'external tooth', inttooth: 'internal tooth' };
+function washerUnder(code, y) {
+  const r = `<path d="M18 ${y} H82 V${y + 6} H18 Z" ${HEAD.border}/>`;
+  if (code === 'f') return r;
+  if (code === 's') return r + `<line x1="66" y1="${y}" x2="72" y2="${y + 6}" stroke="${K}" stroke-width="3"/>`;
+  if (code === 'e') return r + [18, 82].map(x => `<line x1="${x}" y1="${y + 1}" x2="${x < 50 ? x - 5 : x + 5}" y2="${y + 3}" stroke="${K}" stroke-width="3"/><line x1="${x}" y1="${y + 5}" x2="${x < 50 ? x - 5 : x + 5}" y2="${y + 3}" stroke="${K}" stroke-width="3"/>`).join('');
+  return r + [30, 38, 62, 70].map(x => `<line x1="${x}" y1="${y + 1}" x2="${x}" y2="${y + 5}" stroke="${K}" stroke-width="2.5"/>`).join('');
+}
+// shanks from y0 down: blunt or pointed, plain or cutting (thread-forming notch / drill point)
+function shankFor(pointed, cutting, y0) {
+  if (!pointed && !cutting) return shank(50, y0, 92) + threads(50, y0 + 2, 92);
+  if (pointed && !cutting) return `<path d="M44 ${y0} V78 L50 94 L56 78 V${y0} Z" fill="none" stroke="${K}" stroke-width="${SW}"/>` + threads(50, y0 + 6, 78);
+  if (pointed && cutting) return `<path d="M44 ${y0} V70 L46 74 V84 L50 94 L54 84 V74 L56 70 V${y0} Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="46" y1="77" x2="54" y2="85" stroke="${K}" stroke-width="3"/>` + threads(50, y0 + 6, 70);
+  return `<path d="M44 ${y0} V92 H56 V${y0} Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><path d="M44 84 L50 92 L56 84" fill="none" stroke="${K}" stroke-width="3"/>` + threads(50, y0 + 6, 82);
+}
+// variant keys
+const parse = name => { const [shape, ...f] = String(name).split(':'); const w = f.find(x => x[0] === 'w') || ''; return { shape, pointed: f.includes('p'), cutting: f.includes('c'), washers: [...w.slice(1)] }; };
+const key = ({ shape, pointed = false, cutting = false, washers = [] }) => shape + (pointed ? ':p' : '') + (cutting ? ':c' : '') + (washers.length ? ':w' + ['f', 's', 'e', 'i'].filter(c => washers.includes(c)).join('') : '');
+function screw(name) {
+  const v = parse(name), h = SHAPES[v.shape]; if (!h) return null;
+  if (h.whole) return h.whole;
+  let y = h.base, g = h.svg;
+  for (const w of v.washers) { g += washerUnder(w, y); y += 6; }
+  return g + shankFor(v.pointed, v.cutting, y);
+}
+// heads: for the legacy ALL table, the blunt plain version of each shape
+const HEADS = Object.fromEntries(Object.keys(SHAPES).map(k => [k, screw(k)]));
 // nuts and washers: face-on
 const NUTS = {
   nut:  `<path d="M50 14 L82 32 V68 L50 86 L18 68 V32 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><circle cx="50" cy="50" r="15" fill="none" stroke="${K}" stroke-width="${SW}"/>`,
@@ -142,18 +147,29 @@ const MISC = {
   tamiya:      `${box(20, 28, 60, 48, 4)}<rect x="42" y="18" width="16" height="10" fill="none" stroke="${K}" stroke-width="4"/>${box(28, 38, 18, 26, 2, 4)}${box(54, 38, 18, 26, 2, 4)}`,
 };
 const ALL = { ...HEADS, ...NUTS, ...WASHERS, ...MISC };
+const draw = name => ALL[name] !== undefined && !name.includes(':') ? ALL[name] : (screw(name) || '');
+// the readable name of any key, variants included: "Pan, pointed, self-drilling, w/ flat + split lock washer"
+function label(name) {
+  if (LABELS[name]) return LABELS[name];
+  const v = parse(name); if (!SHAPES[v.shape]) return name;
+  const parts = [LABELS[v.shape]];
+  if (v.pointed) parts.push('pointed');
+  if (v.cutting) parts.push(v.pointed ? 'self-drilling' : 'thread-cutting');
+  if (v.washers.length) parts.push('w/ ' + v.washers.map(c => WASHER_NAMES[WASHER_CODES[c]]).join(' + ') + ' washer');
+  return parts.join(', ');
+}
 // icon groups for the glyph picker (list pages)
-const GROUPS = { 'Connectors & test': Object.keys(MISC), Heads: Object.keys(HEADS).filter(k => !['nylon'].includes(k)), Nuts: Object.keys(NUTS), Washers: Object.keys(WASHERS).filter(k => !['nylonw'].includes(k)) };
-const LABELS = { flat: 'Flat', oval: 'Oval', pan: 'Pan', socket: 'Socket cap', button: 'Button', hex: 'Hex', flange: 'Flange', thumb: 'Thumb', carriage: 'Carriage bolt', cheese: 'Cheese', fillister: 'Fillister', setscrew: 'Set screw', shoulder: 'Shoulder', sems: 'Captive lock washer', truss: 'Truss', wood: 'Flat, pointed', sheetmetal: 'Pan, pointed', buttonsm: 'Button, pointed', trusssm: 'Truss, pointed', trim: 'Trim head', flangesm: 'Flange head', hexsm: 'Hex washer, pointed', hexslot: 'Hex, slotted', hexsmslot: 'Hex washer, slotted, pointed', hexdrillslot: 'Hex washer, slotted, self-drilling', hexdrill: 'Hex washer, self-drilling', pandrill: 'Pan, self-drilling', flatdrill: 'Flat, self-drilling',
+const GROUPS = { 'Connectors & test': Object.keys(MISC), Heads: Object.keys(SHAPES), Nuts: Object.keys(NUTS), Washers: Object.keys(WASHERS).filter(k => !['nylonw'].includes(k)) };
+const LABELS = { flat: 'Flat', oval: 'Oval', pan: 'Pan', button: 'Button', truss: 'Truss', cheese: 'Cheese', fillister: 'Fillister', socket: 'Socket cap', hex: 'Hex', hexwasher: 'Hex washer', flange: 'Flange', thumb: 'Thumb', carriage: 'Carriage bolt', trim: 'Trim head', shoulder: 'Shoulder', setscrew: 'Set screw',
   nut: 'Nut', thin: 'Jam nut (thin)', lock: 'Lock nut (prevailing torque)', nylock: 'Nylon insert', toothednut: 'Toothed flange', pressfit: 'Press-fit nut', square: 'Square nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', undersized: 'Undersized (small OD)', cup: 'Cup', sleeved: 'Sleeved', split: 'Split', spring: 'Spring', inttooth: 'Internal tooth', toothed: 'External tooth', inextooth: 'Internal + external tooth',
   banana: 'Banana plug', bananastack: 'Stackable banana plug', bananadual: 'Dual banana plug', bananajack: 'Banana jack', bindingpost: 'Binding post', terminalstrip: 'Terminal strip', shunt: '100 mil shunt', minigrabber: 'Mini grabber', alligator: 'Alligator clip', db9: 'DB9', ffc: 'Flat flex cable end', xt60: 'XT60', xt30: 'XT30', deans: 'Deans / T-plug', jstxh: 'JST-XH', ec3: 'EC3', tamiya: 'Tamiya',
   gpib: 'GPIB (IEEE-488)', toggle: 'Toggle switch', rocker: 'Rocker switch', pushbutton: 'Push button', heatsink: 'Heat sink', header100: '100 mil pin header', socket100: '100 mil socket', header2mm: '2 mm pin header', socket2mm: '2 mm socket', bullet: 'Bullet connector', mt60: 'MT60', mt30: 'MT30', mr30: 'MR30' };
 // one icon as a standalone SVG
-const icon = name => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${ALL[name] || ''}</svg>`;
+const icon = name => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${draw(name)}</svg>`;
 // several icons for the label glyph slot, in one or two rows (rows = 2 puts ceil(n/2) per row, the second row left-aligned)
 const icons = (names, rows = 1) => {
   const cols = Math.ceil(names.length / rows);
-  return `<svg viewBox="0 0 ${100 * cols} ${100 * rows}" xmlns="http://www.w3.org/2000/svg">${names.map((n, i) => `<g transform="translate(${(i % cols) * 100} ${Math.floor(i / cols) * 100})">${ALL[n] || ''}</g>`).join('')}</svg>`;
+  return `<svg viewBox="0 0 ${100 * cols} ${100 * rows}" xmlns="http://www.w3.org/2000/svg">${names.map((n, i) => `<g transform="translate(${(i % cols) * 100} ${Math.floor(i / cols) * 100})">${draw(n)}</g>`).join('')}</svg>`;
 };
 // choose one or two rows for a glyph slot `h` high with `w` of width free: whichever gives the bigger icons
 function layout(names, w, h) {
@@ -162,4 +178,4 @@ function layout(names, w, h) {
   const rows = two > one ? 2 : 1, cols = Math.ceil(n / rows);
   return { rows, size: rows === 2 ? two : one, maxW: Math.max(0.01, (cols / rows) * Math.min(1, (rows === 2 ? two * 2 : one) / h)) };
 }
-module.exports = { HEADS, NUTS, WASHERS, MISC, ALL, LABELS, GROUPS, icon, icons, layout };
+module.exports = { SHAPES, HEADS, NUTS, WASHERS, MISC, ALL, LABELS, GROUPS, WASHER_CODES, WASHER_NAMES, parse, key, label, draw, icon, icons, layout };

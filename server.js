@@ -27,7 +27,14 @@ app.put('/api/data', (req, res) => {
   fs.writeFileSync(DATA + '.tmp', JSON.stringify(d, null, 1)); fs.renameSync(DATA + '.tmp', DATA);
   res.json({ ok: true, rev: d.rev });
 });
-app.get('/api/icons', (req, res) => res.json({ svg: Object.fromEntries(Object.keys(I.ALL).map(k => [k, I.icon(k)])), labels: I.LABELS, groups: I.GROUPS }));
+// icons for the page: every base name, the pointed version of every head shape, and every screw variant in use anywhere
+app.get('/api/icons', (req, res) => {
+  const d = load(), names = new Set([...Object.keys(I.ALL), ...Object.keys(I.SHAPES).map(k => k + ':p')]);
+  for (const page of d.pages) for (const c of Object.values(page.cells || {})) for (const t of c.types || []) names.add(t);
+  res.json({ svg: Object.fromEntries([...names].map(k => [k, I.icon(k)])), labels: Object.fromEntries([...names].map(k => [k, I.label(k)])), groups: I.GROUPS, washers: I.WASHER_NAMES });
+});
+// one icon on demand (a variant the page just created)
+app.get('/api/icon', (req, res) => res.json({ name: req.query.name, svg: I.icon(req.query.name), label: I.label(req.query.name) }));
 app.get('/api/printed', (req, res) => res.json(loadPrinted()));
 
 // ---- what a location holds ----

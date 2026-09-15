@@ -31,9 +31,13 @@ records what has been printed.
 - **Tabs** switch pages. On a phone the page becomes a picker and one thread size is shown at a time as a list of cards.
 - **Cells**: click a head icon to tick it. The row of icons is the page's primary set plus anything else ticked in that cell;
   the **…** at the end offers every other head type for the class. More than nine icons and they shrink.
-- **Right-click / long-press a ticked icon** for its detail: its own location (when that head lives somewhere other than
-  the rest of the cell; a badge on the icon shows it), drive types, and materials per drive. Nuts and washers get materials
-  only. Each ticked drive + material has a **location** button of its own, so one head type's stainless screws can live in
+- **Screws are a head shape plus properties.** Clicking a head icon ticks that shape with the page's default tip (blunt on
+  the machine pages, pointed on wood and sheet metal). **Right-click / long-press a ticked icon** for its detail: tip (blunt
+  or pointed), cutting tip (thread-forming when blunt, self-drilling when pointed), captive washers under the head (flat,
+  split lock, external or internal tooth, any combination), its own location (when that head lives somewhere other than
+  the rest of the cell; a badge on the icon shows it), drive types, and materials per drive. Changing tip, cutting or
+  washers turns the icon into that variant, so one cell can hold, say, plain pan heads and pan heads with a captive split
+  washer side by side. Hex and hex washer heads offer a hex + slotted drive. Nuts and washers get materials only. Each ticked drive + material has a **location** button of its own, so one head type's stainless screws can live in
   a different drawer or bin from its zinc ones; a `…` badge on the icon means the head is split that way.
 - **Location**: click the location line at the bottom of a cell. A drawer is `12` (undivided) or `12R` / `12F` (rear or
   front half of a divided one); a bin is `B3`. Each level (cell, head type, drive + material) can also list **overflow**

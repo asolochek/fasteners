@@ -223,17 +223,20 @@ function typeBadge(info) {
   b.textContent = (l ? M.locText(l) : '…') + (over.length ? '+' : '');
   return b;
 }
+// a variant created on the page may not be in the icon set yet: fetch it before drawing
+async function ensureIcon(t) { if (icons.svg[t]) return; try { const j = await (await fetch(`/api/icon?name=${encodeURIComponent(t)}`)).json(); icons.svg[t] = j.svg; icons.labels[t] = j.label; } catch (e) {} }
 function iconEl(type, on, key) {
   const c = page().cells[key] || {}, info = (c.detail || {})[type] || {};
-  const d = document.createElement('div'); d.className = 'ic' + (on ? ' on' : '') + (on && (info.drives || info.materials) ? ' hasinfo' : ''); d.title = (icons.labels[type] || type) + (on ? ' — right-click / long-press for drive, material, location' : '');
-  d.innerHTML = icons.svg[type]; d.onclick = () => toggle(key, type);
+  const d = document.createElement('div'); d.className = 'ic' + (on ? ' on' : '') + (on && (info.drives || info.materials) ? ' hasinfo' : ''); d.title = iconLabel(type) + (on ? ' — right-click / long-press for tip, washers, drive, material, location' : '');
+  d.innerHTML = iconSvg(type); d.onclick = () => toggle(key, type);
   if (on) { const b = typeBadge(info); if (b) d.appendChild(b); }
   d.oncontextmenu = e => { e.preventDefault(); if (on) openDetail(key, type, e.clientX, e.clientY); };
   return d;
 }
-function shownTypes(c, types, universe) {   // the column's own types plus any others ticked in this cell, in vocabulary order
-  const extra = (c.types || []).filter(t => !types.includes(t) && universe.includes(t));
-  return [...types, ...universe.filter(t => extra.includes(t))];
+function shownTypes(c, types, universe) {   // the column's own types plus any other variants ticked in this cell, in shape order
+  const extra = (c.types || []).filter(t => !types.includes(t) && (!universe || universe.includes(shapeOf(t))));
+  if (!universe) return [...types, ...extra];
+  return [...types, ...extra.sort((a, b) => universe.indexOf(shapeOf(a)) - universe.indexOf(shapeOf(b)) || a.localeCompare(b))];
 }
 function cellTd(key, types, extraClass = '', universe = null) {
   const c = page().cells[key] || { types: [] };
@@ -241,7 +244,7 @@ function cellTd(key, types, extraClass = '', universe = null) {
   const shown = universe ? shownTypes(c, types, universe) : types;
   const ic = document.createElement('div'); ic.className = 'icons' + (shown.length + (universe ? 1 : 0) > 9 ? ' dense' : '');
   for (const t of shown) ic.appendChild(iconEl(t, c.types.includes(t), key));
-  if (universe && universe.some(t => !shown.includes(t))) { const m = document.createElement('div'); m.className = 'more'; m.textContent = '…'; m.title = 'other head types'; m.onclick = e => openMore(key, universe, e.clientX, e.clientY); ic.appendChild(m); }
+  if (universe && universe.some(sh => !shown.includes(defVariant(page(), sh)))) { const m = document.createElement('div'); m.className = 'more'; m.textContent = '…'; m.title = 'other head shapes'; m.onclick = e => openMore(key, universe, e.clientX, e.clientY); ic.appendChild(m); }
   td.appendChild(ic);
   const meta = document.createElement('div'); meta.className = 'meta';
   const dr = document.createElement('span'); dr.className = 'drawer' + (M.locOf(c) ? ' set' : ''); dr.textContent = locSummary(c, 'location?'); dr.title = 'where this cell lives (a head type or a drive+material can override it: right-click the icon)'; dr.onclick = e => openLoc(key, cell(key), cellTextClient(page(), key), e.clientX, e.clientY);
@@ -266,7 +269,7 @@ function render() {
   for (const id of ['addLine', 'printSel']) $('#' + id).style.display = list ? '' : 'none';
   if (list) return renderList(p);
   if (isMobile()) return renderMobile(p, lens);
-  $('#legend').innerHTML = [...p.heads, ...HW.flatMap(([list]) => p[list] || [])].map(t => `<span>${icons.svg[t]}${icons.labels[t] || t}</span>`).join('');
+  $('#legend').innerHTML = [...p.heads.map(sh => defVariant(p, sh)), ...HW.flatMap(([list]) => p[list] || [])].map(t => `<span>${iconSvg(t)}${iconLabel(t)}</span>`).join('');
   const tbl = document.createElement('table');
   const thead = document.createElement('tr'); const theadEl = document.createElement('thead'); theadEl.appendChild(thead); tbl.appendChild(theadEl); const tbody = document.createElement('tbody'); tbl.appendChild(tbody);
   // inch headers show the decimal under the fraction
@@ -282,7 +285,7 @@ function render() {
     else { ctl.className = 'print rowprint rowctl'; ctl.textContent = '⎙'; ctl.title = 'PDF for everything in this row (and its washers)'; ctl.dataset.act = 'print'; }
     th.appendChild(ctl);
     tr.appendChild(th);
-    for (const l of lens) tr.appendChild(cellTd(`${r.id}|${l}`, p.heads, '', HEAD_UNIVERSE[p.class] || HEAD_UNIVERSE.machine));
+    for (const l of lens) tr.appendChild(cellTd(`${r.id}|${l}`, p.heads.map(sh => defVariant(p, sh)), '', universeOf(p)));
     for (const [list, suffix, per] of HW) {
       if (!(p[list] || []).length) continue;
       if (per === 'row') tr.appendChild(cellTd(`${r.id}|${suffix}`, p[list]));
@@ -347,7 +350,7 @@ function renderMobile(p, lens) {
   bar.appendChild(sel); bar.appendChild(pb); g.appendChild(bar);
   if (!r) return;
   const cards = [];
-  for (const l of lens) cards.push([`${r.id}|${l}`, p.heads, lengthText(p, l), p.units === 'mm' ? '' : `(${(+l).toFixed(4).replace(/0+$/, '').replace(/^0/, '')})`, HEAD_UNIVERSE[p.class] || HEAD_UNIVERSE.machine]);
+  for (const l of lens) cards.push([`${r.id}|${l}`, p.heads.map(sh => defVariant(p, sh)), lengthText(p, l), p.units === 'mm' ? '' : `(${(+l).toFixed(4).replace(/0+$/, '').replace(/^0/, '')})`, universeOf(p)]);
   for (const [list, suffix, per, title] of HW) { if (!(p[list] || []).length) continue; cards.push([`${per === 'row' ? r.id : r.dia}|${suffix}`, p[list], per === 'row' ? title : `${r.dia} ${title}`, per === 'dia' ? 'shared by this diameter' : '']); }
   for (const [key, types, title, sub, universe] of cards) {
     const c = p.cells[key] || { types: [] };
@@ -356,7 +359,7 @@ function renderMobile(p, lens) {
     const ic = document.createElement('div'); ic.className = 'icons';
     const shown = universe ? shownTypes(c, types, universe) : types;
     for (const ty of shown) ic.appendChild(iconEl(ty, c.types.includes(ty), key));
-    if (universe && universe.some(x => !shown.includes(x))) { const m = document.createElement('div'); m.className = 'more'; m.textContent = '…'; m.onclick = e => openMore(key, universe, e.clientX, e.clientY); ic.appendChild(m); }
+    if (universe && universe.some(sh => !shown.includes(defVariant(p, sh)))) { const m = document.createElement('div'); m.className = 'more'; m.textContent = '…'; m.onclick = e => openMore(key, universe, e.clientX, e.clientY); ic.appendChild(m); }
     card.appendChild(ic);
     const meta = document.createElement('div'); meta.className = 'meta';
     const dr = document.createElement('span'); dr.className = 'drawer' + (M.locOf(c) ? ' set' : ''); dr.textContent = locSummary(c, 'location?'); dr.onclick = e => openLoc(key, cell(key), cellTextClient(p, key), e.clientX, e.clientY);
@@ -457,7 +460,7 @@ function printCell(key, x, y) {
   const slots = cellSlots(key);
   if (slots.length < 2) return printKeys([key]);
   $('#pop').innerHTML = `<h3>${cellTextClient(page(), key)} is split over ${slots.length} locations — print which?</h3>` +
-    slots.map((s, i) => `<label><input type="checkbox" data-i="${i}" checked>${s.label}${s.overflow ? ' (overflow)' : ''} <span class="note">(${s.types.map(t => icons.labels[t] || t).join(', ')})</span></label>`).join('') +
+    slots.map((s, i) => `<label><input type="checkbox" data-i="${i}" checked>${s.label}${s.overflow ? ' (overflow)' : ''} <span class="note">(${s.types.map(iconLabel).join(', ')})</span></label>`).join('') +
     `<div class="row"><button type="button" id="popGo">Print</button><button type="button" id="popClose">Cancel</button></div>`;
   $('#popGo').onclick = () => { const chosen = [...$('#pop').querySelectorAll('input:checked')].map(i => slots[+i.dataset.i].slot); closePop(); if (chosen.length) printKeys(null, { page: pageId, keys: [key], slots: chosen }); };
   $('#popClose').onclick = closePop; placePop(x, y);
@@ -490,15 +493,26 @@ async function deliver(r) {
   status(`${n} ${tape} mm label${n == 1 ? '' : 's'} → ${name}`);
   return false;
 }
-// head types a class can have at all; a cell shows the page's primary list plus whatever else is ticked, and "…" offers the rest
-const HEAD_UNIVERSE = { machine: ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'hexslot', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew'],
-                        tapping: ['wood', 'sheetmetal', 'buttonsm', 'trusssm', 'hexsm', 'hexsmslot', 'flangesm', 'trim', 'hexdrill', 'hexdrillslot', 'pandrill', 'flatdrill'], wood: ['wood', 'trim', 'flangesm', 'sheetmetal', 'buttonsm', 'trusssm', 'hexsm', 'hexsmslot', 'hexdrill', 'hexdrillslot', 'pandrill', 'flatdrill'] };
+// screws are a head shape plus properties: tip (blunt / pointed), cutting tip (thread-forming or self-drilling) and captive
+// washers. A variant key names the combination ("pan", "pan:p", "pan:p:c", "pan:wfs"); the cell's types list holds variant keys.
+const vParse = name => { const [shape, ...f] = String(name).split(':'); const w = f.find(x => x[0] === 'w') || ''; return { shape, pointed: f.includes('p'), cutting: f.includes('c'), washers: [...w.slice(1)] }; };
+const vKey = ({ shape, pointed = false, cutting = false, washers = [] }) => shape + (pointed ? ':p' : '') + (cutting ? ':c' : '') + (washers.length ? ':w' + ['f', 's', 'e', 'i'].filter(c => washers.includes(c)).join('') : '');
+const WHOLE = ['shoulder', 'setscrew'];   // shapes with no tip or washer options
+// the variant one click on a shape gives on this page: pointed on the wood and sheet metal pages, blunt on the machine pages
+const defVariant = (p, shape) => vKey({ shape, pointed: p.class !== 'machine' && !WHOLE.includes(shape) });
+const shapeOf = t => vParse(t).shape;
+// head shapes a class can have at all; a cell shows the page's primary shapes plus whatever else is ticked, and "…" offers the rest
+const HEAD_UNIVERSE = { machine: ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'hexwasher', 'flange', 'thumb', 'carriage', 'shoulder', 'setscrew'],
+                        tapping: ['flat', 'pan', 'button', 'truss', 'oval', 'hexwasher', 'flange', 'trim'], wood: ['flat', 'trim', 'flange', 'pan', 'button', 'truss', 'oval', 'hexwasher'] };
+const universeOf = p => HEAD_UNIVERSE[p.class] || HEAD_UNIVERSE.machine;
+const iconSvg = t => icons.svg[t] || icons.svg[shapeOf(t)] || '';
+const iconLabel = t => icons.labels[t] || t;
 function placePop(x, y) { const pop = $('#pop'); pop.style.display = 'block'; pop.style.left = Math.min(x, window.innerWidth - 320) + 'px'; pop.style.top = Math.min(y, window.innerHeight - Math.min(pop.offsetHeight, window.innerHeight * .8) - 10) + 'px'; }
 function closePop() { $('#pop').style.display = 'none'; $('#pop').classList.remove('wide'); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
 function openMore(key, universe, x, y) {
   const c = cell(key), p = page();
-  $('#pop').innerHTML = `<h3>Head types · ${cellTextClient(p, key)}</h3>` + universe.map(t => `<label><input type="checkbox" data-t="${t}" ${c.types.includes(t) ? 'checked' : ''}>${icons.svg[t]}${icons.labels[t] || t}</label>`).join('') + `<div class="row"><button type="button" id="popClose">Close</button></div>`;
+  $('#pop').innerHTML = `<h3>Head shapes · ${cellTextClient(p, key)}</h3><div class="note">Tip, cutting tip and captive washers are set per head: right-click its icon.</div>` + universe.map(sh => { const t = defVariant(p, sh); return `<label><input type="checkbox" data-t="${t}" ${c.types.includes(t) ? 'checked' : ''}>${iconSvg(t)}${iconLabel(t)}</label>`; }).join('') + `<div class="row"><button type="button" id="popClose">Close</button></div>`;
   $('#pop').querySelectorAll('input').forEach(i => i.onchange = () => { toggle(key, i.dataset.t); });
   $('#popClose').onclick = closePop; placePop(x, y);
 }
@@ -506,14 +520,19 @@ function cellTextClient(p, key) { if (M.isList(p)) return M.cellText(p, key); co
 // per-head detail: own drawer, drive types, materials per drive (washers and nuts: materials only)
 function openDetail(key, type, x, y) {
   const c = cell(key), p = page(); c.detail = c.detail || {}; const info = c.detail[type] = c.detail[type] || {};
-  const isHead = (HEAD_UNIVERSE[p.class] || HEAD_UNIVERSE.machine).includes(type), isWasher = key.split('|')[1].endsWith('washer');
-  const mats = isWasher ? MAT_WASHER : MAT_SCREW, fixed = isHead ? FIXED_DRIVE[type] : undefined;
-  const drives = isHead && fixed === undefined ? DRIVES : (fixed && fixed !== 'none' ? [[fixed, DRIVES.find(d => d[0] === fixed)[1] + ' (always)']] : []);
+  const v = vParse(type), isHead = universeOf(p).includes(v.shape) || v.shape in FIXED_DRIVE || v.shape in DRIVES_FOR, isWasher = key.split('|')[1].endsWith('washer');
+  const mats = isWasher ? MAT_WASHER : MAT_SCREW, fixed = isHead ? FIXED_DRIVE[v.shape] : undefined;
+  const drives = isHead && fixed === undefined ? (DRIVES_FOR[v.shape] ? DRIVES.filter(d => DRIVES_FOR[v.shape].includes(d[0])) : DRIVES) : (fixed && fixed !== 'none' ? [[fixed, DRIVES.find(d => d[0] === fixed)[1] + ' (always)']] : []);
   const matList = (drive) => `<div class="sub">` + mats.map(([m, l]) => { const on = ((drive ? (info.drives || {})[drive] : info.materials) || []).includes(m); return `<label><input type="checkbox" data-drive="${drive}" data-m="${m}" ${on ? 'checked' : ''}>${l}${on ? locBtn(itemOf(drive, m), drive, m) : ''}</label>`; }).join('') + `</div>`;
   const locBtn = (o, d, m) => `<button type="button" class="locbtn${M.locOf(o) ? (M.locOf(o).kind === 'bin' ? ' bin' : ' set') : ''}" data-drive="${d}" data-m="${m}" title="location of this drive + material">${locSummary(o, '') || 'location'}</button>`;
   const itemOf = (d, m) => ((info.items || {})[`${d}|${m}`] || {});
-  let h = `<h3>${icons.svg[type]} ${icons.labels[type] || type} · ${cellTextClient(p, key)}</h3>
-    <h4>Location</h4><div class="loc"><span>${locSummary(info, '') || `as the cell (${locSummary(c, 'unset')})`}</span>${locBtn(info, '', '')}</div>`;
+  let h = `<h3>${iconSvg(type)} ${iconLabel(type)} · ${cellTextClient(p, key)}</h3>`;
+  if (isHead && !WHOLE.includes(v.shape)) {
+    h += `<h4>Tip</h4><label><input type="radio" name="tip" value="blunt" ${!v.pointed ? 'checked' : ''}>Blunt</label><label><input type="radio" name="tip" value="pointed" ${v.pointed ? 'checked' : ''}>Pointed</label>
+      <label><input type="checkbox" id="popCut" ${v.cutting ? 'checked' : ''}>Cutting tip (${v.pointed ? 'self-drilling' : 'thread-forming'})</label>
+      <h4>Captive washer</h4>` + [['f', 'Flat'], ['s', 'Split lock'], ['e', 'External tooth'], ['i', 'Internal tooth']].map(([c, l]) => `<label><input type="checkbox" class="popW" value="${c}" ${v.washers.includes(c) ? 'checked' : ''}>${l}</label>`).join('');
+  }
+  h += `<h4>Location</h4><div class="loc"><span>${locSummary(info, '') || `as the cell (${locSummary(c, 'unset')})`}</span>${locBtn(info, '', '')}</div>`;
   if (drives.length) {
     // a drive with no material ticked is one item of its own, so it gets a location button of its own
     h += `<h4>Drive</h4>` + drives.map(([d, l]) => `<label><input type="checkbox" data-drive="${d}" ${(info.drives || {})[d] ? 'checked' : ''} ${fixed ? 'disabled checked' : ''}>${l}${(info.drives || {})[d] && !info.drives[d].length ? locBtn(itemOf(d, ''), d, '') : ''}</label>` + ((info.drives || {})[d] || fixed ? `<div class="note sub">materials</div>` + matList(d) : '')).join('');
@@ -523,15 +542,24 @@ function openDetail(key, type, x, y) {
   $('#pop').innerHTML = h;
   if (fixed && fixed !== 'none') { info.drives = info.drives || {}; info.drives[fixed] = info.drives[fixed] || []; }
   const here = () => openDetail(key, type, parseInt($('#pop').style.left), parseInt($('#pop').style.top));
+  // tip / cutting / washers rename the variant: its detail moves with it; a variant that already exists in the cell is refused
+  const revariant = () => {
+    const nv = { shape: v.shape, pointed: $('#pop input[name=tip]:checked')?.value === 'pointed', cutting: $('#popCut')?.checked, washers: [...$('#pop').querySelectorAll('.popW:checked')].map(i => i.value) };
+    const nk = vKey(nv); if (nk === type) return;
+    if (c.types.includes(nk)) { alert(`${iconLabel(nk)} is already in this cell.`); return here(); }
+    c.types[c.types.indexOf(type)] = nk; c.detail[nk] = info; delete c.detail[type];
+    save(); ensureIcon(nk).then(() => { render(); openDetail(key, nk, parseInt($('#pop').style.left), parseInt($('#pop').style.top)); });
+  };
+  $('#pop').querySelectorAll('input[name=tip], #popCut, .popW').forEach(i => i.onchange = revariant);
   $('#pop').querySelectorAll('.locbtn').forEach(b => b.onclick = e => {
     e.preventDefault();
-    const d = b.dataset.drive, m = b.dataset.m, what = `${icons.labels[type] || type} · ${cellTextClient(p, key)}`;
+    const d = b.dataset.drive, m = b.dataset.m, what = `${iconLabel(type)} · ${cellTextClient(p, key)}`;
     if (!d && !m) return openLoc(key, info, what, e.clientX, e.clientY, here);
     info.items = info.items || {}; const it = info.items[`${d}|${m}`] = info.items[`${d}|${m}`] || {};
     const mat = (mats.find(x => x[0] === m) || [])[1] || '', drv = (DRIVES.find(x => x[0] === d) || [])[1] || '';
     openLoc(key, it, `${what} · ${[drv, mat].filter(Boolean).join(', ')}`, e.clientX, e.clientY, () => { if (!Object.keys(it).length) delete info.items[`${d}|${m}`]; here(); });
   });
-  $('#pop').querySelectorAll('input[type=checkbox]').forEach(i => i.onchange = () => {
+  $('#pop').querySelectorAll('input[type=checkbox]:not(#popCut):not(.popW)').forEach(i => i.onchange = () => {
     if (i.dataset.m !== undefined) {   // a material
       const list = i.dataset.drive ? (info.drives = info.drives || {}, info.drives[i.dataset.drive] = info.drives[i.dataset.drive] || []) : (info.materials = info.materials || []);
       const j = list.indexOf(i.dataset.m); if (i.checked && j < 0) list.push(i.dataset.m); if (!i.checked && j >= 0) list.splice(j, 1);
@@ -545,16 +573,17 @@ function openDetail(key, type, x, y) {
 // which head / nut / washer types this page shows (types ticked in cells but hidden here still print)
 // drive and material vocabularies for the per-head detail (right-click / long-press on a ticked icon)
 const DRIVES = [['slotted', 'Slotted'], ['phillips', 'Phillips'], ['combo', 'Slotted + Phillips combo'], ['hexslot', 'Hex + slotted'], ['pozidriv', 'Pozidriv'], ['jis', 'JIS'], ['torx', 'Torx'], ['hex', 'Hex'], ['square', 'Square']];
-const FIXED_DRIVE = { socket: 'hex', shoulder: 'hex', setscrew: 'hex', hex: 'hex', hexsm: 'hex', hexdrill: 'hex', hexslot: 'hexslot', hexsmslot: 'hexslot', hexdrillslot: 'hexslot', thumb: 'none' };   // carriage bolts: usually none, but some carry a slot, so the normal list applies   // heads whose drive is a given
+const FIXED_DRIVE = { socket: 'hex', shoulder: 'hex', setscrew: 'hex', thumb: 'none' };   // by shape
+const DRIVES_FOR = { hex: ['hex', 'hexslot'], hexwasher: ['hex', 'hexslot'] };   // shapes with a restricted drive choice   // carriage bolts: usually none, but some carry a slot, so the normal list applies   // heads whose drive is a given
 const MAT_SCREW = [['aluminum', 'Aluminum'], ['steel', 'Steel, plain'], ['steel-blackoxide', 'Steel, black oxide'], ['steel-zinc', 'Steel, zinc'], ['steel-cadmium', 'Steel, cadmium'], ['stainless', 'Stainless steel'], ['brass', 'Brass'],
                    ['nylon', 'Nylon'], ['ptfe', 'PTFE'], ['phenolic', 'Phenolic'], ['pei', 'PEI (Ultem)'], ['polycarbonate', 'Polycarbonate'], ['plastic', 'Plastic, other']];
 const MAT_WASHER = [...MAT_SCREW, ['fiber', 'Fiber'], ['copper', 'Copper'], ['bronze', 'Bronze']];
 // hardware columns: [page list, cell key suffix, per row or per diameter, label]
 const HW = [['locknuts', 'locknut', 'row', 'Lock Nut'], ['nuts', 'nut', 'row', 'Nut'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer'], ['washers', 'washer', 'dia', 'Washer']];
-const GROUPS = [['heads', 'Heads', ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew', 'hexslot', 'wood', 'sheetmetal', 'buttonsm', 'trusssm', 'trim', 'flangesm', 'hexsm', 'hexsmslot', 'hexdrill', 'hexdrillslot', 'pandrill', 'flatdrill']], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'undersized', 'fender', 'thinw', 'cup', 'sleeved']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed', 'inextooth']]];
+const GROUPS = [['heads', 'Heads', ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'hexwasher', 'flange', 'thumb', 'carriage', 'trim', 'shoulder', 'setscrew']], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'undersized', 'fender', 'thinw', 'cup', 'sleeved']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed', 'inextooth']]];
 function renderTypes() {
   const p = page();
-  $('#types').innerHTML = GROUPS.map(([k, title, all]) => `<h3>${title}</h3>` + all.map(t => `<label><input type="checkbox" data-group="${k}" data-type="${t}" ${p[k].includes(t) ? 'checked' : ''}>${icons.svg[t]}${icons.labels[t] || t}</label>`).join('')).join('');
+  $('#types').innerHTML = GROUPS.map(([k, title, all]) => `<h3>${title}</h3>` + all.map(t => { const sh = k === 'heads' ? defVariant(p, t) : t; return `<label><input type="checkbox" data-group="${k}" data-type="${t}" ${(p[k] || []).includes(t) ? 'checked' : ''}>${iconSvg(sh)}${iconLabel(sh)}</label>`; }).join('')).join('');
   $('#types').querySelectorAll('input').forEach(i => i.onchange = () => {
     p[i.dataset.group] = p[i.dataset.group] || []; const list = p[i.dataset.group], t = i.dataset.type;
     if (i.checked) { if (!list.includes(t)) list.push(t); list.sort((a, b) => GROUPS.find(g => g[0] === i.dataset.group)[2].indexOf(a) - GROUPS.find(g => g[0] === i.dataset.group)[2].indexOf(b)); }
