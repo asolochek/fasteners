@@ -2036,11 +2036,48 @@
     {
      "id": "lmu27tgvf",
      "text": "Banana Plugs",
-     "glyph": "",
+     "glyph": "bananastack",
+     "checked": false,
+     "detail": ""
+    },
+    {
+     "id": "lmu27z8ru",
+     "text": "Banana Plugs",
+     "glyph": "banana",
+     "checked": false
+    },
+    {
+     "id": "lmu27zj51",
+     "text": "Binding Posts",
+     "glyph": "bindingpost",
+     "checked": false
+    },
+    {
+     "id": "lmu27zvja",
+     "text": "Banana Jacks",
+     "glyph": "bananajack",
+     "checked": false
+    },
+    {
+     "id": "lmu2805cz",
+     "text": "Double Banana",
+     "glyph": "bananadual",
+     "checked": false
+    },
+    {
+     "id": "lmu280djj",
+     "text": "DB9",
+     "glyph": "db9",
+     "checked": false
+    },
+    {
+     "id": "lmu281v29",
+     "text": "Alligator Clips",
+     "glyph": "alligator",
      "checked": false
     }
    ]
   }
  ],
- "rev": 525
+ "rev": 561
 }
