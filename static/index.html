@@ -510,6 +510,8 @@ const iconLabel = t => icons.labels[t] || t;
 function placePop(x, y) { const pop = $('#pop'); pop.style.display = 'block'; pop.style.left = Math.min(x, window.innerWidth - 320) + 'px'; pop.style.top = Math.min(y, window.innerHeight - Math.min(pop.offsetHeight, window.innerHeight * .8) - 10) + 'px'; }
 function closePop() { $('#pop').style.display = 'none'; $('#pop').classList.remove('wide'); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
+// a click anywhere outside the popup closes it (the click still does whatever it landed on)
+document.addEventListener('pointerdown', e => { const pop = $('#pop'); if (pop.style.display === 'block' && !pop.contains(e.target)) closePop(); }, true);
 function openMore(key, universe, x, y) {
   const c = cell(key), p = page();
   $('#pop').innerHTML = `<h3>Head shapes · ${cellTextClient(p, key)}</h3><div class="note">Tip, cutting tip and captive washers are set per head: right-click its icon.</div>` + universe.map(sh => { const t = defVariant(p, sh); return `<label><input type="checkbox" data-t="${t}" ${c.types.includes(t) ? 'checked' : ''}>${iconSvg(t)}${iconLabel(t)}</label>`; }).join('') + `<div class="row"><button type="button" id="popClose">Close</button></div>`;
