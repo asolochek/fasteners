@@ -1788,6 +1788,20 @@
       "drawer": "85",
       "half": "back"
      }
+    },
+    "8-32|0.25": {
+     "types": [
+      "truss"
+     ],
+     "detail": {
+      "truss": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      }
+     }
     }
    },
    "locknuts": [
@@ -2726,5 +2740,5 @@
    ]
   }
  ],
- "rev": 790
+ "rev": 793
 }

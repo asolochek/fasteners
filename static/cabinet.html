@@ -53,6 +53,7 @@ main { display:flex; gap:16px; padding:14px; align-items:flex-start; }
 .card.gap { border-color:var(--bad2); color:var(--bad2); font-weight:600; }
 .card.whole { border-width:2px; border-color:var(--ink2); }
 .card .pg { display:block; font-size:10px; color:var(--ink2); }
+.card.cat { border-left:5px solid var(--cat); }   /* unassigned: the category the card belongs to, in its colour */
 .card .pg.list { color:var(--accent); }
 #right { width:250px; flex:none; }
 #unassigned { min-height:120px; background:var(--none); border-radius:6px; padding:6px; display:flex; flex-direction:column; gap:4px; }
@@ -233,6 +234,7 @@ let dragging = null;
 function makeCard(card) {
   const el = document.createElement('div'); el.className = 'card' + (card.overflow ? ' ov' : '') + (card.gap ? ' gap' : '') + (card.whole ? ' whole' : '');
   el.draggable = true; el.innerHTML = `${card.text}<span class="pg${card.list ? ' list' : ''}">${card.page}</span>`;
+  if (!card.from) { const c = M.cabinetById(pageOf(card.pageId)?.cabinet); if (c) { el.classList.add('cat'); el.style.setProperty('--cat', c.color); } }
   el.ondragstart = e => { dragging = card; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; };
   el.ondragend = () => { dragging = null; el.classList.remove('dragging'); document.querySelectorAll('.over').forEach(x => x.classList.remove('over')); };
   el.oncontextmenu = e => { e.preventDefault(); cardMenu(card, e.clientX, e.clientY); };
