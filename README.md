@@ -46,8 +46,16 @@ records what has been printed.
 - **Rows** are thread sizes (`#4-40`, `1/4-28`, `M6`, `M6x0.75`, or a bare gauge like `#6` on wood and sheet metal pages);
   **Add row…** inserts one in order, × on an empty row removes it. Lengths likewise: **Add length…** takes `7/16`, `0.4375`,
   `1-1/2` or `22`; × on an empty column removes it. **Types…** chooses which head, nut and washer types a page shows.
-- **Cabinet** opens an 8 × 8 map of the drawers for the page (more rows of 8 when drawers beyond 64 are used): grey unassigned, red where a drawer half holds lengths that
-  skip one in between. The bins are listed under the grid; overflow stock shows in italics.
+- **Cabinet** opens the drawer map, all pages at once (8 across, more rows of 8 as drawers beyond 64 are used): every label
+  is a card in its drawer half, bin, or the Unassigned column on the right. Drag a card to a half, a bin, "drop here for a
+  new bin", or back to Unassigned. Dropping on an occupied half offers **Merge** (both become one label) or **Insert**,
+  shifting what is there along by one half: to the next gap, the rest of the row (refused if the row's last half is in
+  use), or everything after. Right-click a card to **split** its label into cards per size, per head type, or per drive +
+  material (they stay put until dragged, so material A can go to one drawer and material B to another), to flag it as
+  **needing a whole drawer** (drawn full height; both halves must be free), or to unassign it. Right-click an empty half to
+  insert or delete a space with the same three ranges; a row-scoped delete only pulls back within its row. Shifts show
+  the chain of moves before they commit, and **Undo** reverts the last change. Red marks a half whose lengths skip one;
+  overflow stock shows in italics.
 
 ## List pages
 

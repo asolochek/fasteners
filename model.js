@@ -62,21 +62,24 @@ const locOf = o => o?.loc?.kind === 'bin' ? (o.loc.bin ? { kind: 'bin', bin: Str
   : o?.drawer ? { kind: 'drawer', drawer: String(o.drawer), half: o.half || '' } : null;
 const overflowOf = o => (o?.overflow || []).map(l => locOf({ loc: l })).filter(Boolean);
 // the items of a cell: one per (type, drive, material) recorded, else per type; each with its resolved primary and overflow locations
+// each item also says which level its location came from: locLevel / overLevel = 'item' | 'type' | 'cell' | '' (none)
 function items(page, key) {
-  if (isList(page)) { const it = listItem(page, key); return it ? [{ key, type: it.glyph || '', drive: '', material: '', loc: locOf(it), overflow: overflowOf(it) }] : []; }
+  if (isList(page)) { const it = listItem(page, key); return it ? [{ key, type: it.glyph || '', drive: '', material: '', loc: locOf(it), overflow: overflowOf(it), locLevel: locOf(it) ? 'cell' : '', overLevel: overflowOf(it).length ? 'cell' : '', whole: !!it.whole }] : []; }
   const c = page.cells[key] || {}, out = [];
   const cellLoc = locOf(c), cellOver = overflowOf(c);
   for (const t of c.types || []) {
     const o = (c.detail || {})[t] || {};
-    const typeLoc = locOf(o) || cellLoc, typeOver = overflowOf(o).length ? overflowOf(o) : (locOf(o) ? [] : cellOver);
+    const typeLoc = locOf(o) || cellLoc, typeLL = locOf(o) ? 'type' : cellLoc ? 'cell' : '';
+    const typeOver = overflowOf(o).length ? overflowOf(o) : (locOf(o) ? [] : cellOver), typeOL = overflowOf(o).length ? 'type' : (!locOf(o) && cellOver.length) ? 'cell' : '';
     const combos = [];
     if (o.drives) for (const [d, mats] of Object.entries(o.drives)) { if (mats.length) for (const m of mats) combos.push([d, m]); else combos.push([d, '']); }
     if (o.materials) for (const m of o.materials) combos.push(['', m]);
     if (!combos.length) combos.push(['', '']);
     for (const [d, m] of combos) {
       const it = (o.items || {})[`${d}|${m}`] || {};
-      const loc = locOf(it) || typeLoc, over = overflowOf(it).length ? overflowOf(it) : (locOf(it) ? [] : typeOver);
-      out.push({ key, type: t, drive: d, material: m, loc, overflow: over });
+      const loc = locOf(it) || typeLoc, locLevel = locOf(it) ? 'item' : typeLL;
+      const over = overflowOf(it).length ? overflowOf(it) : (locOf(it) ? [] : typeOver), overLevel = overflowOf(it).length ? 'item' : (!locOf(it) ? typeOL : '');
+      out.push({ key, type: t, drive: d, material: m, loc, overflow: over, locLevel, overLevel, whole: !!c.whole });
     }
   }
   return out;

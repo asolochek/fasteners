@@ -5,74 +5,332 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fastener Cabinet</title>
 <style>
-:root { --paper:#f7f6f2; --ink:#17181a; --ink2:#5b6470; --line:#d9d7cf; --none:#e6e4de; --have:#ffffff; --bad:#f8d7d7; --bad2:#c0392b; --accent:#d8641f; }
+:root { --paper:#f7f6f2; --ink:#17181a; --ink2:#5b6470; --line:#d9d7cf; --none:#e6e4de; --have:#ffffff; --bad:#f8d7d7; --bad2:#c0392b; --accent:#d8641f; --bin:#2f6db5; --drop:#dff3df; }
 body { margin:0; background:var(--paper); color:var(--ink); font:14px/1.3 system-ui, sans-serif; }
-header { display:flex; gap:12px; align-items:center; padding:10px 14px; border-bottom:1px solid var(--line); }
+header { display:flex; gap:12px; align-items:center; padding:10px 14px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
 h1 { font-size:18px; margin:0; font-weight:600; }
-#pageSel { font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:4px; background:#fff; }
-.legend { color:var(--ink2); font-size:13px; display:flex; gap:14px; }
-.legend i { display:inline-block; width:14px; height:14px; border-radius:3px; vertical-align:-2px; margin-right:4px; border:1px solid var(--line); }
-main { padding:14px; }
-.grid { display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; max-width:1400px; }
-.drawer { background:var(--none); border-radius:6px; min-height:74px; padding:6px 8px; position:relative; color:var(--ink2); }
-.drawer.have { background:var(--have); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line); }
-.drawer.gap { background:var(--bad); box-shadow:inset 0 0 0 2px var(--bad2); }
-.drawer .n { position:absolute; top:4px; right:7px; font-size:12px; color:var(--ink2); font-variant-numeric:tabular-nums; }
-.half { font-size:13px; margin:2px 0; min-height:16px; }
-.half[data-h="front"] { border-top:1px solid var(--line); padding-top:3px; }   /* rear above the line, front below, like the drawer */
-.half.gap { color:var(--bad2); font-weight:600; }
-.whole { font-size:13px; margin:2px 0; }
-.whole.gap { color:var(--bad2); font-weight:600; }
-.pg { font-size:11px; color:var(--ink2); }
-.ov { font-style:italic; color:var(--ink2); }
-.ov::after { content:' (overflow)'; font-size:11px; }
 h2 { font-size:15px; margin:18px 0 8px; font-weight:600; color:var(--ink2); }
-.bins { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:6px; max-width:1400px; }
-.bin { background:var(--have); border-radius:6px; padding:6px 8px 6px 8px; position:relative; box-shadow:inset 0 0 0 1px var(--line); min-height:40px; }
-.bin .n { position:absolute; top:4px; right:7px; font-size:12px; color:#2f6db5; font-weight:600; }
-.bin div { font-size:13px; margin:2px 0; padding-right:26px; }
-@media (max-width:720px) { .grid { grid-template-columns:repeat(4, 1fr); } }
+button { font:inherit; padding:5px 10px; border:1px solid var(--line); background:#fff; border-radius:4px; cursor:pointer; }
+button:disabled { opacity:.45; cursor:default; }
+#status { color:var(--ink2); font-size:13px; }
+.legend { color:var(--ink2); font-size:13px; display:flex; gap:14px; flex-wrap:wrap; }
+.legend i { display:inline-block; width:14px; height:14px; border-radius:3px; vertical-align:-2px; margin-right:4px; border:1px solid var(--line); }
+main { display:flex; gap:16px; padding:14px; align-items:flex-start; }
+#left { flex:1; min-width:0; }
+.grid { display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; }
+.drawer { background:var(--none); border-radius:6px; min-height:78px; position:relative; display:flex; flex-direction:column; }
+.drawer .n { position:absolute; top:3px; right:6px; font-size:11px; color:var(--ink2); font-variant-numeric:tabular-nums; pointer-events:none; z-index:1; }
+.half { flex:1; min-height:36px; padding:5px 6px 4px; border-radius:6px; display:flex; flex-direction:column; gap:3px; }
+.half[data-h="front"] { border-top:1px dashed var(--line); }   /* rear above the line, front below, like the drawer */
+.half.whole { border-top:0; }
+.half.over { background:var(--drop); outline:2px solid #8fcf8f; }
+.half.gap { background:var(--bad); }
+.card { background:var(--have); border:1px solid var(--line); border-radius:5px; padding:3px 6px; font-size:12.5px; cursor:grab; box-shadow:0 1px 2px rgba(0,0,0,.06); position:relative; }
+.card:active { cursor:grabbing; }
+.card.dragging { opacity:.4; }
+.card.ov { font-style:italic; color:var(--ink2); }
+.card.ov::after { content:' (overflow)'; font-size:11px; }
+.card.gap { border-color:var(--bad2); color:var(--bad2); font-weight:600; }
+.card.whole { border-width:2px; border-color:var(--ink2); }
+.card .pg { display:block; font-size:10px; color:var(--ink2); }
+.card .pg.list { color:var(--accent); }
+#right { width:250px; flex:none; }
+#unassigned { min-height:120px; background:var(--none); border-radius:6px; padding:6px; display:flex; flex-direction:column; gap:4px; }
+#unassigned.over { background:var(--drop); outline:2px solid #8fcf8f; }
+.bins { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:6px; }
+.bin { background:var(--none); border-radius:6px; padding:6px 8px 6px 8px; position:relative; min-height:44px; display:flex; flex-direction:column; gap:3px; }
+.bin.over { background:var(--drop); outline:2px solid #8fcf8f; }
+.bin .n { position:absolute; top:4px; right:7px; font-size:12px; color:var(--bin); font-weight:600; pointer-events:none; }
+.bin.new { border:1px dashed var(--line); color:var(--ink2); justify-content:center; align-items:center; }
+#menu { position:fixed; background:#fff; border:1px solid var(--line); border-radius:6px; box-shadow:0 6px 24px rgba(0,0,0,.16); display:none; z-index:20; min-width:220px; font-size:13.5px; padding:4px 0; }
+#menu div { padding:6px 12px; cursor:pointer; }
+#menu div:hover { background:var(--paper); }
+#menu div.hd { color:var(--ink2); font-size:11px; text-transform:uppercase; letter-spacing:.04em; cursor:default; padding-top:8px; }
+#menu div.hd:hover { background:none; }
+#menu div.dis { color:var(--line); cursor:default; }
+#menu .sub { padding-left:24px; }
+@media (max-width:900px) { .grid { grid-template-columns:repeat(4, 1fr); } main { flex-direction:column; } #right { width:auto; } }
 </style>
 </head>
 <body>
-<header><h1>Fastener cabinet</h1><select id="pageSel"></select><span class="legend"><span><i style="background:var(--none)"></i>unassigned</span><span><i style="background:var(--have)"></i>assigned</span><span><i style="background:var(--bad);border-color:var(--bad2)"></i>lengths not contiguous</span></span></header>
-<main><div class="grid" id="grid"></div><div id="binsWrap" hidden><h2>Bins (18 mm labels)</h2><div class="bins" id="bins"></div></div></main>
+<header><h1>Fastener cabinet</h1>
+  <button id="undo" disabled title="undo the last move or shift">Undo</button>
+  <span id="status"></span>
+  <span class="legend"><span><i style="background:var(--none)"></i>empty</span><span><i style="background:var(--have)"></i>a label</span><span><i style="background:var(--bad);border-color:var(--bad2)"></i>lengths not contiguous</span><span>drag cards between halves, bins and the unassigned list · right-click a card or a half for more</span></span>
+</header>
+<main>
+  <div id="left">
+    <div class="grid" id="grid"></div>
+    <h2>Bins (18 mm labels)</h2><div class="bins" id="bins"></div>
+  </div>
+  <div id="right"><h2 style="margin-top:0">Unassigned</h2><div id="unassigned"></div></div>
+</main>
+<div id="menu"></div>
+<script src="/model.js"></script>
 <script>
-(async () => {
-  const want = new URLSearchParams(location.search).get('page') || '';
-  const { drawers, bins, pages, page } = await (await fetch('/api/cabinet?page=' + encodeURIComponent(want))).json();
-  const sel = document.getElementById('pageSel');
-  sel.innerHTML = pages.map(p => `<option value="${p.id}" ${p.id === page ? 'selected' : ''}>${p.title}</option>`).join('');
-  if (!page) sel.innerHTML = '<option value="">(all pages)</option>' + sel.innerHTML;
-  sel.onchange = () => location.search = '?page=' + encodeURIComponent(sel.value);
-  document.title = (pages.find(p => p.id === page)?.title || 'Fastener') + ' cabinet';
-  // 8 × 8 drawers, extended by whole rows of 8 when higher drawer numbers are in use
-  const top = Math.max(0, ...Object.keys(drawers).map(Number).filter(n => n > 0));
-  const N = Math.max(64, Math.ceil(top / 8) * 8), g = document.getElementById('grid');
-  const txt = e => e.overflow ? `<span class="ov">${e.text}</span>` : e.text;
-  const line = (e, cls, h) => `<div class="${cls}${e.gap ? ' gap' : ''}" ${h ? `data-h="${h}"` : ''}>${txt(e)}</div>`;
-  for (let n = 1; n <= N; n++) {
-    const d = drawers[String(n)], el = document.createElement('div');
-    const gap = d && [...d.back, ...d.front, ...d.whole].some(e => e.gap);
-    el.className = 'drawer' + (d ? ' have' : '') + (gap ? ' gap' : '');
-    let html = `<span class="n">${n}</span>`;
-    if (d) {
-      if (d.whole.length) html += d.whole.map(e => line(e, 'whole')).join('');
-      if (d.back.length || d.front.length) {
-        html += `<div class="half${d.back.some(e => e.gap) ? ' gap' : ''}" data-h="rear">${d.back.map(txt).join('<br>') || '<span class="pg">empty</span>'}</div>`;
-        html += `<div class="half${d.front.some(e => e.gap) ? ' gap' : ''}" data-h="front">${d.front.map(txt).join('<br>') || '<span class="pg">empty</span>'}</div>`;
-      }
+let data, cab, labels = {}, undoStack = [];
+const $ = s => document.querySelector(s);
+const status = t => { $('#status').textContent = t; };
+// per-slot display split: 'cell' | 'type' | 'item' (session only; nothing in the data changes until a piece is dragged)
+const splitMode = {};
+const slotKey = loc => loc.kind === 'bin' ? `B:${loc.bin}` : `D:${loc.drawer}|${loc.half || ''}`;
+
+// ---- loading ----
+async function load() {
+  const [d, c, ic] = await Promise.all([fetch('/api/data').then(r => r.json()), fetch('/api/cabinet').then(r => r.json()), fetch('/api/icons').then(r => r.json())]);
+  data = d; cab = c; labels = ic.labels || {}; render();
+}
+async function commit(what) {
+  status('saving…');
+  const r = await fetch('/api/data', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  if (r.status === 409) { undoStack.length = 0; $('#undo').disabled = true; alert('The data changed elsewhere; reloading. Please redo that change.'); await load(); return false; }
+  if (!r.ok) { status('save failed'); alert('Save failed'); return false; }
+  data.rev = (await r.json()).rev;
+  cab = await (await fetch('/api/cabinet')).json(); render(); status(what || 'saved'); return true;
+}
+function snapshot() { undoStack.push(JSON.stringify(data)); if (undoStack.length > 30) undoStack.shift(); $('#undo').disabled = false; }
+$('#undo').onclick = async () => { if (!undoStack.length) return; const prev = JSON.parse(undoStack.pop()); prev.rev = data.rev; data = prev; $('#undo').disabled = !undoStack.length; await commit('undone'); };
+
+// ---- the objects a part's location lives on ----
+const pageOf = id => data.pages.find(p => p.id === id);
+const RANK = { '': 0, cell: 1, type: 2, item: 3 };
+function objectAt(pageId, part, level) {
+  const p = pageOf(pageId); if (!p) return null;
+  if (M.isList(p)) return M.listItem(p, part.key);
+  const c = p.cells[part.key]; if (!c) return null;
+  if (level === 'cell') return c;
+  c.detail = c.detail || {}; const o = c.detail[part.type] = c.detail[part.type] || {};
+  if (level === 'type') return o;
+  o.items = o.items || {}; return o.items[`${part.drive}|${part.material}`] = o.items[`${part.drive}|${part.material}`] || {};
+}
+// move a card: every part gets `loc` written at the finer of its own level and the card's grain (null loc = unassign)
+function setCardLoc(card, loc) {
+  for (const part of card.parts) {
+    const level = RANK[part.level] > RANK[card.grain] ? part.level : card.grain;
+    const o = objectAt(card.pageId, part, level || 'cell'); if (!o) continue;
+    if (part.overflow) {
+      const old = card.from ? slotKey(card.from) : null;
+      o.overflow = (o.overflow || []).filter(l => !old || slotKey(M.locOf({ loc: l }) || {}) !== old);
+      if (loc) o.overflow.push(loc); if (!o.overflow.length) delete o.overflow;
+    } else {
+      delete o.drawer; delete o.half;
+      if (loc) o.loc = loc; else delete o.loc;
     }
-    el.innerHTML = html; g.appendChild(el);
   }
-  // bins: any number, in id order, each listing what it holds (overflow stock in italics)
-  const ids = Object.keys(bins || {}).sort((a, b) => (parseInt(a.slice(1)) - parseInt(b.slice(1))) || a.localeCompare(b));
-  if (ids.length) {
-    document.getElementById('binsWrap').hidden = false;
-    const bg = document.getElementById('bins');
-    for (const id of ids) { const el = document.createElement('div'); el.className = 'bin'; el.innerHTML = `<span class="n">${id}</span>` + bins[id].map(e => `<div>${txt(e)}</div>`).join(''); bg.appendChild(el); }
+}
+function setWhole(card, on) { for (const part of card.parts) { const o = objectAt(card.pageId, part, 'cell'); if (o) { if (on) o.whole = true; else delete o.whole; } } }
+
+// ---- cards: one per label, or the pieces of a split slot ----
+const short = { drive: d => M.DRIVE_SHORT[d] || d, mat: m => M.MAT_SHORT[m] || m };
+function cardsOf(entries, loc) {
+  const mode = loc ? splitMode[slotKey(loc)] : '';
+  const out = [];
+  for (const e of entries) {
+    const base = { from: loc, overflow: e.overflow, whole: e.whole, gap: e.gap, page: e.page, pageId: e.pageId, list: M.isList(pageOf(e.pageId)) };
+    if (!mode) { out.push({ ...base, grain: '', text: e.text, parts: e.parts }); continue; }
+    const p = pageOf(e.pageId), groups = new Map();
+    for (const part of e.parts) {
+      const k = mode === 'cell' ? part.key : mode === 'type' ? `${part.key}\n${part.type}` : `${part.key}\n${part.type}\n${part.drive}|${part.material}`;
+      if (!groups.has(k)) groups.set(k, []); groups.get(k).push(part);
+    }
+    for (const [k, parts] of groups) {
+      const pt = parts[0]; let text = M.cellText(p, pt.key);
+      if (mode !== 'cell' && pt.type) text += ' · ' + (labels[pt.type] || pt.type);
+      if (mode === 'item') text += ' · ' + [pt.drive && short.drive(pt.drive), pt.material && short.mat(pt.material)].filter(Boolean).join(' ');
+      out.push({ ...base, grain: mode, text, parts });
+    }
   }
-})();
+  return out;
+}
+// ---- slots: rear/front halves in order; a whole-drawer card takes both halves of its drawer ----
+const N = () => Math.max(64, Math.ceil(Math.max(0, ...Object.keys(cab.drawers).map(Number)) / 8) * 8);
+const idx = (drawer, half) => (drawer - 1) * 2 + (half === 'front' ? 1 : 0);
+const locAt = (i, whole) => ({ kind: 'drawer', drawer: String(Math.floor(i / 2) + 1), half: whole ? '' : (i % 2 ? 'front' : 'back') });
+// units: the cards that share a slot move together; size 2 = a whole drawer
+function units() {
+  const out = [];
+  for (const [n, dr] of Object.entries(cab.drawers)) {
+    const d = +n;
+    if (dr.whole.length) out.push({ start: idx(d, 'back'), size: 2, cards: cardsOf(dr.whole, { kind: 'drawer', drawer: n, half: '' }) });
+    if (dr.back.length) out.push({ start: idx(d, 'back'), size: 1, cards: cardsOf(dr.back, { kind: 'drawer', drawer: n, half: 'back' }) });
+    if (dr.front.length) out.push({ start: idx(d, 'front'), size: 1, cards: cardsOf(dr.front, { kind: 'drawer', drawer: n, half: 'front' }) });
+  }
+  return out.sort((a, b) => a.start - b.start);
+}
+const covers = (u, i) => i >= u.start && i < u.start + u.size;
+// shift `moved` (in slot order) by `delta` halves, keeping the gaps between them; a whole-drawer unit that would land on a
+// front half moves one more, and anything behind it moves up as needed. `floor` is the first index a unit may land on.
+// Returns the index after the last unit.
+function shift(moved, delta, floor) {
+  let prevEnd = floor;
+  for (const u of moved) { let to = Math.max(u.start + delta, prevEnd); if (u.size === 2 && to % 2) to++; u.to = to; prevEnd = to + u.size; }
+  return prevEnd;
+}
+const rowEnd = i => Math.floor(i / 16) * 16 + 15;
+// the shift plans. Each returns { moved: [units with .to], error } — nothing is written until apply()
+function planInsert(all, i, range, size = 1) {
+  const chainFrom = j => { const out = []; let k = j; for (;;) { const u = all.find(x => covers(x, k) && !out.includes(x)); if (!u) break; out.push(u); k = u.start + u.size; } return out; };
+  let moved;
+  if (range === 'gap') {
+    moved = chainFrom(i); shift(moved, size, i + size);
+    for (;;) {   // a whole unit bumped onto a drawer boundary may now overlap something further on: that chain moves too
+      const hit = all.find(u => !moved.includes(u) && moved.some(m => m.to < u.start + u.size && u.start < m.to + m.size));
+      if (!hit) break; moved.push(...chainFrom(hit.start).filter(u => !moved.includes(u))); moved.sort((a, b) => a.start - b.start); shift(moved, size, i + size);
+    }
+  } else if (range === 'row') {
+    moved = all.filter(u => u.start >= i && u.start <= rowEnd(i));
+    if (shift(moved, size, i + size) > rowEnd(i) + 1) return { error: 'That row has no room: its last half is in use.' };
+  } else { moved = all.filter(u => u.start >= i); shift(moved, size, i + size); }
+  return { moved: moved.filter(u => u.to !== u.start) };
+}
+function planDelete(all, i, range) {
+  if (all.some(u => covers(u, i))) return { error: 'That space is not empty.' };
+  let moved;
+  if (range === 'gap') { moved = []; let k = i + 1; for (;;) { const u = all.find(x => covers(x, k)); if (!u) break; moved.push(u); k = u.start + u.size; } }
+  else if (range === 'row') moved = all.filter(u => u.start > i && u.start <= rowEnd(i));
+  else moved = all.filter(u => u.start > i);
+  shift(moved, -1, i);
+  return { moved: moved.filter(u => u.to !== u.start) };
+}
+function describe(moved) { return moved.map(u => `${M.locText(locAt(u.start, u.size === 2))}→${M.locText(locAt(u.to, u.size === 2))}`).join(', '); }
+async function apply(plan, then, what) {
+  if (plan.error) return alert(plan.error);
+  if (plan.moved.length && !confirm(`This moves ${plan.moved.length} label${plan.moved.length === 1 ? '' : 's'}: ${describe(plan.moved)}. Go ahead?`)) return;
+  snapshot();
+  for (const u of plan.moved) for (const card of u.cards) setCardLoc(card, locAt(u.to, u.size === 2));
+  if (then) then();
+  await commit(what);
+}
+
+// ---- drag and drop ----
+let dragging = null;
+function makeCard(card) {
+  const el = document.createElement('div'); el.className = 'card' + (card.overflow ? ' ov' : '') + (card.gap ? ' gap' : '') + (card.whole ? ' whole' : '');
+  el.draggable = true; el.innerHTML = `${card.text}<span class="pg${card.list ? ' list' : ''}">${card.page}</span>`;
+  el.ondragstart = e => { dragging = card; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; };
+  el.ondragend = () => { dragging = null; el.classList.remove('dragging'); document.querySelectorAll('.over').forEach(x => x.classList.remove('over')); };
+  el.oncontextmenu = e => { e.preventDefault(); cardMenu(card, e.clientX, e.clientY); };
+  return el;
+}
+function dropZone(el, onDrop) {
+  el.ondragover = e => { if (!dragging) return; e.preventDefault(); el.classList.add('over'); };
+  el.ondragleave = () => el.classList.remove('over');
+  el.ondrop = e => { e.preventDefault(); el.classList.remove('over'); if (dragging) onDrop(dragging, e); };
+}
+const sameCard = (a, b) => a.from && b.from && slotKey(a.from) === slotKey(b.from) && a.text === b.text && a.grain === b.grain;
+// dropping on a drawer half
+function dropOnHalf(card, i, x, y) {
+  const size = card.whole ? 2 : 1, start = card.whole ? i - (i % 2) : i, loc = locAt(start, card.whole);
+  if (card.from && card.from.kind === 'drawer' && slotKey(card.from) === slotKey(loc)) return;
+  // the card leaves its own unit first, so a chain it was part of does not carry it along
+  const live = units().map(u => ({ ...u, cards: u.cards.filter(c => !sameCard(c, card)) })).filter(u => u.cards.length);
+  const occupied = live.some(u => u.start < start + size && start < u.start + u.size);
+  const place = () => setCardLoc(card, loc);
+  if (!occupied) { snapshot(); place(); return commit('moved'); }
+  menu(x, y, [
+    ...(card.whole ? [] : [['Merge into this label', () => { snapshot(); place(); commit('merged'); }]]),
+    ['hd', 'Insert here, shifting…'],
+    ['…to the next gap', () => apply(planInsert(live, start, 'gap', size), place, 'inserted')],
+    ['…the rest of the row', () => apply(planInsert(live, start, 'row', size), place, 'inserted')],
+    ['…everything after', () => apply(planInsert(live, start, 'table', size), place, 'inserted')],
+  ]);
+}
+function dropOnBin(card, bin) {
+  if (card.from && card.from.kind === 'bin' && card.from.bin === bin) return;
+  snapshot(); setCardLoc(card, { kind: 'bin', bin }); commit('moved to ' + bin);
+}
+function dropUnassign(card) { if (!card.from) return; snapshot(); setCardLoc(card, null); commit('unassigned'); }
+
+// ---- menus ----
+function menu(x, y, items) {
+  const m = $('#menu'); m.innerHTML = '';
+  for (const it of items) {
+    const d = document.createElement('div');
+    if (it[0] === 'hd') { d.className = 'hd'; d.textContent = it[1]; }
+    else if (it[0] === 'dis') { d.className = 'dis sub'; d.textContent = it[1]; }
+    else { d.textContent = it[0]; if (it[0].startsWith('…')) d.className = 'sub'; d.onclick = () => { closeMenu(); it[1](); }; }
+    m.appendChild(d);
+  }
+  m.style.display = 'block'; m.style.left = Math.min(x, window.innerWidth - 240) + 'px'; m.style.top = Math.min(y, window.innerHeight - m.offsetHeight - 10) + 'px';
+}
+function closeMenu() { $('#menu').style.display = 'none'; }
+document.addEventListener('pointerdown', e => { if (!$('#menu').contains(e.target)) closeMenu(); }, true);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+function cardMenu(card, x, y) {
+  const items = [];
+  if (card.from && !card.grain) {
+    const key = slotKey(card.from);
+    items.push(['hd', 'Split this label into…']);
+    items.push(new Set(card.parts.map(p => p.key)).size > 1 ? ['…one card per size', () => { splitMode[key] = 'cell'; render(); }] : ['dis', 'one size only']);
+    items.push(new Set(card.parts.map(p => p.key + '\n' + p.type)).size > 1 ? ['…one card per head type', () => { splitMode[key] = 'type'; render(); }] : ['dis', 'one head type only']);
+    items.push(card.parts.length > 1 ? ['…one card per drive + material', () => { splitMode[key] = 'item'; render(); }] : ['dis', 'one drive + material only']);
+  } else if (card.from && card.grain) items.push(['Show as one label again', () => { delete splitMode[slotKey(card.from)]; render(); }]);
+  if (!card.overflow) items.push([card.whole ? 'Does not need a whole drawer' : 'Needs a whole drawer', () => {
+    if (!card.whole && card.from && card.from.kind === 'drawer') {   // the rest of the drawer must be free before it can be taken whole
+      const dr = cab.drawers[card.from.drawer] || { back: [], front: [], whole: [] };
+      const others = [...dr.back, ...dr.front, ...dr.whole].filter(e => !card.parts.every(p => e.parts.some(q => q.key === p.key && q.type === p.type && q.drive === p.drive && q.material === p.material)));
+      if (others.length) return alert(`Drawer ${card.from.drawer} also holds ${others.map(e => e.text).join(', ')}. Move that out first.`);
+    }
+    snapshot(); setWhole(card, !card.whole);
+    if (card.from && card.from.kind === 'drawer') setCardLoc(card, { kind: 'drawer', drawer: card.from.drawer, half: card.whole ? 'back' : '' });   // re-place it: whole drawers have no half
+    commit(card.whole ? 'now a half-drawer label' : 'now needs a whole drawer');
+  }]);
+  if (card.from) items.push(['Unassign', () => dropUnassign(card)]);
+  menu(x, y, items);
+}
+function halfMenu(i, x, y) {
+  const all = units();
+  menu(x, y, [
+    ['hd', 'Insert an empty space here, shifting…'],
+    ['…to the next gap', () => apply(planInsert(all, i, 'gap'), null, 'space inserted')],
+    ['…the rest of the row', () => apply(planInsert(all, i, 'row'), null, 'space inserted')],
+    ['…everything after', () => apply(planInsert(all, i, 'table'), null, 'space inserted')],
+    ['hd', 'Delete this empty space, pulling back…'],
+    ['…up to the next gap', () => apply(planDelete(all, i, 'gap'), null, 'space deleted')],
+    ['…the rest of the row', () => apply(planDelete(all, i, 'row'), null, 'space deleted')],
+    ['…everything after', () => apply(planDelete(all, i, 'table'), null, 'space deleted')],
+  ]);
+}
+
+// ---- rendering ----
+function render() {
+  const g = $('#grid'); g.innerHTML = '';
+  for (let n = 1; n <= N(); n++) {
+    const d = cab.drawers[String(n)], el = document.createElement('div'); el.className = 'drawer';
+    el.innerHTML = `<span class="n">${n}</span>`;
+    // a whole-drawer card fills the drawer; older undivided assignments that share a drawer with half entries show all three zones
+    const whole = d && d.whole.length, halvesUsed = d && (d.back.length || d.front.length);
+    const halves = whole && !halvesUsed ? [['', 'whole']] : whole ? [['', 'whole'], ['back', 'rear'], ['front', 'front']] : [['back', 'rear'], ['front', 'front']];
+    for (const [h, name] of halves) {
+      const z = document.createElement('div'); z.className = 'half' + (h === '' ? ' whole' : ''); z.dataset.h = name;
+      const entries = d ? d[h || 'whole'] : [];
+      if (entries.some(e => e.gap)) z.classList.add('gap');
+      const loc = { kind: 'drawer', drawer: String(n), half: h };
+      for (const card of cardsOf(entries, loc)) z.appendChild(makeCard(card));
+      const i = idx(n, h || 'back');
+      dropZone(z, (card, e) => dropOnHalf(card, i, e.clientX, e.clientY));
+      z.oncontextmenu = e => { if (e.target.closest('.card')) return; e.preventDefault(); halfMenu(i, e.clientX, e.clientY); };
+      el.appendChild(z);
+    }
+    g.appendChild(el);
+  }
+  const bg = $('#bins'); bg.innerHTML = '';
+  const ids = Object.keys(cab.bins).sort((a, b) => (parseInt(a.slice(1)) - parseInt(b.slice(1))) || a.localeCompare(b));
+  for (const id of ids) {
+    const el = document.createElement('div'); el.className = 'bin'; el.innerHTML = `<span class="n">${id}</span>`;
+    for (const card of cardsOf(cab.bins[id], { kind: 'bin', bin: id })) el.appendChild(makeCard(card));
+    dropZone(el, card => dropOnBin(card, id)); bg.appendChild(el);
+  }
+  const nb = document.createElement('div'); nb.className = 'bin new'; nb.textContent = 'drop here for a new bin';
+  dropZone(nb, card => { const v = prompt('Bin id (a number)', String((ids.length ? Math.max(...ids.map(x => parseInt(x.slice(1)) || 0)) : 0) + 1)); if (!v) return; const l = M.parseLoc(/^b/i.test(v) ? v : 'B' + v); if (!l || l.kind !== 'bin') return alert('Use a number, e.g. 4'); dropOnBin(card, l.bin); });
+  bg.appendChild(nb);
+  const ua = $('#unassigned'); ua.innerHTML = '';
+  for (const card of cardsOf(cab.unassigned, null)) ua.appendChild(makeCard(card));
+  if (!cab.unassigned.length) ua.innerHTML = '<span style="color:var(--ink2);font-size:12px">everything has a place</span>';
+  dropZone(ua, dropUnassign);
+}
+load();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 </script>
 </body>
 </html>

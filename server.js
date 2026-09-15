@@ -257,27 +257,31 @@ app.post('/api/printed', (req, res) => {
   }
   fs.writeFileSync(PRINTED, JSON.stringify(pr, null, 1)); res.json({ ok: true, marked });
 });
-// GET /api/cabinet -> what is in each drawer and bin: { drawers: { "12": { back: [...], front: [...], whole: [...] } }, bins: { "B3": [...] } }
-// each entry: { text, page, keys, gap, overflow } where gap = the screw lengths in that half are not a contiguous run of the
-// page's lengths, overflow = everything in this entry is overflow stock
+// GET /api/cabinet -> what is in each drawer and bin: { drawers: { "12": { back: [...], front: [...], whole: [...] } }, bins: { "B3": [...] },
+// unassigned: [...] }. Each entry (one label): { text, page, pageId, keys, gap, overflow, whole, parts } where gap = the screw
+// lengths in that half are not a contiguous run of the page's lengths, overflow = everything in this entry is overflow stock,
+// whole = its stock is flagged as needing a whole drawer, parts = the items behind it (with the level each got its location from)
 app.get('/api/cabinet', (req, res) => {
-  const d = load(), drawers = {}, bins = {};
+  const d = load(), drawers = {}, bins = {}, unassigned = [];
   const pages = req.query.page ? d.pages.filter(p => p.id === req.query.page) : d.pages;
   for (const page of pages) {
-    for (const g of groupBySlot(page, M.populated(page)).filter(g => g[0].kind)) {
+    for (const g of groupBySlot(page, M.populated(page))) {
       const c = g[0], t = groupText(page, g);
       // gap check per row: the lengths assigned here must be consecutive in the page's length list
       const lens = M.lengths(page); let gap = false;
       const byRow = {};
       for (const pt of g) { const [a, b] = pt.key.split('|'); if (!isNaN(+b)) (byRow[a] = byRow[a] || []).push(lens.indexOf(+b)); }
       for (const idx of Object.values(byRow)) { idx.sort((x, y) => x - y); for (let i = 1; i < idx.length; i++) if (idx[i] !== idx[i - 1] + 1) gap = true; }
-      const entry = { text: t.pn + (t.value ? '  ' + t.value : '') + (t.qual ? '  ' + t.qual : ''), page: page.title, keys: g.map(pt => pt.key), gap, overflow: g.every(pt => pt.overflow) };
+      const parts = g.flatMap(pt => pt.items.map(it => ({ key: it.key, type: it.type, drive: it.drive, material: it.material, overflow: pt.overflow, level: pt.overflow ? it.overLevel : it.locLevel })));
+      const entry = { text: t.pn + (t.value ? '  ' + t.value : '') + (t.qual ? '  ' + t.qual : ''), page: page.title, pageId: page.id, keys: g.map(pt => pt.key), gap,
+                      overflow: g.every(pt => pt.overflow), whole: g.some(pt => pt.items.some(it => it.whole)), parts };
+      if (!c.kind) { unassigned.push(entry); continue; }
       if (c.kind === 'bin') { (bins[c.bin] = bins[c.bin] || []).push(entry); continue; }
       const dr = drawers[c.drawer] = drawers[c.drawer] || { back: [], front: [], whole: [] };
       dr[c.half || 'whole'].push(entry);
     }
   }
-  res.json({ drawers, bins, pages: d.pages.map(p => ({ id: p.id, title: p.title })), page: req.query.page || '' });
+  res.json({ drawers, bins, unassigned, pages: d.pages.map(p => ({ id: p.id, title: p.title })), page: req.query.page || '' });
 });
 // GET /api/preview.png?page=..&key=..[&slot=..]  -> a PNG of one label for the on-screen preview (the cell's primary location, or the slot given)
 app.get('/api/preview.png', async (req, res) => {
