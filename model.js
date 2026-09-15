@@ -110,7 +110,7 @@ function bins(page) {
   return [...out].sort((a, b) => (parseInt(a.slice(1)) - parseInt(b.slice(1))) || a.localeCompare(b));
 }
 // short names for the label qualifiers (an item that is only part of its cell's stock says what sets it apart)
-const MAT_SHORT = { aluminum: 'Al', steel: 'steel', 'steel-blackoxide': 'blk oxide', 'steel-zinc': 'zinc', 'steel-cadmium': 'cad', stainless: 'SS', brass: 'brass', nylon: 'nylon', plastic: 'plastic', fiber: 'fiber', copper: 'Cu', bronze: 'bronze', ptfe: 'PTFE', phenolic: 'phenolic' };
+const MAT_SHORT = { aluminum: 'Al', steel: 'steel', 'steel-blackoxide': 'blk oxide', 'steel-zinc': 'zinc', 'steel-cadmium': 'cad', stainless: 'SS', brass: 'brass', nylon: 'nylon', plastic: 'plastic', fiber: 'fiber', copper: 'Cu', bronze: 'bronze', ptfe: 'PTFE', phenolic: 'phenolic', pei: 'PEI', polycarbonate: 'PC' };
 const DRIVE_SHORT = { slotted: 'slotted', phillips: 'Phillips', combo: 'combo', pozidriv: 'Pozi', jis: 'JIS', torx: 'Torx', hex: 'hex', square: 'square' };
 // print order: labels with a drawer first, by drawer number then rear before front; the rest in reading order
 function drawerOrder(page, groups) {

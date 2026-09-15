@@ -469,8 +469,9 @@ function openDetail(key, type, x, y) {
 // drive and material vocabularies for the per-head detail (right-click / long-press on a ticked icon)
 const DRIVES = [['slotted', 'Slotted'], ['phillips', 'Phillips'], ['combo', 'Slotted + Phillips combo'], ['pozidriv', 'Pozidriv'], ['jis', 'JIS'], ['torx', 'Torx'], ['hex', 'Hex'], ['square', 'Square']];
 const FIXED_DRIVE = { socket: 'hex', shoulder: 'hex', setscrew: 'hex', hex: 'hex', hexsm: 'hex', thumb: 'none' };   // carriage bolts: usually none, but some carry a slot, so the normal list applies   // heads whose drive is a given
-const MAT_SCREW = [['aluminum', 'Aluminum'], ['steel', 'Steel, plain'], ['steel-blackoxide', 'Steel, black oxide'], ['steel-zinc', 'Steel, zinc'], ['steel-cadmium', 'Steel, cadmium'], ['stainless', 'Stainless steel'], ['brass', 'Brass'], ['nylon', 'Nylon'], ['plastic', 'Plastic, other']];
-const MAT_WASHER = [...MAT_SCREW, ['fiber', 'Fiber'], ['copper', 'Copper'], ['bronze', 'Bronze'], ['ptfe', 'PTFE'], ['phenolic', 'Phenolic']];
+const MAT_SCREW = [['aluminum', 'Aluminum'], ['steel', 'Steel, plain'], ['steel-blackoxide', 'Steel, black oxide'], ['steel-zinc', 'Steel, zinc'], ['steel-cadmium', 'Steel, cadmium'], ['stainless', 'Stainless steel'], ['brass', 'Brass'],
+                   ['nylon', 'Nylon'], ['ptfe', 'PTFE'], ['phenolic', 'Phenolic'], ['pei', 'PEI (Ultem)'], ['polycarbonate', 'Polycarbonate'], ['plastic', 'Plastic, other']];
+const MAT_WASHER = [...MAT_SCREW, ['fiber', 'Fiber'], ['copper', 'Copper'], ['bronze', 'Bronze']];
 // hardware columns: [page list, cell key suffix, per row or per diameter, label]
 const HW = [['locknuts', 'locknut', 'row', 'Lock Nut'], ['nuts', 'nut', 'row', 'Nut'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer'], ['washers', 'washer', 'dia', 'Washer']];
 const GROUPS = [['heads', 'Heads', ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew', 'wood', 'sheetmetal', 'buttonsm', 'trusssm', 'trim', 'flangesm', 'hexsm']], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'undersized', 'fender', 'thinw', 'cup', 'sleeved']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed']]];
