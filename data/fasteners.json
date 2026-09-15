@@ -1379,8 +1379,17 @@
        ]
       }
      },
-     "drawer": "78",
-     "half": ""
+     "loc": {
+      "kind": "drawer",
+      "drawer": "78",
+      "half": ""
+     },
+     "overflow": [
+      {
+       "kind": "bin",
+       "bin": "B2"
+      }
+     ]
     },
     "3/8|lockwasher": {
      "types": [
@@ -1393,6 +1402,11 @@
         "steel-zinc"
        ]
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "79",
+      "half": "back"
      }
     },
     "3/8|washer": {
@@ -1411,7 +1425,12 @@
       "fender": {
        "materials": [
         "steel-zinc"
-       ]
+       ],
+       "loc": {
+        "kind": "drawer",
+        "drawer": "80",
+        "half": "back"
+       }
       }
      }
     },
@@ -1785,5 +1804,5 @@
    "cells": {}
   }
  ],
- "rev": 459
+ "rev": 462
 }

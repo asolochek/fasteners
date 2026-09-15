@@ -393,21 +393,25 @@ async function printKeys(keys, body) {
   const r = await fetch('/api/labels', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || { page: pageId, keys }) });
   if (!r.ok) { status(''); return alert((await r.json()).error || 'failed'); }
   const bins = (r.headers.get('X-Bins') || '').split(',').filter(Boolean);
-  if (r.status !== 204) await deliver(r);
+  const sent = r.status !== 204 ? await deliver(r) : false;
   if (bins.length) {
+    // all the 9 mm labels have gone to the printer; the bin labels need the 18 mm tape, so wait for it to be loaded
+    if (sent && !confirm(`${bins.length} bin label${bins.length == 1 ? '' : 's'} (18 mm) to follow. Load the 18 mm tape, then OK.`)) { status('bin labels not printed'); return; }
     const rb = await fetch('/api/labels', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bins, only: keys === 'new' ? 'new' : undefined }) });
     if (!rb.ok) { status(''); return alert((await rb.json()).error || 'failed'); }
     await deliver(rb);
   }
 }
+// delivers one PDF: to the helper's printer queue for that tape, or as a download. Returns true when it went to the printer.
 async function deliver(r) {
   const n = r.headers.get('X-Label-Count'), tape = r.headers.get('X-Tape') || '9'; const blob = await r.blob();
-  if (HS.get().direct && await sendToPrinter(blob, n, tape)) return;
+  if (HS.get().direct && await sendToPrinter(blob, n, tape)) return true;
   // download rather than open: a pop-up would be blocked, and the file is what gets printed anyway
   const name = (/filename="([^"]+)"/.exec(r.headers.get('Content-Disposition') || '') || [])[1] || 'labels.pdf';
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 60000);
   status(`${n} ${tape} mm label${n == 1 ? '' : 's'} → ${name}`);
+  return false;
 }
 // head types a class can have at all; a cell shows the page's primary list plus whatever else is ticked, and "…" offers the rest
 const HEAD_UNIVERSE = { machine: ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew'],
