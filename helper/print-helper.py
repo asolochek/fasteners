@@ -19,6 +19,7 @@ Endpoints (CORS open, so a browser page served from elsewhere can call them):
 Python 3.8+ standard library only.
 """
 import argparse, json, os, shutil, subprocess, sys, tempfile, time
+VERSION = '2026-09-15.2'   # shown by GET / and /printers and on startup; bump on every change
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -106,9 +107,9 @@ class H(BaseHTTPRequestHandler):
         u = urlparse(self.path); q = parse_qs(u.query)
         if u.path == '/printers':
             if not self._auth(q): return self._json(403, {'error': 'bad token'})
-            name, exe = backend(); return self._json(200, {'printers': printers(), 'backend': name, 'exe': exe, 'sumatra': exe})
+            name, exe = backend(); return self._json(200, {'printers': printers(), 'backend': name, 'exe': exe, 'sumatra': exe, 'version': VERSION})
         name, exe = backend()
-        body = f'<h3>Label print helper</h3><p>Backend: {name or "NONE FOUND"} ({exe})</p><p>Printers: {", ".join(printers()) or "(none listed)"}</p>'.encode()
+        body = f'<h3>Label print helper {VERSION}</h3><p>Backend: {name or "NONE FOUND"} ({exe})</p><p>Printers: {", ".join(printers()) or "(none listed)"}</p>'.encode()
         self.send_response(200); self._cors(); self.send_header('Content-Type', 'text/html'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body)
     def do_POST(self):
         u = urlparse(self.path); q = parse_qs(u.query)
@@ -133,13 +134,14 @@ class H(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--version', action='version', version=VERSION)
     ap.add_argument('--port', type=int, default=8094); ap.add_argument('--bind', default='0.0.0.0', help='0.0.0.0 = accept connections from the LAN (default); 127.0.0.1 = this PC only')
     ap.add_argument('--token', default='', help='if set, callers must send ?token= or X-Token')
     ap.add_argument('--backend', choices=['acrobat', 'gs', 'sumatra'], default='', help='print program (default: first found of acrobat, gs, sumatra)')
     ap.add_argument('--exe', default='', help='path to that program, if it is not found automatically')
     ARGS = ap.parse_args()
     name, exe = backend()
-    log(f'label print helper on http://{ARGS.bind}:{ARGS.port}/  backend: {name or "NONE FOUND"} ({exe})  printers: {printers() or "(none)"}')
+    log(f'label print helper {VERSION} on http://{ARGS.bind}:{ARGS.port}/  backend: {name or "NONE FOUND"} ({exe})  printers: {printers() or "(none)"}')
     if ARGS.bind == '0.0.0.0':
         # listen on IPv6 and IPv4 at once, so http://localhost:8094/ works whichever the browser tries first
         import socket

@@ -638,7 +638,7 @@ function renderHelper() {
     try { const j = await (await fetch(url)).json(); if (j.error) throw new Error(j.error);
       sel.innerHTML = j.printers.map(pn => `<option ${pn === h.printer ? 'selected' : ''}>${pn}</option>`).join('') || '<option value="">(no printers found)</option>';
       selB.innerHTML = '<option value="">(none)</option>' + j.printers.map(pn => `<option ${pn === h.printerBin ? 'selected' : ''}>${pn}</option>`).join('');
-      $('#hMsg').textContent = `helper ok · print program: ${j.backend || 'NONE FOUND'} · ${j.printers.length} printers`;
+      $('#hMsg').textContent = `helper ${j.version || '(old, no version)'} · print program: ${j.backend || 'NONE FOUND'} · ${j.printers.length} printers`;
     } catch (e) { $('#hMsg').textContent = 'no answer from the helper: ' + e.message; }
   };
   $('#hSave').onclick = () => { HS.set({ url: $('#hUrl').value.trim(), token: $('#hTok').value.trim(), printer: sel.value, printerBin: selB.value, direct: $('#hDirect').checked }); $('#hMsg').textContent = 'saved'; };
