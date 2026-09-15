@@ -46,7 +46,9 @@ h2 { font-size:15px; margin:18px 0 8px; font-weight:600; color:var(--ink2); }
   if (!page) sel.innerHTML = '<option value="">(all pages)</option>' + sel.innerHTML;
   sel.onchange = () => location.search = '?page=' + encodeURIComponent(sel.value);
   document.title = (pages.find(p => p.id === page)?.title || 'Fastener') + ' cabinet';
-  const N = 64, g = document.getElementById('grid');
+  // 8 × 8 drawers, extended by whole rows of 8 when higher drawer numbers are in use
+  const top = Math.max(0, ...Object.keys(drawers).map(Number).filter(n => n > 0));
+  const N = Math.max(64, Math.ceil(top / 8) * 8), g = document.getElementById('grid');
   const txt = e => e.overflow ? `<span class="ov">${e.text}</span>` : e.text;
   const line = (e, cls, h) => `<div class="${cls}${e.gap ? ' gap' : ''}" ${h ? `data-h="${h}"` : ''}>${txt(e)}</div>`;
   for (let n = 1; n <= N; n++) {

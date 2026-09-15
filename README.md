@@ -42,7 +42,7 @@ records what has been printed.
 - **Rows** are thread sizes (`#4-40`, `1/4-28`, `M6`, `M6x0.75`, or a bare gauge like `#6` on wood and sheet metal pages);
   **Add row…** inserts one in order, × on an empty row removes it. Lengths likewise: **Add length…** takes `7/16`, `0.4375`,
   `1-1/2` or `22`; × on an empty column removes it. **Types…** chooses which head, nut and washer types a page shows.
-- **Cabinet** opens an 8 × 8 map of the drawers for the page: grey unassigned, red where a drawer half holds lengths that
+- **Cabinet** opens an 8 × 8 map of the drawers for the page (more rows of 8 when drawers beyond 64 are used): grey unassigned, red where a drawer half holds lengths that
   skip one in between. The bins are listed under the grid; overflow stock shows in italics.
 
 ## Labels

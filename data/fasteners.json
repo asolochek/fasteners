@@ -145,6 +145,12 @@
      "pitch": 20
     },
     {
+     "id": "1/4-28",
+     "label": "1/4-28",
+     "dia": "1/4",
+     "pitch": 28
+    },
+    {
      "id": "5/16-18",
      "label": "5/16-18",
      "dia": "5/16",
@@ -155,6 +161,12 @@
      "label": "3/8-16",
      "dia": "3/8",
      "pitch": 16
+    },
+    {
+     "id": "7/16-14",
+     "label": "7/16-14",
+     "dia": "7/16",
+     "pitch": 14
     },
     {
      "id": "1/2-13",
@@ -1131,7 +1143,8 @@
     "1/4-20|1.75": {
      "types": [
       "hex",
-      "pan"
+      "pan",
+      "truss"
      ],
      "drawer": "65",
      "half": "back",
@@ -1146,6 +1159,13 @@
       "pan": {
        "drives": {
         "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "truss": {
+       "drives": {
+        "slotted": [
          "steel-zinc"
         ]
        }
@@ -1394,10 +1414,16 @@
     "3/8|lockwasher": {
      "types": [
       "split",
-      "toothed"
+      "inextooth"
      ],
      "detail": {
       "split": {
+       "materials": [
+        "steel-zinc"
+       ]
+      },
+      "toothed": {},
+      "inextooth": {
        "materials": [
         "steel-zinc"
        ]
@@ -1573,6 +1599,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "81",
+      "half": "back"
      }
     },
     "1/2-13|3.25": {
@@ -1621,6 +1652,30 @@
      "types": [],
      "drawer": "74",
      "half": "front"
+    },
+    "1/2-13|nut": {
+     "types": [
+      "nut"
+     ],
+     "loc": {
+      "kind": "drawer",
+      "drawer": "82",
+      "half": "front"
+     }
+    },
+    "1/4-28|0.375": {
+     "types": [
+      "pan"
+     ],
+     "detail": {
+      "pan": {
+       "drives": {
+        "phillips": [
+         "steel-blackoxide"
+        ]
+       }
+      }
+     }
     }
    },
    "locknuts": [
@@ -1631,7 +1686,8 @@
     "split",
     "spring",
     "inttooth",
-    "toothed"
+    "toothed",
+    "inextooth"
    ]
   },
   {
@@ -1871,5 +1927,5 @@
    "cells": {}
   }
  ],
- "rev": 481
+ "rev": 496
 }
