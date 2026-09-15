@@ -25,6 +25,7 @@ thead th:first-child { left:0; z-index:4; }
 table { border-collapse:separate; border-spacing:3px; }
 th { font-weight:600; font-size:13px; color:var(--ink2); padding:2px 4px; white-space:nowrap; text-align:center; vertical-align:bottom; }
 th.row { text-align:right; font-size:15px; color:var(--ink); }
+th.row .dec { display:block; font-size:11px; font-weight:400; color:var(--ink2); }
 th .dec { font-weight:400; color:var(--ink2); }
 th .del { color:var(--ink2); cursor:pointer; margin-left:4px; font-weight:400; }
 th .del:hover { color:var(--accent); }
@@ -274,7 +275,7 @@ function render() {
   const doneDia = new Set();
   for (const r of p.rows) {
     const tr = document.createElement('tr');
-    const th = document.createElement('th'); th.className = 'row'; th.textContent = r.label;
+    const th = document.createElement('th'); th.className = 'row'; th.innerHTML = `${r.label}<span class="dec">(${diaText(r.dia)})</span>`;
     const ctl = document.createElement('button'); ctl.type = 'button'; ctl.dataset.row = r.id;
     if (rowEmpty(p, r)) { ctl.className = 'del rowctl'; ctl.textContent = '×'; ctl.title = 'remove this row'; ctl.dataset.act = 'remove'; }
     else { ctl.className = 'print rowprint rowctl'; ctl.textContent = '⎙'; ctl.title = 'PDF for everything in this row (and its washers)'; ctl.dataset.act = 'print'; }
@@ -309,6 +310,8 @@ function parseRow(text, units) {
   if (!m[2]) return { id: dia, label: dia, dia, pitch: 0 };   // gauge only (wood / sheet metal screws)
   const label = `${dia}-${m[2]}`; return { id: `${m[1]}-${m[2]}`, label, dia, pitch: +m[2] };
 }
+// nominal major diameter for the row header: ".164″" for #8, ".250″" for 1/4, "6 mm" stays as is for metric (with the inch equivalent)
+function diaText(dia) { const v = diaValue(dia); return dia.startsWith('M') ? `${+dia.slice(1)} mm · ${v.toFixed(3).replace(/^0/, '')}″` : `${v.toFixed(3).replace(/^0/, '')}″`; }
 function diaValue(dia) {   // major diameter in inches, for ordering
   if (dia.startsWith('#')) { const t = dia.slice(1); if (/^0+$/.test(t)) return 0.06 - 0.013 * (t.length - 1); return 0.06 + 0.013 * +t; }   // #0 = .060, #00 = .047, #000 = .034
   if (dia.startsWith('M')) return +dia.slice(1) / 25.4; const [n, d] = dia.split('/'); return d ? n / d : +dia;
@@ -337,7 +340,7 @@ function renderMobile(p, lens) {
   const r = p.rows.find(x => x.id === mobileRow);
   const g = $('#grid'); g.innerHTML = '';
   const bar = document.createElement('div'); bar.className = 'mrow';
-  const sel = document.createElement('select'); sel.innerHTML = p.rows.map(x => `<option value="${x.id}" ${x.id === mobileRow ? 'selected' : ''}>${x.label}</option>`).join('');
+  const sel = document.createElement('select'); sel.innerHTML = p.rows.map(x => `<option value="${x.id}" ${x.id === mobileRow ? 'selected' : ''}>${x.label} (${diaText(x.dia)})</option>`).join('');
   sel.onchange = e => { mobileRow = e.target.value; render(); };
   const pb = document.createElement('button'); pb.textContent = '⎙ row'; pb.title = 'labels for this row'; pb.onclick = () => r && printKeys(rowKeys(p, r));
   bar.appendChild(sel); bar.appendChild(pb); g.appendChild(bar);

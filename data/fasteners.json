@@ -2141,7 +2141,8 @@
     "#10|0.75": {
      "types": [
       "wood",
-      "buttonsm"
+      "buttonsm",
+      "pandrill"
      ],
      "detail": {
       "wood": {
@@ -2155,6 +2156,14 @@
        "drives": {
         "slotted": [
          "steel-zinc"
+        ]
+       }
+      },
+      "sheetmetal": {},
+      "pandrill": {
+       "drives": {
+        "phillips": [
+         "stainless"
         ]
        }
       }
@@ -2163,7 +2172,8 @@
     "#10|1": {
      "types": [
       "wood",
-      "buttonsm"
+      "buttonsm",
+      "pandrill"
      ],
      "detail": {
       "wood": {
@@ -2177,6 +2187,13 @@
        "drives": {
         "slotted": [
          "steel-zinc"
+        ]
+       }
+      },
+      "pandrill": {
+       "drives": {
+        "phillips": [
+         "stainless"
         ]
        }
       }
@@ -2385,5 +2402,5 @@
    ]
   }
  ],
- "rev": 668
+ "rev": 676
 }
