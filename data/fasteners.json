@@ -2203,6 +2203,28 @@
        }
       }
      }
+    },
+    "#10|2": {
+     "types": [
+      "wood",
+      "buttonsm"
+     ],
+     "detail": {
+      "wood": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "buttonsm": {
+       "drives": {
+        "slotted": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
     }
    },
    "locknuts": [],
@@ -2363,5 +2385,5 @@
    ]
   }
  ],
- "rev": 658
+ "rev": 668
 }

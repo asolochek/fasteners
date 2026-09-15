@@ -4,6 +4,8 @@
 const K = '#000', SW = 5;
 const shank = (x, y0, y1) => `<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}" stroke="${K}" stroke-width="${SW * 2.2}" stroke-linecap="butt"/>`;
 const threads = (x, y0, y1) => { let g = ''; for (let y = y0 + 6; y < y1 - 2; y += 8) g += `<line x1="${x - 9}" y1="${y}" x2="${x + 9}" y2="${y + 3}" stroke="${K}" stroke-width="2.5"/>`; return g; };
+// a self-drilling shank: threads, then a plain drill point with a flute, chisel tip
+const drillShank = `<path d="M44 44 V70 L46 74 V84 L50 94 L54 84 V74 L56 70 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="46" y1="77" x2="54" y2="85" stroke="${K}" stroke-width="3"/>${threads(50, 50, 70)}`;
 // heads: the head sits at the top, shank goes down
 const HEADS = {
   flat:   `<path d="M20 22 H80 L62 44 H38 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="50" y1="22" x2="50" y2="34" stroke="${K}" stroke-width="3.5"/>${shank(50, 44, 92)}${threads(50, 46, 92)}`,
@@ -40,6 +42,10 @@ const HEADS = {
   // flange (washer) head: pan head on a wide flat flange
   flangesm: `<path d="M30 36 V30 Q30 18 42 18 H58 Q70 18 70 30 V36 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><path d="M16 36 H84 V44 H16 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
   hexsm:  `<path d="M22 20 H78 V38 H22 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="40" y1="20" x2="40" y2="38" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="38" stroke="${K}" stroke-width="3"/><line x1="16" y1="44" x2="84" y2="44" stroke="${K}" stroke-width="${SW}"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
+  // self-drilling (Tek) tips: an unthreaded drill point with a flute below the threads
+  hexdrill: `<path d="M22 20 H78 V38 H22 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="40" y1="20" x2="40" y2="38" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="38" stroke="${K}" stroke-width="3"/><line x1="16" y1="44" x2="84" y2="44" stroke="${K}" stroke-width="${SW}"/>${drillShank}`,
+  pandrill: `<path d="M24 44 V32 Q24 18 40 18 H60 Q76 18 76 32 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="36" y1="22" x2="64" y2="22" stroke="${K}" stroke-width="3.5"/>${drillShank}`,
+  flatdrill: `<path d="M20 22 H80 L62 44 H38 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="50" y1="22" x2="50" y2="34" stroke="${K}" stroke-width="3.5"/>${drillShank}`,
   sheetmetal: `<path d="M24 44 V32 Q24 18 40 18 H60 Q76 18 76 32 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}" stroke-linejoin="round"/><line x1="36" y1="22" x2="64" y2="22" stroke="${K}" stroke-width="3.5"/><path d="M44 44 V78 L50 94 L56 78 V44 Z" fill="none" stroke="${K}" stroke-width="${SW}"/>${threads(50, 50, 78)}`,
 };
 // nuts and washers: face-on
@@ -134,7 +140,7 @@ const MISC = {
 const ALL = { ...HEADS, ...NUTS, ...WASHERS, ...MISC };
 // icon groups for the glyph picker (list pages)
 const GROUPS = { 'Connectors & test': Object.keys(MISC), Heads: Object.keys(HEADS).filter(k => !['nylon'].includes(k)), Nuts: Object.keys(NUTS), Washers: Object.keys(WASHERS).filter(k => !['nylonw'].includes(k)) };
-const LABELS = { flat: 'Flat', oval: 'Oval', pan: 'Pan', socket: 'Socket cap', button: 'Button', hex: 'Hex', flange: 'Flange', thumb: 'Thumb', carriage: 'Carriage bolt', cheese: 'Cheese', fillister: 'Fillister', setscrew: 'Set screw', shoulder: 'Shoulder', sems: 'Captive lock washer', truss: 'Truss', wood: 'Flat, pointed', sheetmetal: 'Pan, pointed', buttonsm: 'Button, pointed', trusssm: 'Truss, pointed', trim: 'Trim head', flangesm: 'Flange head', hexsm: 'Hex washer, pointed',
+const LABELS = { flat: 'Flat', oval: 'Oval', pan: 'Pan', socket: 'Socket cap', button: 'Button', hex: 'Hex', flange: 'Flange', thumb: 'Thumb', carriage: 'Carriage bolt', cheese: 'Cheese', fillister: 'Fillister', setscrew: 'Set screw', shoulder: 'Shoulder', sems: 'Captive lock washer', truss: 'Truss', wood: 'Flat, pointed', sheetmetal: 'Pan, pointed', buttonsm: 'Button, pointed', trusssm: 'Truss, pointed', trim: 'Trim head', flangesm: 'Flange head', hexsm: 'Hex washer, pointed', hexdrill: 'Hex washer, self-drilling', pandrill: 'Pan, self-drilling', flatdrill: 'Flat, self-drilling',
   nut: 'Nut', thin: 'Jam nut (thin)', lock: 'Lock nut (prevailing torque)', nylock: 'Nylon insert', toothednut: 'Toothed flange', pressfit: 'Press-fit nut', square: 'Square nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', undersized: 'Undersized (small OD)', cup: 'Cup', sleeved: 'Sleeved', split: 'Split', spring: 'Spring', inttooth: 'Internal tooth', toothed: 'External tooth', inextooth: 'Internal + external tooth',
   banana: 'Banana plug', bananastack: 'Stackable banana plug', bananadual: 'Dual banana plug', bananajack: 'Banana jack', bindingpost: 'Binding post', terminalstrip: 'Terminal strip', shunt: '100 mil shunt', minigrabber: 'Mini grabber', alligator: 'Alligator clip', db9: 'DB9', ffc: 'Flat flex cable end', xt60: 'XT60', xt30: 'XT30', deans: 'Deans / T-plug', jstxh: 'JST-XH', ec3: 'EC3', tamiya: 'Tamiya',
   gpib: 'GPIB (IEEE-488)', toggle: 'Toggle switch', rocker: 'Rocker switch', pushbutton: 'Push button', heatsink: 'Heat sink', header100: '100 mil pin header', socket100: '100 mil socket', header2mm: '2 mm pin header', socket2mm: '2 mm socket', bullet: 'Bullet connector', mt60: 'MT60', mt30: 'MT30', mr30: 'MR30' };

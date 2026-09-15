@@ -488,7 +488,7 @@ async function deliver(r) {
 }
 // head types a class can have at all; a cell shows the page's primary list plus whatever else is ticked, and "…" offers the rest
 const HEAD_UNIVERSE = { machine: ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew'],
-                        tapping: ['wood', 'sheetmetal', 'buttonsm', 'trusssm', 'hexsm', 'flangesm', 'trim'], wood: ['wood', 'trim', 'flangesm', 'sheetmetal', 'buttonsm', 'trusssm'] };
+                        tapping: ['wood', 'sheetmetal', 'buttonsm', 'trusssm', 'hexsm', 'flangesm', 'trim', 'hexdrill', 'pandrill', 'flatdrill'], wood: ['wood', 'trim', 'flangesm', 'sheetmetal', 'buttonsm', 'trusssm', 'hexdrill', 'pandrill', 'flatdrill'] };
 function placePop(x, y) { const pop = $('#pop'); pop.style.display = 'block'; pop.style.left = Math.min(x, window.innerWidth - 320) + 'px'; pop.style.top = Math.min(y, window.innerHeight - Math.min(pop.offsetHeight, window.innerHeight * .8) - 10) + 'px'; }
 function closePop() { $('#pop').style.display = 'none'; $('#pop').classList.remove('wide'); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
@@ -541,13 +541,13 @@ function openDetail(key, type, x, y) {
 // which head / nut / washer types this page shows (types ticked in cells but hidden here still print)
 // drive and material vocabularies for the per-head detail (right-click / long-press on a ticked icon)
 const DRIVES = [['slotted', 'Slotted'], ['phillips', 'Phillips'], ['combo', 'Slotted + Phillips combo'], ['pozidriv', 'Pozidriv'], ['jis', 'JIS'], ['torx', 'Torx'], ['hex', 'Hex'], ['square', 'Square']];
-const FIXED_DRIVE = { socket: 'hex', shoulder: 'hex', setscrew: 'hex', hex: 'hex', hexsm: 'hex', thumb: 'none' };   // carriage bolts: usually none, but some carry a slot, so the normal list applies   // heads whose drive is a given
+const FIXED_DRIVE = { socket: 'hex', shoulder: 'hex', setscrew: 'hex', hex: 'hex', hexsm: 'hex', hexdrill: 'hex', thumb: 'none' };   // carriage bolts: usually none, but some carry a slot, so the normal list applies   // heads whose drive is a given
 const MAT_SCREW = [['aluminum', 'Aluminum'], ['steel', 'Steel, plain'], ['steel-blackoxide', 'Steel, black oxide'], ['steel-zinc', 'Steel, zinc'], ['steel-cadmium', 'Steel, cadmium'], ['stainless', 'Stainless steel'], ['brass', 'Brass'],
                    ['nylon', 'Nylon'], ['ptfe', 'PTFE'], ['phenolic', 'Phenolic'], ['pei', 'PEI (Ultem)'], ['polycarbonate', 'Polycarbonate'], ['plastic', 'Plastic, other']];
 const MAT_WASHER = [...MAT_SCREW, ['fiber', 'Fiber'], ['copper', 'Copper'], ['bronze', 'Bronze']];
 // hardware columns: [page list, cell key suffix, per row or per diameter, label]
 const HW = [['locknuts', 'locknut', 'row', 'Lock Nut'], ['nuts', 'nut', 'row', 'Nut'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer'], ['washers', 'washer', 'dia', 'Washer']];
-const GROUPS = [['heads', 'Heads', ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew', 'wood', 'sheetmetal', 'buttonsm', 'trusssm', 'trim', 'flangesm', 'hexsm']], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'undersized', 'fender', 'thinw', 'cup', 'sleeved']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed', 'inextooth']]];
+const GROUPS = [['heads', 'Heads', ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'flange', 'thumb', 'carriage', 'sems', 'shoulder', 'setscrew', 'wood', 'sheetmetal', 'buttonsm', 'trusssm', 'trim', 'flangesm', 'hexsm', 'hexdrill', 'pandrill', 'flatdrill']], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'undersized', 'fender', 'thinw', 'cup', 'sleeved']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed', 'inextooth']]];
 function renderTypes() {
   const p = page();
   $('#types').innerHTML = GROUPS.map(([k, title, all]) => `<h3>${title}</h3>` + all.map(t => `<label><input type="checkbox" data-group="${k}" data-type="${t}" ${p[k].includes(t) ? 'checked' : ''}>${icons.svg[t]}${icons.labels[t] || t}</label>`).join('')).join('');
