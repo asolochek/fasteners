@@ -192,20 +192,24 @@ function toggle(key, type) {
 const halfText = h => h === 'back' ? 'rear' : h === 'front' ? 'front' : '';
 // summary of what is set on an object holding loc/overflow: "drawer 12 rear +B3", "bin B2", or the fallback text
 function locSummary(o, fallback = '') {
-  const l = M.locOf(o), over = M.overflowOf(o);
-  return (l ? M.locLong(l) : fallback) + (over.length ? ' +' + over.map(M.locText).join(',') : '');
+  const l = M.locOf(o), over = M.overflowOf(o), home = page().cabinet;
+  return (l ? M.locLong(l, home) : fallback) + (over.length ? ' +' + over.map(x => M.locText(x, home)).join(',') : '');
 }
+// the cabinet a page's bare drawer numbers refer to; a list page without one needs the prefix (I, M, W) in its locations
+const cabHint = () => page().cabinet ? `${M.cabinetById(page().cabinet).title.replace(/ screws$/, '')} cabinet; I/M/W prefix for another, e.g. M12R` : 'this page has no cabinet: prefix drawers with I, M or W, e.g. W12R';
 // the editor: primary and overflow locations of `target` (a cell, a head type's detail, or one drive+material's item)
 function openLoc(key, target, title, x, y, back) {
   $('#pop').innerHTML = `<h3>Location · ${title}</h3>
-    <h4>Primary</h4><input type="text" id="popLoc" placeholder="${target === page().cells?.[key] || M.isList(page()) ? 'e.g. 12, 12R, 12F or B3' : 'blank = as the level above; e.g. 12R or B3'}" value="${M.locText(M.locOf(target))}">
-    <h4>Overflow</h4><input type="text" id="popOver" placeholder="e.g. B2, 13F" value="${M.overflowOf(target).map(M.locText).join(', ')}">
-    <div class="note">Drawers: number, then R (rear) or F (front) if divided. Bins: B and a number. Overflow: a list.</div>
+    <h4>Primary</h4><input type="text" id="popLoc" placeholder="${target === page().cells?.[key] || M.isList(page()) ? 'e.g. 12, 12R, 12F or B3' : 'blank = as the level above; e.g. 12R or B3'}" value="${M.locText(M.locOf(target), page().cabinet)}">
+    <h4>Overflow</h4><input type="text" id="popOver" placeholder="e.g. B2, 13F" value="${M.overflowOf(target).map(x => M.locText(x, page().cabinet)).join(', ')}">
+    <div class="note">Drawers: number, then R (rear) or F (front) if divided; bare numbers are the ${cabHint()}. Bins: B and a number. Overflow: a list.</div>
     <div class="row"><button type="button" id="popGo">Save</button><button type="button" id="popClose">Cancel</button></div>`;
   const done = () => { closePop(); if (back) back(); };
   $('#popGo').onclick = () => {
     const prim = M.parseLoc($('#popLoc').value), over = M.parseLocs($('#popOver').value);
-    if (prim === undefined || over.some(l => l === undefined)) return alert('Could not read a location. Use 12, 12R, 12F or B3.');
+    if (prim === undefined || over.some(l => l === undefined)) return alert('Could not read a location. Use 12, 12R, 12F, M12R or B3.');
+    if (!page().cabinet && [prim, ...over].some(l => l && l.kind === 'drawer' && !l.cabinet)) return alert('This page has no cabinet of its own: prefix drawer numbers with I, M or W (e.g. W12R).');
+    for (const l of [prim, ...over]) if (l && l.cabinet === page().cabinet) delete l.cabinet;   // the page's own cabinet stays implicit
     delete target.drawer; delete target.half;   // the old fields
     if (prim) target.loc = prim; else delete target.loc;
     if (over.length) target.overflow = over; else delete target.overflow;
@@ -220,7 +224,7 @@ function typeBadge(info) {
   const l = M.locOf(info), over = M.overflowOf(info), items = Object.values(info.items || {}).filter(it => M.locOf(it) || M.overflowOf(it).length);
   if (!l && !over.length && !items.length) return null;
   const b = document.createElement('span'); b.className = 'badge' + (l?.kind === 'bin' ? ' bin' : !l ? ' mixed' : '');
-  b.textContent = (l ? M.locText(l) : '…') + (over.length ? '+' : '');
+  b.textContent = (l ? M.locText(l, page().cabinet) : '…') + (over.length ? '+' : '');
   return b;
 }
 // a variant created on the page may not be in the icon set yet: fetch it before drawing
@@ -450,7 +454,7 @@ async function sendToPrinter(blob, n, tape = '9') {
 function cellSlots(key) {
   const by = {};
   for (const pt of M.portions(page(), [key])) {
-    const slot = M.portionSlot(pt), s = by[slot] = by[slot] || { slot, label: slot ? M.locLong(pt) : 'no location', types: [], overflow: true };
+    const slot = M.portionSlot(pt), s = by[slot] = by[slot] || { slot, label: slot ? M.locLong(pt, page().cabinet) : 'no location', types: [], overflow: true };
     for (const t of pt.types) if (!s.types.includes(t)) s.types.push(t);
     s.overflow = s.overflow && pt.overflow;
   }
@@ -643,7 +647,7 @@ function renderHelper() {
 $('#helperBtn').onclick = () => { const t = $('#helper'); if (t.style.display === 'block') t.style.display = 'none'; else { renderHelper(); t.style.display = 'block'; } };
 $('#cabinetBtn').onclick = () => window.open(`cabinet.html?page=${encodeURIComponent(pageId)}`, '_blank');
 $('#printAll').onclick = () => printKeys('all');
-$('#printDrawers').onclick = () => { const v = prompt('Drawers to print, across every page: a list or ranges, R/F for one half of a divided drawer. e.g. 12-16, 20, 30R'); if (v) printKeys(null, { drawers: v }); };
+$('#printDrawers').onclick = () => { const v = prompt(`Drawers to print: a list or ranges, R/F for one half of a divided drawer; bare numbers are the ${cabHint()}. e.g. 12-16, 20, 30R, M3-5`); if (v) printKeys(null, { drawers: v, page: pageId }); };
 $('#printBins').onclick = () => { const v = prompt('Bins to print (18 mm labels): a list or ranges, or "all". e.g. B1, B3-5'); if (v) printKeys(null, { bins: v.trim().toLowerCase() === 'all' ? 'all' : v }); };
 $('#printNew').onclick = () => printKeys('new');
 $('#markPrinted').onclick = async () => {

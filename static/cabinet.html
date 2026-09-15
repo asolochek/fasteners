@@ -17,9 +17,12 @@ button:disabled { opacity:.45; cursor:default; }
 .legend i { display:inline-block; width:14px; height:14px; border-radius:3px; vertical-align:-2px; margin-right:4px; border:1px solid var(--line); }
 main { display:flex; gap:16px; padding:14px; align-items:flex-start; }
 #left { flex:1; min-width:0; }
+.cabinet { border:2px solid var(--cab); border-radius:10px; padding:10px; margin-bottom:16px; }
+.cabinet h2 { margin:0 0 8px; color:var(--cab); }
 .grid { display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; }
+.drawer .n { background:var(--cab); color:#fff; padding:1px 5px; border-radius:8px; }
 .drawer { background:var(--none); border-radius:6px; min-height:78px; position:relative; display:flex; flex-direction:column; }
-.drawer .n { position:absolute; top:3px; right:6px; font-size:11px; color:var(--ink2); font-variant-numeric:tabular-nums; pointer-events:none; z-index:1; }
+.drawer .n { position:absolute; top:3px; right:5px; font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; pointer-events:none; z-index:1; }
 .half { flex:1; min-height:36px; padding:5px 6px 4px; border-radius:6px; display:flex; flex-direction:column; gap:3px; }
 .half[data-h="front"] { border-top:1px dashed var(--line); }   /* rear above the line, front below, like the drawer */
 .half.whole { border-top:0; }
@@ -60,7 +63,7 @@ main { display:flex; gap:16px; padding:14px; align-items:flex-start; }
 </header>
 <main>
   <div id="left">
-    <div class="grid" id="grid"></div>
+    <div id="cabinets"></div>
     <h2>Bins (18 mm labels)</h2><div class="bins" id="bins"></div>
   </div>
   <div id="right"><h2 style="margin-top:0">Unassigned</h2><div id="unassigned"></div></div>
@@ -73,7 +76,8 @@ const $ = s => document.querySelector(s);
 const status = t => { $('#status').textContent = t; };
 // per-slot display split: 'cell' | 'type' | 'item' (session only; nothing in the data changes until a piece is dragged)
 const splitMode = {};
-const slotKey = loc => loc.kind === 'bin' ? `B:${loc.bin}` : `D:${loc.drawer}|${loc.half || ''}`;
+const slotKey = loc => loc.kind === 'bin' ? `B:${loc.bin}` : `D:${loc.cabinet || ''}:${loc.drawer}|${loc.half || ''}`;
+const cabOf = id => cab.cabinets.find(c => c.id === id);
 
 // ---- loading ----
 async function load() {
@@ -111,10 +115,10 @@ function setCardLoc(card, loc) {
     if (part.overflow) {
       const old = card.from ? slotKey(card.from) : null;
       o.overflow = (o.overflow || []).filter(l => !old || slotKey(M.locOf({ loc: l }) || {}) !== old);
-      if (loc) o.overflow.push(loc); if (!o.overflow.length) delete o.overflow;
+      if (loc) { const l = { ...loc }; if (l.cabinet === (pageOf(card.pageId).cabinet || '')) delete l.cabinet; o.overflow.push(l); } if (!o.overflow.length) delete o.overflow;
     } else {
       delete o.drawer; delete o.half;
-      if (loc) o.loc = loc; else delete o.loc;
+      if (loc) { o.loc = { ...loc }; if (o.loc.cabinet === (pageOf(card.pageId).cabinet || '')) delete o.loc.cabinet; } else delete o.loc;
     }
   }
 }
@@ -143,17 +147,17 @@ function cardsOf(entries, loc) {
   return out;
 }
 // ---- slots: rear/front halves in order; a whole-drawer card takes both halves of its drawer ----
-const N = () => Math.max(64, Math.ceil(Math.max(0, ...Object.keys(cab.drawers).map(Number)) / 8) * 8);
+const N = c => Math.max(64, Math.ceil(Math.max(0, ...Object.keys(c.drawers).map(Number)) / 8) * 8);
 const idx = (drawer, half) => (drawer - 1) * 2 + (half === 'front' ? 1 : 0);
-const locAt = (i, whole) => ({ kind: 'drawer', drawer: String(Math.floor(i / 2) + 1), half: whole ? '' : (i % 2 ? 'front' : 'back') });
-// units: the cards that share a slot move together; size 2 = a whole drawer
-function units() {
-  const out = [];
-  for (const [n, dr] of Object.entries(cab.drawers)) {
-    const d = +n;
-    if (dr.whole.length) out.push({ start: idx(d, 'back'), size: 2, cards: cardsOf(dr.whole, { kind: 'drawer', drawer: n, half: '' }) });
-    if (dr.back.length) out.push({ start: idx(d, 'back'), size: 1, cards: cardsOf(dr.back, { kind: 'drawer', drawer: n, half: 'back' }) });
-    if (dr.front.length) out.push({ start: idx(d, 'front'), size: 1, cards: cardsOf(dr.front, { kind: 'drawer', drawer: n, half: 'front' }) });
+const locAt = (cabId, i, whole) => ({ kind: 'drawer', cabinet: cabId, drawer: String(Math.floor(i / 2) + 1), half: whole ? '' : (i % 2 ? 'front' : 'back') });
+// units of one cabinet: the cards that share a slot move together; size 2 = a whole drawer
+function units(cabId) {
+  const out = [], c = cabOf(cabId);
+  for (const [n, dr] of Object.entries(c.drawers)) {
+    const d = +n, at = half => ({ kind: 'drawer', cabinet: cabId, drawer: n, half });
+    if (dr.whole.length) out.push({ start: idx(d, 'back'), size: 2, cards: cardsOf(dr.whole, at('')) });
+    if (dr.back.length) out.push({ start: idx(d, 'back'), size: 1, cards: cardsOf(dr.back, at('back')) });
+    if (dr.front.length) out.push({ start: idx(d, 'front'), size: 1, cards: cardsOf(dr.front, at('front')) });
   }
   return out.sort((a, b) => a.start - b.start);
 }
@@ -192,12 +196,12 @@ function planDelete(all, i, range) {
   shift(moved, -1, i);
   return { moved: moved.filter(u => u.to !== u.start) };
 }
-function describe(moved) { return moved.map(u => `${M.locText(locAt(u.start, u.size === 2))}→${M.locText(locAt(u.to, u.size === 2))}`).join(', '); }
-async function apply(plan, then, what) {
+function describe(cabId, moved) { return moved.map(u => `${M.locText(locAt(cabId, u.start, u.size === 2), cabId)}→${M.locText(locAt(cabId, u.to, u.size === 2), cabId)}`).join(', '); }
+async function apply(cabId, plan, then, what) {
   if (plan.error) return alert(plan.error);
-  if (plan.moved.length && !confirm(`This moves ${plan.moved.length} label${plan.moved.length === 1 ? '' : 's'}: ${describe(plan.moved)}. Go ahead?`)) return;
+  if (plan.moved.length && !confirm(`This moves ${plan.moved.length} label${plan.moved.length === 1 ? '' : 's'} in the ${cabOf(cabId).title.replace(/ screws$/, '')} cabinet: ${describe(cabId, plan.moved)}. Go ahead?`)) return;
   snapshot();
-  for (const u of plan.moved) for (const card of u.cards) setCardLoc(card, locAt(u.to, u.size === 2));
+  for (const u of plan.moved) for (const card of u.cards) setCardLoc(card, locAt(cabId, u.to, u.size === 2));
   if (then) then();
   await commit(what);
 }
@@ -219,20 +223,20 @@ function dropZone(el, onDrop) {
 }
 const sameCard = (a, b) => a.from && b.from && slotKey(a.from) === slotKey(b.from) && a.text === b.text && a.grain === b.grain;
 // dropping on a drawer half
-function dropOnHalf(card, i, x, y) {
-  const size = card.whole ? 2 : 1, start = card.whole ? i - (i % 2) : i, loc = locAt(start, card.whole);
+function dropOnHalf(card, cabId, i, x, y) {
+  const size = card.whole ? 2 : 1, start = card.whole ? i - (i % 2) : i, loc = locAt(cabId, start, card.whole);
   if (card.from && card.from.kind === 'drawer' && slotKey(card.from) === slotKey(loc)) return;
   // the card leaves its own unit first, so a chain it was part of does not carry it along
-  const live = units().map(u => ({ ...u, cards: u.cards.filter(c => !sameCard(c, card)) })).filter(u => u.cards.length);
+  const live = units(cabId).map(u => ({ ...u, cards: u.cards.filter(c => !sameCard(c, card)) })).filter(u => u.cards.length);
   const occupied = live.some(u => u.start < start + size && start < u.start + u.size);
   const place = () => setCardLoc(card, loc);
   if (!occupied) { snapshot(); place(); return commit('moved'); }
   menu(x, y, [
     ...(card.whole ? [] : [['Merge into this label', () => { snapshot(); place(); commit('merged'); }]]),
     ['hd', 'Insert here, shifting…'],
-    ['…to the next gap', () => apply(planInsert(live, start, 'gap', size), place, 'inserted')],
-    ['…the rest of the row', () => apply(planInsert(live, start, 'row', size), place, 'inserted')],
-    ['…everything after', () => apply(planInsert(live, start, 'table', size), place, 'inserted')],
+    ['…to the next gap', () => apply(cabId, planInsert(live, start, 'gap', size), place, 'inserted')],
+    ['…the rest of the row', () => apply(cabId, planInsert(live, start, 'row', size), place, 'inserted')],
+    ['…everything after', () => apply(cabId, planInsert(live, start, 'table', size), place, 'inserted')],
   ]);
 }
 function dropOnBin(card, bin) {
@@ -267,36 +271,39 @@ function cardMenu(card, x, y) {
   } else if (card.from && card.grain) items.push(['Show as one label again', () => { delete splitMode[slotKey(card.from)]; render(); }]);
   if (!card.overflow) items.push([card.whole ? 'Does not need a whole drawer' : 'Needs a whole drawer', () => {
     if (!card.whole && card.from && card.from.kind === 'drawer') {   // the rest of the drawer must be free before it can be taken whole
-      const dr = cab.drawers[card.from.drawer] || { back: [], front: [], whole: [] };
+      const dr = cabOf(card.from.cabinet).drawers[card.from.drawer] || { back: [], front: [], whole: [] };
       const others = [...dr.back, ...dr.front, ...dr.whole].filter(e => !card.parts.every(p => e.parts.some(q => q.key === p.key && q.type === p.type && q.drive === p.drive && q.material === p.material)));
       if (others.length) return alert(`Drawer ${card.from.drawer} also holds ${others.map(e => e.text).join(', ')}. Move that out first.`);
     }
     snapshot(); setWhole(card, !card.whole);
-    if (card.from && card.from.kind === 'drawer') setCardLoc(card, { kind: 'drawer', drawer: card.from.drawer, half: card.whole ? 'back' : '' });   // re-place it: whole drawers have no half
+    if (card.from && card.from.kind === 'drawer') setCardLoc(card, { kind: 'drawer', cabinet: card.from.cabinet, drawer: card.from.drawer, half: card.whole ? 'back' : '' });   // re-place it: whole drawers have no half
     commit(card.whole ? 'now a half-drawer label' : 'now needs a whole drawer');
   }]);
   if (card.from) items.push(['Unassign', () => dropUnassign(card)]);
   menu(x, y, items);
 }
-function halfMenu(i, x, y) {
-  const all = units();
+function halfMenu(cabId, i, x, y) {
+  const all = units(cabId);
   menu(x, y, [
     ['hd', 'Insert an empty space here, shifting…'],
-    ['…to the next gap', () => apply(planInsert(all, i, 'gap'), null, 'space inserted')],
-    ['…the rest of the row', () => apply(planInsert(all, i, 'row'), null, 'space inserted')],
-    ['…everything after', () => apply(planInsert(all, i, 'table'), null, 'space inserted')],
+    ['…to the next gap', () => apply(cabId, planInsert(all, i, 'gap'), null, 'space inserted')],
+    ['…the rest of the row', () => apply(cabId, planInsert(all, i, 'row'), null, 'space inserted')],
+    ['…everything after', () => apply(cabId, planInsert(all, i, 'table'), null, 'space inserted')],
     ['hd', 'Delete this empty space, pulling back…'],
-    ['…up to the next gap', () => apply(planDelete(all, i, 'gap'), null, 'space deleted')],
-    ['…the rest of the row', () => apply(planDelete(all, i, 'row'), null, 'space deleted')],
-    ['…everything after', () => apply(planDelete(all, i, 'table'), null, 'space deleted')],
+    ['…up to the next gap', () => apply(cabId, planDelete(all, i, 'gap'), null, 'space deleted')],
+    ['…the rest of the row', () => apply(cabId, planDelete(all, i, 'row'), null, 'space deleted')],
+    ['…everything after', () => apply(cabId, planDelete(all, i, 'table'), null, 'space deleted')],
   ]);
 }
 
 // ---- rendering ----
 function render() {
-  const g = $('#grid'); g.innerHTML = '';
-  for (let n = 1; n <= N(); n++) {
-    const d = cab.drawers[String(n)], el = document.createElement('div'); el.className = 'drawer';
+  const wrap = $('#cabinets'); wrap.innerHTML = '';
+  for (const c of cab.cabinets) {
+  const box = document.createElement('section'); box.className = 'cabinet'; box.style.setProperty('--cab', c.color);
+  box.innerHTML = `<h2>${c.title}</h2>`; const g = document.createElement('div'); g.className = 'grid'; box.appendChild(g); wrap.appendChild(box);
+  for (let n = 1; n <= N(c); n++) {
+    const d = c.drawers[String(n)], el = document.createElement('div'); el.className = 'drawer';
     el.innerHTML = `<span class="n">${n}</span>`;
     // a whole-drawer card fills the drawer; older undivided assignments that share a drawer with half entries show all three zones
     const whole = d && d.whole.length, halvesUsed = d && (d.back.length || d.front.length);
@@ -305,14 +312,15 @@ function render() {
       const z = document.createElement('div'); z.className = 'half' + (h === '' ? ' whole' : ''); z.dataset.h = name;
       const entries = d ? d[h || 'whole'] : [];
       if (entries.some(e => e.gap)) z.classList.add('gap');
-      const loc = { kind: 'drawer', drawer: String(n), half: h };
+      const loc = { kind: 'drawer', cabinet: c.id, drawer: String(n), half: h };
       for (const card of cardsOf(entries, loc)) z.appendChild(makeCard(card));
       const i = idx(n, h || 'back');
-      dropZone(z, (card, e) => dropOnHalf(card, i, e.clientX, e.clientY));
-      z.oncontextmenu = e => { if (e.target.closest('.card')) return; e.preventDefault(); halfMenu(i, e.clientX, e.clientY); };
+      dropZone(z, (card, e) => dropOnHalf(card, c.id, i, e.clientX, e.clientY));
+      z.oncontextmenu = e => { if (e.target.closest('.card')) return; e.preventDefault(); halfMenu(c.id, i, e.clientX, e.clientY); };
       el.appendChild(z);
     }
     g.appendChild(el);
+  }
   }
   const bg = $('#bins'); bg.innerHTML = '';
   const ids = Object.keys(cab.bins).sort((a, b) => (parseInt(a.slice(1)) - parseInt(b.slice(1))) || a.localeCompare(b));

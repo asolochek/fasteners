@@ -51,20 +51,29 @@ function populated(page) {
   }
   return out;
 }
+// ---- cabinets ----
+// three 8 × 8 cabinets, each numbered from 1; a page belongs to one (page.cabinet) and a bare drawer number means that
+// cabinet. A location may name another cabinet explicitly (loc.cabinet), written with the prefix letter: I12R, M3, W40F.
+const CABINETS = [{ id: 'imperial', prefix: 'I', title: 'Imperial machine screws', color: '#2e9e4f' }, { id: 'metric', prefix: 'M', title: 'Metric machine screws', color: '#2f6db5' }, { id: 'wood', prefix: 'W', title: 'Wood & sheet metal screws', color: '#c0392b' }];
+const cabinetById = id => CABINETS.find(c => c.id === id);
+const cabinetByPrefix = ch => CABINETS.find(c => c.prefix === String(ch || '').toUpperCase());
 // ---- locations ----
 // A location is { kind:'drawer', drawer:'12', half:'back'|'front'|'' } or { kind:'bin', bin:'B7' }. It can be set on the cell
 // (cell.loc), on one head type (cell.detail[type].loc) or on one drive+material of a head (cell.detail[type].items['drive|material'].loc);
 // the most specific one wins. Each level may also carry overflow locations (…overflow: [loc, ...]).
 // Older data used cell.drawer / cell.half and detail[type].drawer / half; those still read as drawer locations.
-const slotOf = l => !l ? '' : l.kind === 'bin' ? `B:${l.bin}` : (l.drawer ? `D:${l.drawer}|${l.half || ''}` : '');
+const slotOf = l => !l ? '' : l.kind === 'bin' ? `B:${l.bin}` : (l.drawer ? `D:${l.cabinet || ''}:${l.drawer}|${l.half || ''}` : '');
 const locOf = o => o?.loc?.kind === 'bin' ? (o.loc.bin ? { kind: 'bin', bin: String(o.loc.bin) } : null)
-  : o?.loc?.drawer ? { kind: 'drawer', drawer: String(o.loc.drawer), half: o.loc.half || '' }
+  : o?.loc?.drawer ? { kind: 'drawer', drawer: String(o.loc.drawer), half: o.loc.half || '', ...(o.loc.cabinet ? { cabinet: o.loc.cabinet } : {}) }
   : o?.drawer ? { kind: 'drawer', drawer: String(o.drawer), half: o.half || '' } : null;
 const overflowOf = o => (o?.overflow || []).map(l => locOf({ loc: l })).filter(Boolean);
+// a drawer location with its cabinet filled in from the page when it does not name one
+const inCabinet = (page, l) => !l || l.kind !== 'drawer' ? l : { ...l, cabinet: l.cabinet || page.cabinet || '' };
 // the items of a cell: one per (type, drive, material) recorded, else per type; each with its resolved primary and overflow locations
 // each item also says which level its location came from: locLevel / overLevel = 'item' | 'type' | 'cell' | '' (none)
 function items(page, key) {
-  if (isList(page)) { const it = listItem(page, key); return it ? [{ key, type: it.glyph || '', drive: '', material: '', loc: locOf(it), overflow: overflowOf(it), locLevel: locOf(it) ? 'cell' : '', overLevel: overflowOf(it).length ? 'cell' : '', whole: !!it.whole }] : []; }
+  const fix = l => inCabinet(page, l), fixAll = ls => ls.map(fix);
+  if (isList(page)) { const it = listItem(page, key); return it ? [{ key, type: it.glyph || '', drive: '', material: '', loc: fix(locOf(it)), overflow: fixAll(overflowOf(it)), locLevel: locOf(it) ? 'cell' : '', overLevel: overflowOf(it).length ? 'cell' : '', whole: !!it.whole }] : []; }
   const c = page.cells[key] || {}, out = [];
   const cellLoc = locOf(c), cellOver = overflowOf(c);
   for (const t of c.types || []) {
@@ -79,7 +88,7 @@ function items(page, key) {
       const it = (o.items || {})[`${d}|${m}`] || {};
       const loc = locOf(it) || typeLoc, locLevel = locOf(it) ? 'item' : typeLL;
       const over = overflowOf(it).length ? overflowOf(it) : (locOf(it) ? [] : typeOver), overLevel = overflowOf(it).length ? 'item' : (!locOf(it) ? typeOL : '');
-      out.push({ key, type: t, drive: d, material: m, loc, overflow: over, locLevel, overLevel, whole: !!c.whole });
+      out.push({ key, type: t, drive: d, material: m, loc: fix(loc), overflow: fixAll(over), locLevel, overLevel, whole: !!c.whole });
     }
   }
   return out;
@@ -92,7 +101,7 @@ function portions(page, keys) {
     const by = {};
     const add = (loc, it, over) => {
       const slot = loc ? slotOf(loc) + (over ? '#o' : '') : `cell:${k}`;
-      const p = by[slot] = by[slot] || { key: k, types: [], items: [], kind: loc?.kind || '', drawer: loc?.drawer || '', half: loc?.half || '', bin: loc?.bin || '', overflow: !!over };
+      const p = by[slot] = by[slot] || { key: k, types: [], items: [], kind: loc?.kind || '', cabinet: loc?.cabinet || '', drawer: loc?.drawer || '', half: loc?.half || '', bin: loc?.bin || '', overflow: !!over };
       if (it.type && !p.types.includes(it.type)) p.types.push(it.type);
       p.items.push(it);
     };
@@ -101,16 +110,18 @@ function portions(page, keys) {
   }
   return out;
 }
-const portionSlot = p => p.kind === 'bin' ? `B:${p.bin}` : p.kind === 'drawer' ? `D:${p.drawer}|${p.half || ''}` : '';
-// location text: "12", "12R", "12F" for drawers, "B3" for bins; parseLoc reads the same (plus "12 rear", "bin 3", "b3")
-const locText = l => !l ? '' : l.kind === 'bin' ? l.bin : l.drawer + (l.half === 'back' ? 'R' : l.half === 'front' ? 'F' : '');
-const locLong = l => !l ? '' : l.kind === 'bin' ? `bin ${l.bin}` : `drawer ${l.drawer}${l.half === 'back' ? ' rear' : l.half === 'front' ? ' front' : ''}`;
+const portionSlot = p => p.kind === 'bin' ? `B:${p.bin}` : p.kind === 'drawer' ? `D:${p.cabinet || ''}:${p.drawer}|${p.half || ''}` : '';
+// location text: "12", "12R", "12F" for drawers, "B3" for bins, with the cabinet prefix when the drawer is in a cabinet other
+// than `home` (a page's own cabinet); parseLoc reads the same (plus "12 rear", "bin 3", "b3", "M12R")
+const prefixFor = (l, home) => l.cabinet && l.cabinet !== home ? (cabinetById(l.cabinet)?.prefix || '') : '';
+const locText = (l, home) => !l ? '' : l.kind === 'bin' ? l.bin : prefixFor(l, home) + l.drawer + (l.half === 'back' ? 'R' : l.half === 'front' ? 'F' : '');
+const locLong = (l, home) => !l ? '' : l.kind === 'bin' ? `bin ${l.bin}` : `${l.cabinet && l.cabinet !== home ? cabinetById(l.cabinet)?.title.replace(/ screws$/, '') + ' ' : ''}drawer ${l.drawer}${l.half === 'back' ? ' rear' : l.half === 'front' ? ' front' : ''}`;
 function parseLoc(text) {
   const t = String(text || '').trim(); if (!t) return null;
   let m = /^(?:bin\s*)?b\s*(\d+)$/i.exec(t); if (m) return { kind: 'bin', bin: `B${+m[1]}` };
-  m = /^(\d+)\s*(r|rear|b|back|f|front)?$/i.exec(t); if (!m) return undefined;   // undefined = not understood
-  const h = (m[2] || '').toLowerCase();
-  return { kind: 'drawer', drawer: m[1], half: /^(r|rear|b|back)$/.test(h) ? 'back' : /^(f|front)$/.test(h) ? 'front' : '' };
+  m = /^([imw])?\s*(\d+)\s*(r|rear|b|back|f|front)?$/i.exec(t); if (!m) return undefined;   // undefined = not understood
+  const h = (m[3] || '').toLowerCase();
+  return { kind: 'drawer', drawer: m[2], half: /^(r|rear|b|back)$/.test(h) ? 'back' : /^(f|front)$/.test(h) ? 'front' : '', ...(m[1] ? { cabinet: cabinetByPrefix(m[1]).id } : {}) };
 }
 const parseLocs = text => String(text || '').replace(/bin\s+(?=\d)/gi, 'B').replace(/(\d)\s+(r|rear|b|back|f|front)\b/gi, '$1$2').split(/[,;\s]+/).filter(Boolean).map(parseLoc);
 // every bin named anywhere on a page (primary or overflow, at any level)
@@ -124,9 +135,10 @@ const MAT_SHORT = { aluminum: 'Al', steel: 'steel', 'steel-blackoxide': 'blk oxi
 const DRIVE_SHORT = { slotted: 'slotted', phillips: 'Phillips', combo: 'combo', hexslot: 'hex+slot', pozidriv: 'Pozi', jis: 'JIS', torx: 'Torx', hex: 'hex', square: 'square' };
 // print order: labels with a drawer first, by drawer number then rear before front; the rest in reading order
 function drawerOrder(page, groups) {
-  const key = g => { const c = g[0]; return c.kind === 'drawer' ? [0, +c.drawer, c.half === 'front' ? 1 : 0] : c.kind === 'bin' ? [1, 0, 0] : [2, 0, 0]; };
-  return groups.map((g, i) => [g, key(g), i]).sort((a, b) => (a[1][0] - b[1][0]) || (a[1][1] - b[1][1]) || (a[1][2] - b[1][2]) || (a[2] - b[2])).map(x => x[0]);
+  const cabIx = id => Math.max(0, CABINETS.findIndex(c => c.id === id));
+  const key = g => { const c = g[0]; return c.kind === 'drawer' ? [0, cabIx(c.cabinet), +c.drawer, c.half === 'front' ? 1 : 0] : c.kind === 'bin' ? [1, 0, 0, 0] : [2, 0, 0, 0]; };
+  return groups.map((g, i) => [g, key(g), i]).sort((a, b) => (a[1][0] - b[1][0]) || (a[1][1] - b[1][1]) || (a[1][2] - b[1][2]) || (a[1][3] - b[1][3]) || (a[2] - b[2])).map(x => x[0]);
 }
-const api = { isList, listItem, lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, items, portions, portionSlot, slotOf, locOf, overflowOf, locText, locLong, parseLoc, parseLocs, bins, drawerOrder, HW, MAT_SHORT, DRIVE_SHORT };
+const api = { CABINETS, cabinetById, cabinetByPrefix, inCabinet, isList, listItem, lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, items, portions, portionSlot, slotOf, locOf, overflowOf, locText, locLong, parseLoc, parseLocs, bins, drawerOrder, HW, MAT_SHORT, DRIVE_SHORT };
 if (typeof module !== 'undefined') module.exports = api; else window.M = api;   // the same file is served to the browser
 })();

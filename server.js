@@ -156,15 +156,16 @@ function binLabel(d, bin) {
            _sig: entries.map(e => e.sig).join(';'), _slot: `B:${bin}`, _bin: bin, _entries: entries };
 }
 const allBins = d => [...new Set(d.pages.flatMap(p => M.bins(p)))].sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
-// drawer spec: "12-16, 20, 30R, 31F" -> predicate on (drawer, half). A bare number matches both halves of a divided drawer.
-function drawerMatcher(spec) {
+// drawer spec: "12-16, 20, 30R, M3-5" -> predicate on (cabinet, drawer, half). A bare number matches both halves of a divided
+// drawer; a term without a cabinet prefix (I, M, W) means `home`, the cabinet of the page the request came from
+function drawerMatcher(spec, home) {
   const terms = String(spec).split(/[,\s]+/).filter(Boolean).map(t => {
-    const m = /^(\d+)(?:-(\d+))?([rRfFbB])?$/.exec(t); if (!m) return null;
-    const half = m[3] ? (/[fF]/.test(m[3]) ? 'front' : 'back') : null;
-    return { lo: +m[1], hi: +(m[2] || m[1]), half };
+    const m = /^([imwIMW])?(\d+)(?:-(\d+))?([rRfFbB])?$/.exec(t); if (!m) return null;
+    const half = m[4] ? (/[fF]/.test(m[4]) ? 'front' : 'back') : null;
+    return { cabinet: m[1] ? M.cabinetByPrefix(m[1]).id : (home || ''), lo: +m[2], hi: +(m[3] || m[2]), half };
   });
   if (terms.some(t => !t)) return null;
-  return (drawer, half) => { const n = +drawer; return terms.some(t => n >= t.lo && n <= t.hi && (!t.half || t.half === (half || ''))); };
+  return (cabinet, drawer, half) => { const n = +drawer; return terms.some(t => t.cabinet === (cabinet || '') && n >= t.lo && n <= t.hi && (!t.half || t.half === (half || ''))); };
 }
 // bin spec: "all" | ["B1", ...] | "B1, B3-5, 7" -> list of bin ids (only ones that hold something)
 function binList(d, spec) {
@@ -204,13 +205,14 @@ app.post('/api/labels', async (req, res) => {
   }
   let groups = [], pageOf = new Map(), name = 'all', bins = [];
   if (req.body.drawers) {
-    const ok = drawerMatcher(req.body.drawers); if (!ok) return res.status(400).json({ error: 'bad drawer list; use e.g. 12-16, 20, 30R' });
+    const home = d.pages.find(p => p.id === req.body.page)?.cabinet || M.CABINETS[0].id;
+    const ok = drawerMatcher(req.body.drawers, home); if (!ok) return res.status(400).json({ error: 'bad drawer list; use e.g. 12-16, 20, 30R, M3' });
     for (const page of d.pages) {
-      for (const g of groupBySlot(page, M.populated(page))) if (g[0].kind === 'drawer' && ok(g[0].drawer, g[0].half)) { groups.push(g); pageOf.set(g, page); }
+      for (const g of groupBySlot(page, M.populated(page))) if (g[0].kind === 'drawer' && ok(g[0].cabinet, g[0].drawer, g[0].half)) { groups.push(g); pageOf.set(g, page); }
     }
-    // drawer order, rear before front
-    const dk = g => [+g[0].drawer, g[0].half === 'front' ? 1 : 0];
-    groups.sort((a, b) => { const [x, y] = dk(a), [u, v] = dk(b); return (x - u) || (y - v); });
+    // cabinet, then drawer order, rear before front
+    const dk = g => [M.CABINETS.findIndex(c => c.id === g[0].cabinet), +g[0].drawer, g[0].half === 'front' ? 1 : 0];
+    groups.sort((a, b) => { const [c, x, y] = dk(a), [e, u, v] = dk(b); return (c - e) || (x - u) || (y - v); });
     name = 'drawers-' + String(req.body.drawers).replace(/[^\w-]+/g, '_');
   } else {
     const page = d.pages.find(p => p.id === req.body.page);
@@ -257,12 +259,13 @@ app.post('/api/printed', (req, res) => {
   }
   fs.writeFileSync(PRINTED, JSON.stringify(pr, null, 1)); res.json({ ok: true, marked });
 });
-// GET /api/cabinet -> what is in each drawer and bin: { drawers: { "12": { back: [...], front: [...], whole: [...] } }, bins: { "B3": [...] },
-// unassigned: [...] }. Each entry (one label): { text, page, pageId, keys, gap, overflow, whole, parts } where gap = the screw
+// GET /api/cabinet -> what is in each drawer and bin: { cabinets: [{ id, title, color, drawers: { "12": { back: [...], front: [...], whole: [...] } }],
+// bins: { "B3": [...] }, unassigned: [...] }. Each entry (one label): { text, page, pageId, keys, gap, overflow, whole, parts } where gap = the screw
 // lengths in that half are not a contiguous run of the page's lengths, overflow = everything in this entry is overflow stock,
 // whole = its stock is flagged as needing a whole drawer, parts = the items behind it (with the level each got its location from)
 app.get('/api/cabinet', (req, res) => {
-  const d = load(), drawers = {}, bins = {}, unassigned = [];
+  const d = load(), bins = {}, unassigned = [];
+  const cabinets = M.CABINETS.map(c => ({ ...c, drawers: {} }));
   const pages = req.query.page ? d.pages.filter(p => p.id === req.query.page) : d.pages;
   for (const page of pages) {
     for (const g of groupBySlot(page, M.populated(page))) {
@@ -277,11 +280,12 @@ app.get('/api/cabinet', (req, res) => {
                       overflow: g.every(pt => pt.overflow), whole: g.some(pt => pt.items.some(it => it.whole)), parts };
       if (!c.kind) { unassigned.push(entry); continue; }
       if (c.kind === 'bin') { (bins[c.bin] = bins[c.bin] || []).push(entry); continue; }
-      const dr = drawers[c.drawer] = drawers[c.drawer] || { back: [], front: [], whole: [] };
+      const cabinet = cabinets.find(x => x.id === c.cabinet) || cabinets[0];
+      const dr = cabinet.drawers[c.drawer] = cabinet.drawers[c.drawer] || { back: [], front: [], whole: [] };
       dr[c.half || 'whole'].push(entry);
     }
   }
-  res.json({ drawers, bins, unassigned, pages: d.pages.map(p => ({ id: p.id, title: p.title })), page: req.query.page || '' });
+  res.json({ cabinets, bins, unassigned, pages: d.pages.map(p => ({ id: p.id, title: p.title, cabinet: p.cabinet || '' })), page: req.query.page || '' });
 });
 // GET /api/preview.png?page=..&key=..[&slot=..]  -> a PNG of one label for the on-screen preview (the cell's primary location, or the slot given)
 app.get('/api/preview.png', async (req, res) => {

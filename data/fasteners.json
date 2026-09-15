@@ -1790,7 +1790,8 @@
     "inttooth",
     "toothed",
     "inextooth"
-   ]
+   ],
+   "cabinet": "imperial"
   },
   {
    "id": "metric-machine",
@@ -1918,7 +1919,8 @@
     "spring",
     "inttooth",
     "toothed"
-   ]
+   ],
+   "cabinet": "metric"
   },
   {
    "id": "wood",
@@ -2555,7 +2557,8 @@
     }
    },
    "locknuts": [],
-   "lockwashers": []
+   "lockwashers": [],
+   "cabinet": "wood"
   },
   {
    "id": "sheet-metal",
@@ -2629,7 +2632,8 @@
      "pitch": 0
     }
    ],
-   "cells": {}
+   "cells": {},
+   "cabinet": "wood"
   },
   {
    "id": "other",
@@ -2712,5 +2716,5 @@
    ]
   }
  ],
- "rev": 786
+ "rev": 787
 }
