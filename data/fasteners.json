@@ -1552,15 +1552,7 @@
         "stainless",
         "polycarbonate"
        ],
-       "items": {
-        "|polycarbonate": {
-         "loc": {
-          "kind": "drawer",
-          "drawer": "80",
-          "half": "front"
-         }
-        }
-       }
+       "items": {}
       },
       "washer": {
        "materials": [
@@ -1879,5 +1871,5 @@
    "cells": {}
   }
  ],
- "rev": 480
+ "rev": 481
 }

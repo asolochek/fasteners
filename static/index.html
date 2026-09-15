@@ -97,7 +97,8 @@ td.cell:not(.have) .print, .card:not(.have) .print { visibility:hidden; }
 .mobile #types, .mobile #helper { top:8px; right:8px; left:8px; width:auto; max-height:85vh; }
 #pageSel { display:none; }
 .mobile #addLen, .mobile #addRow { display:none; }
-#preview { position:fixed; right:14px; bottom:14px; background:#fff; border:1px solid var(--line); padding:6px; border-radius:6px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; }
+/* the stack never takes the pointer: if it grows up under the cursor the ⎙ would get mouseleave and the preview would flicker */
+#preview { position:fixed; right:14px; bottom:14px; background:#fff; border:1px solid var(--line); padding:6px; border-radius:6px; box-shadow:0 4px 18px rgba(0,0,0,.12); display:none; pointer-events:none; max-height:calc(100vh - 28px); overflow:hidden; }
 #preview img { display:block; width:430px; height:auto; }   /* 50 mm at the same scale for both tapes: 9 mm labels short, 18 mm labels tall */
 #preview img + img { margin-top:6px; }
 </style>
