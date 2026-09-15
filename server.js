@@ -41,33 +41,34 @@ function groupBySlot(page, keys) {
   return [...singles, ...groups.values()];
 }
 const groupSlot = g => M.portionSlot(g[0]);
-// what sets this portion apart from the rest of its cell: the drive / material of the items in it when the head type's other
-// items live elsewhere ("SS", "Phillips zinc"), and "overflow" for an overflow portion
+// what sets this portion apart from the rest of its cell: the drives / materials of its items when the head type's other
+// items live elsewhere, as a short list ("SS/zinc", "Phillips"); "overflow" is added by the caller. The icons already
+// say which types are here, so type names are left out.
 function qualifier(page, pt) {
-  const all = M.items(page, pt.key), out = [];
+  const all = M.items(page, pt.key), ds = new Set(), ms = new Set();
+  const u = (list, f) => [...new Set(list.map(f).filter(Boolean))];
   for (const t of pt.types) {
     const mine = pt.items.filter(i => i.type === t), whole = all.filter(i => i.type === t);
     if (mine.length >= whole.length) continue;
-    const u = (list, f) => [...new Set(list.map(f).filter(Boolean))];
-    const ds = u(mine, i => i.drive), ms = u(mine, i => i.material), q = [];
-    if (ds.length && ds.length < u(whole, i => i.drive).length) q.push(ds.map(x => M.DRIVE_SHORT[x] || x).join('/'));
-    if (ms.length && ms.length < u(whole, i => i.material).length) q.push(ms.map(x => M.MAT_SHORT[x] || x).join('/'));
-    if (!q.length) continue;
-    out.push((pt.types.length > 1 ? shortType(t) + ' ' : '') + q.join(' '));
+    const md = u(mine, i => i.drive), mm = u(mine, i => i.material);
+    if (md.length && md.length < u(whole, i => i.drive).length) md.forEach(x => ds.add(M.DRIVE_SHORT[x] || x));
+    if (mm.length && mm.length < u(whole, i => i.material).length) mm.forEach(x => ms.add(M.MAT_SHORT[x] || x));
   }
-  const s = [...new Set(out)].join(' · ');
-  return pt.overflow ? (s ? s + ' · overflow' : 'overflow') : s;
+  return { drives: [...ds], materials: [...ms] };
 }
-// a head / nut / washer type name for a label: the on-screen name without its parenthetical or ", pointed" tail ("jam nut", "flat")
-const SHORT_TYPE = { sems: 'sems', socket: 'socket', carriage: 'carriage', inextooth: 'int+ext tooth', trim: 'trim', flangesm: 'flange', hexsm: 'hex washer' };
-const shortType = t => SHORT_TYPE[t] || (I.LABELS[t] || t).replace(/\s*\(.*?\)/g, '').split(',')[0].trim().toLowerCase();
+// the qualifier line of a group: the union over its portions, drives then materials, then "overflow" if any portion is one
+function groupQual(page, group) {
+  const ds = new Set(), ms = new Set(); let over = false;
+  for (const pt of group) { const q = qualifier(page, pt); q.drives.forEach(x => ds.add(x)); q.materials.forEach(x => ms.add(x)); over = over || pt.overflow; }
+  return [[...ds].join('/'), [...ms].join('/'), over ? 'overflow' : ''].filter(Boolean).join(' ');
+}
 // the text of one location's label: { pn, value, qual, types, sig }
 // cells that share a location print as ONE label: "#10 Washer" (washers + lock washers), "#4-40 Nut" (nuts + lock nuts),
 // or for screws the size in the big slot and the lengths on the detail line; the icons are the union of the cells'
 function groupText(page, group) {
   const types = [...new Set(group.flatMap(pt => pt.types || []))];
-  const quals = [...new Set(group.map(pt => { const q = qualifier(page, pt); return q && group.length > 1 ? `${shortCell(page, pt.key)} ${q}` : q; }).filter(Boolean))];
-  if (group.length === 1) { const pn = M.cellText(page, group[0].key); return { pn, value: '', qual: quals.join(' · '), types, sig: `${pn}||${quals.join(' · ')}|${types.join(',')}` }; }
+  const qual = groupQual(page, group);
+  if (group.length === 1) { const pn = M.cellText(page, group[0].key); return { pn, value: '', qual, types, sig: `${pn}||${qual}|${types.join(',')}` }; }
   const cells = group.map(pt => ({ k: pt.key, types: pt.types, suffix: pt.key.split('|')[1], base: pt.key.split('|')[0] }));
   // reading order inside the label: rows in page order, lengths ascending, hardware after the lengths
   const rowIx = id => page.rows.findIndex(r => r.id === id);
@@ -89,11 +90,8 @@ function groupText(page, group) {
     pn = per[0]; value = per.slice(1).join('  ');
   }
   else { pn = base; value = items.join('  '); }
-  const qual = quals.join(' · ');
   return { pn, value, qual, types, sig: `${pn}|${value}|${qual}|${types.join(',')}` };
 }
-// "1/2″" / "Nut" / "Washer": how a cell is named inside a merged label's qualifier
-function shortCell(page, key) { const b = key.split('|')[1]; return M.HW.find(h => h[1] === b)?.[3] || M.lengthText(page, +b); }
 // a 9 mm drawer label for one location: big text, lengths and/or qualifier as detail, the icons on the right
 function drawerLabel(page, group) {
   const S = L.STYLE.drawer, t = groupText(page, group);
