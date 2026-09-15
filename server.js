@@ -93,21 +93,29 @@ function groupText(page, group) {
   return { pn, value, qual, types, sig: `${pn}|${value}|${qual}|${types.join(',')}` };
 }
 // a 9 mm drawer label for one location: big text, lengths and/or qualifier as detail, the icons on the right
+// a long single detail line ("PEI/phenolic/PTFE") may be wrapped onto two lines at a slash or space, whichever keeps the icons larger
+function wrap2(text, fs) {
+  const parts = text.split(/(?<=[\/ ])/); let best = null;
+  for (let i = 1; i < parts.length; i++) {
+    const a = parts.slice(0, i).join('').replace(/[\/ ]$/, ''), b = parts.slice(i).join('');
+    const w = Math.max(L.textWidth(a, fs), L.textWidth(b, fs)); if (!best || w < best.w) best = { a, b, w };
+  }
+  return best ? [best.a, best.b] : [text];
+}
 function drawerLabel(page, group) {
   const S = L.STYLE.drawer, t = groupText(page, group);
-  const lines = [t.value, t.qual].filter(Boolean);
-  let extra = {};
-  if (lines.length) extra = { spec: 3.0, detX: S.pnX + L.textWidth(t.pn, S.pn) + 2.5, detCenter: lines.length === 1 };
-  // the icons take the width left after the big text and the detail lines; a long detail gives up font size until the icons
-  // keep at least ~3 mm, so neither the text nor the icons get squeezed out
-  const freeFor = sp => S.len - S.pad - 1.5 - Math.max(S.pnX + L.textWidth(t.pn, S.pn), ...lines.map(l => (extra.detX ?? S.detX) + L.textWidth(l, sp ?? S.spec)));
-  let lay;
-  for (const sp of (lines.length ? (lines.length === 1 ? [3.0, 2.6, 2.3, 2.0] : [2.6, 2.3, 2.0, 1.9]) : [null])) {
-    if (lines.length) extra.spec = sp;
-    lay = I.layout(t.types, freeFor(extra.spec), S.glyphH);
-    if (lay.size >= Math.min(3.0, S.glyphH / 2)) break;
-  }
-  return { kind: 'drawer', pn: t.pn, value: lines[0] || '', specs: lines[1] || '', pinout: null, glyphSvg: I.icons(t.types, lay.rows), glyphMaxW: lay.maxW, ...extra,
+  const base = [t.value, t.qual].filter(Boolean);
+  const detX = S.pnX + L.textWidth(t.pn, S.pn) + 2.5;
+  const freeFor = (lines, sp) => S.len - S.pad - 1.5 - Math.max(S.pnX + L.textWidth(t.pn, S.pn), ...lines.map(l => detX + L.textWidth(l, sp)));
+  // candidates in order of preference: one line large, then two lines / smaller text; the first that keeps the icons ≥ ~3 mm wins
+  const cands = [];
+  if (base.length === 1) for (const sp of [3.0, 2.6, 2.3, 2.0]) { cands.push({ lines: base, sp }); if (sp < 3.0 && base[0].length > 6) cands.push({ lines: wrap2(base[0], sp), sp }); }
+  else if (base.length === 2) for (const sp of [2.6, 2.3, 2.0, 1.9]) cands.push({ lines: base, sp });
+  else cands.push({ lines: [], sp: null });
+  let pick = null;
+  for (const c of cands) { c.lay = I.layout(t.types, freeFor(c.lines, c.sp ?? S.spec), S.glyphH); if (!pick || c.lay.size > pick.lay.size + 1e-6) pick = c; if (c.lay.size >= Math.min(3.0, S.glyphH / 2)) { pick = c; break; } }
+  const extra = pick.lines.length ? { spec: pick.sp, detX, detCenter: pick.lines.length === 1 } : {};
+  return { kind: 'drawer', pn: t.pn, value: pick.lines[0] || '', specs: pick.lines[1] || '', pinout: null, glyphSvg: I.icons(t.types, pick.lay.rows), glyphMaxW: pick.lay.maxW, ...extra,
            generic: true, _n: t.types.length, _sig: t.sig, _slot: groupSlot(group) };
 }
 // an 18 mm bin label: everything in the bin, from every page. One entry: the size big with its details under it; several:
