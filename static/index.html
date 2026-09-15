@@ -530,7 +530,8 @@ function openDetail(key, type, x, y) {
   if (isHead && !WHOLE.includes(v.shape)) {
     h += `<h4>Tip</h4><label><input type="radio" name="tip" value="blunt" ${!v.pointed ? 'checked' : ''}>Blunt</label><label><input type="radio" name="tip" value="pointed" ${v.pointed ? 'checked' : ''}>Pointed</label>
       <label><input type="checkbox" id="popCut" ${v.cutting ? 'checked' : ''}>Cutting tip (${v.pointed ? 'self-drilling' : 'thread-forming'})</label>
-      <h4>Captive washer</h4>` + [['k', 'Countersunk (finishing cup)'], ['f', 'Flat'], ['s', 'Split lock'], ['e', 'External tooth'], ['i', 'Internal tooth']].map(([c, l]) => `<label><input type="checkbox" class="popW" value="${c}" ${v.washers.includes(c) ? 'checked' : ''}>${l}</label>`).join('');
+      <h4>Captive washer</h4>` + [['k', 'Countersunk (finishing cup)'], ['f', 'Flat'], ['s', 'Split lock'], ['e', 'External tooth'], ['i', 'Internal tooth']].map(([c, l]) => `<label><input type="checkbox" class="popW" value="${c}" ${v.washers.includes(c) ? 'checked' : ''}>${l}</label>`).join('') +
+      `<div class="note">Changing these converts this head. <button type="button" id="popVar" class="locbtn">Add another variant…</button> keeps it and adds a second one (same drives and materials) with a different tip or washers.</div>`;
   }
   h += `<h4>Location</h4><div class="loc"><span>${locSummary(info, '') || `as the cell (${locSummary(c, 'unset')})`}</span>${locBtn(info, '', '')}</div>`;
   if (drives.length) {
@@ -551,6 +552,7 @@ function openDetail(key, type, x, y) {
     save(); ensureIcon(nk).then(() => { render(); openDetail(key, nk, parseInt($('#pop').style.left), parseInt($('#pop').style.top)); });
   };
   $('#pop').querySelectorAll('input[name=tip], #popCut, .popW').forEach(i => i.onchange = revariant);
+  if ($('#popVar')) $('#popVar').onclick = e => openVariant(key, type, e.clientX, e.clientY);
   $('#pop').querySelectorAll('.locbtn').forEach(b => b.onclick = e => {
     e.preventDefault();
     const d = b.dataset.drive, m = b.dataset.m, what = `${iconLabel(type)} · ${cellTextClient(p, key)}`;
@@ -568,6 +570,24 @@ function openDetail(key, type, x, y) {
     }
     save(); here(); render();
   });
+  $('#popClose').onclick = closePop; placePop(x, y);
+}
+// a second variant of a head in the same cell: e.g. the self-drilling version next to the plain one. Drives and materials
+// are copied from the head it is made from; locations are not.
+function openVariant(key, type, x, y) {
+  const c = cell(key), v = vParse(type), src = (c.detail || {})[type] || {};
+  $('#pop').innerHTML = `<h3>${iconSvg(type)} Another variant of ${iconLabel(v.shape)} · ${cellTextClient(page(), key)}</h3>
+    <h4>Tip</h4><label><input type="radio" name="vtip" value="blunt" ${!v.pointed ? 'checked' : ''}>Blunt</label><label><input type="radio" name="vtip" value="pointed" ${v.pointed ? 'checked' : ''}>Pointed</label>
+    <label><input type="checkbox" id="vCut" ${v.cutting ? 'checked' : ''}>Cutting tip</label>
+    <h4>Captive washer</h4>` + [['k', 'Countersunk (finishing cup)'], ['f', 'Flat'], ['s', 'Split lock'], ['e', 'External tooth'], ['i', 'Internal tooth']].map(([cd, l]) => `<label><input type="checkbox" class="vW" value="${cd}" ${v.washers.includes(cd) ? 'checked' : ''}>${l}</label>`).join('') +
+    `<div class="row"><button type="button" id="popGo">Add</button><button type="button" id="popClose">Cancel</button></div>`;
+  $('#popGo').onclick = () => {
+    const nk = vKey({ shape: v.shape, pointed: $('#pop input[name=vtip]:checked')?.value === 'pointed', cutting: $('#vCut').checked, washers: [...$('#pop').querySelectorAll('.vW:checked')].map(i => i.value) });
+    if (c.types.includes(nk)) return alert(`${iconLabel(nk)} is already in this cell.`);
+    c.types.push(nk); c.detail = c.detail || {};
+    c.detail[nk] = { ...(src.drives ? { drives: JSON.parse(JSON.stringify(src.drives)) } : {}), ...(src.materials ? { materials: [...src.materials] } : {}) };
+    save(); ensureIcon(nk).then(() => { render(); openDetail(key, nk, x, y); });
+  };
   $('#popClose').onclick = closePop; placePop(x, y);
 }
 // which head / nut / washer types this page shows (types ticked in cells but hidden here still print)
