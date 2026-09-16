@@ -308,7 +308,7 @@ function render() {
   tbl.querySelectorAll('.del').forEach(x => x.onclick = () => removeLength(+x.dataset.len));
 }
 // rows: thread sizes. "#3-48", "1/4-28", "M6x0.75" (metric without a pitch gets the coarse pitch). Kept in diameter order, coarse before fine.
-const COARSE = { 1.6: 0.35, 2: 0.4, 2.5: 0.45, 3: 0.5, 3.5: 0.6, 4: 0.7, 5: 0.8, 6: 1, 8: 1.25, 10: 1.5, 12: 1.75 };
+const COARSE = { 1: 0.25, 1.2: 0.25, 1.4: 0.3, 1.6: 0.35, 1.8: 0.35, 2: 0.4, 2.5: 0.45, 3: 0.5, 3.5: 0.6, 4: 0.7, 5: 0.8, 6: 1, 7: 1, 8: 1.25, 10: 1.5, 12: 1.75, 14: 2, 16: 2, 18: 2.5, 20: 2.5 };
 function parseRow(text, units) {
   const t = text.trim().replace(/\s+/g, '');
   if (units === 'mm') { const m = /^M(\d+(?:\.\d+)?)(?:[x×](\d+(?:\.\d+)?))?$/i.exec(t); if (!m) return null;
