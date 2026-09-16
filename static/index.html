@@ -507,8 +507,11 @@ const WHOLE = ['shoulder', 'setscrew'];   // shapes with no tip or washer option
 const defVariant = (p, shape) => vKey({ shape, pointed: p.class !== 'machine' && !WHOLE.includes(shape) });
 const shapeOf = t => vParse(t).shape;
 // head shapes a class can have at all; a cell shows the page's primary shapes plus whatever else is ticked, and "…" offers the rest
-const HEAD_UNIVERSE = { machine: ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'hexwasher', 'flange', 'thumb', 'carriage', 'shoulder', 'setscrew'],
-                        tapping: ['flat', 'pan', 'button', 'truss', 'oval', 'hexwasher', 'flange', 'trim'], wood: ['flat', 'trim', 'flange', 'pan', 'button', 'truss', 'oval', 'hexwasher'] };
+// every shape is available on every page through "…"; the order just puts the usual ones for that class first
+const HEAD_SHAPES = ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'hexwasher', 'flange', 'thumb', 'carriage', 'trim', 'shoulder', 'setscrew'];
+const HEAD_UNIVERSE = { machine: HEAD_SHAPES,
+                        tapping: ['flat', 'pan', 'button', 'truss', 'oval', 'hexwasher', 'flange', 'trim', ...HEAD_SHAPES.filter(x => !['flat', 'pan', 'button', 'truss', 'oval', 'hexwasher', 'flange', 'trim'].includes(x))],
+                        wood: ['flat', 'trim', 'flange', 'pan', 'button', 'truss', 'oval', 'hexwasher', ...HEAD_SHAPES.filter(x => !['flat', 'trim', 'flange', 'pan', 'button', 'truss', 'oval', 'hexwasher'].includes(x))] };
 const universeOf = p => HEAD_UNIVERSE[p.class] || HEAD_UNIVERSE.machine;
 const iconSvg = t => icons.svg[t] || icons.svg[shapeOf(t)] || '';
 const iconLabel = t => icons.labels[t] || t;
@@ -527,7 +530,7 @@ function cellTextClient(p, key) { if (M.isList(p)) return M.cellText(p, key); co
 // per-head detail: own drawer, drive types, materials per drive (washers and nuts: materials only)
 function openDetail(key, type, x, y) {
   const c = cell(key), p = page(); c.detail = c.detail || {}; const info = c.detail[type] = c.detail[type] || {};
-  const v = vParse(type), isHead = universeOf(p).includes(v.shape) || v.shape in FIXED_DRIVE || v.shape in DRIVES_FOR, isWasher = key.split('|')[1].endsWith('washer');
+  const v = vParse(type), isHead = HEAD_SHAPES.includes(v.shape), isWasher = key.split('|')[1].endsWith('washer');
   const mats = isWasher ? MAT_WASHER : MAT_SCREW, fixed = isHead ? FIXED_DRIVE[v.shape] : undefined;
   const drives = isHead && fixed === undefined ? (DRIVES_FOR[v.shape] ? DRIVES.filter(d => DRIVES_FOR[v.shape].includes(d[0])) : DRIVES) : (fixed && fixed !== 'none' ? [[fixed, DRIVES.find(d => d[0] === fixed)[1] + ' (always)']] : []);
   const matList = (drive) => `<div class="sub">` + mats.map(([m, l]) => { const on = ((drive ? (info.drives || {})[drive] : info.materials) || []).includes(m); return `<label><input type="checkbox" data-drive="${drive}" data-m="${m}" ${on ? 'checked' : ''}>${l}${on ? locBtn(itemOf(drive, m), drive, m) : ''}</label>`; }).join('') + `</div>`;

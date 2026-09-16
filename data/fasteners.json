@@ -1978,13 +1978,16 @@
     "extra": [
      5.5,
      0.625,
-     1.625
+     1.625,
+     0.25,
+     0.375
     ],
     "skip": []
    },
    "heads": [
     "flat",
     "pan",
+    "cheese",
     "hex",
     "hexwasher",
     "trim"
@@ -2032,6 +2035,12 @@
      "pitch": 0
     },
     {
+     "id": "#9",
+     "label": "#9",
+     "dia": "#9",
+     "pitch": 0
+    },
+    {
      "id": "#10",
      "label": "#10",
      "dia": "#10",
@@ -2066,7 +2075,9 @@
     "#8|0.75": {
      "types": [
       "flat:p",
-      "button:p"
+      "button:p",
+      "hexwasher:p:c",
+      "pan:p"
      ],
      "detail": {
       "flat:p": {
@@ -2083,6 +2094,21 @@
          "steel-zinc"
         ]
        }
+      },
+      "hexwasher:p:c": {
+       "drives": {
+        "hex": [
+         "steel-chrome"
+        ]
+       }
+      },
+      "pan:p": {
+       "drives": {
+        "phillips": [
+         "stainless",
+         "steel-zinc"
+        ]
+       }
       }
      }
     },
@@ -2095,7 +2121,8 @@
       "flat:p": {
        "drives": {
         "phillips": [
-         "steel-zinc"
+         "steel-zinc",
+         "brass"
         ]
        }
       },
@@ -2138,7 +2165,8 @@
     "#6|0.75": {
      "types": [
       "flat:p",
-      "button:p"
+      "button:p",
+      "pan:p"
      ],
      "detail": {
       "flat:p": {
@@ -2154,18 +2182,44 @@
          "steel-zinc"
         ]
        }
+      },
+      "pan:p": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
       }
      }
     },
     "#6|1": {
      "types": [
-      "button:p"
+      "button:p",
+      "flat:p",
+      "pan:p:c"
      ],
      "detail": {
       "button:p": {
        "drives": {
         "slotted": [
          "steel-zinc"
+        ],
+        "combo": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "flat:p": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      },
+      "pan:p:c": {
+       "drives": {
+        "phillips": [
+         "stainless"
         ]
        }
       }
@@ -2173,13 +2227,29 @@
     },
     "#8|0.5": {
      "types": [
-      "flat:p"
+      "flat:p",
+      "hexwasher:p:c",
+      "pan:p"
      ],
      "detail": {
       "flat:p": {
        "drives": {
         "phillips": [
          "steel-zinc"
+        ]
+       }
+      },
+      "hexwasher:p:c": {
+       "drives": {
+        "hex": [
+         "steel-chrome"
+        ]
+       }
+      },
+      "pan:p": {
+       "drives": {
+        "phillips": [
+         "steel-blackoxide"
         ]
        }
       }
@@ -2218,7 +2288,8 @@
     "#8|1.25": {
      "types": [
       "flat:p",
-      "button:p"
+      "button:p",
+      "truss:p"
      ],
      "detail": {
       "flat:p": {
@@ -2239,6 +2310,13 @@
        "drives": {
         "slotted": [
          "steel-zinc"
+        ]
+       }
+      },
+      "truss:p": {
+       "drives": {
+        "phillips": [
+         "steel-chrome"
         ]
        }
       }
@@ -2279,7 +2357,8 @@
      "types": [
       "flat:p",
       "button:p",
-      "pan:p:c"
+      "pan:p:c",
+      "pan:p"
      ],
      "detail": {
       "flat:p": {
@@ -2302,13 +2381,21 @@
          "stainless"
         ]
        }
+      },
+      "pan:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
       }
      }
     },
     "#10|1.5": {
      "types": [
       "flat:p",
-      "button:p"
+      "button:p",
+      "trim:p:c"
      ],
      "detail": {
       "flat:p": {
@@ -2322,6 +2409,13 @@
        "drives": {
         "slotted": [
          "steel-zinc"
+        ]
+       }
+      },
+      "trim:p:c": {
+       "drives": {
+        "torx": [
+         "steel-ceramic"
         ]
        }
       }
@@ -2486,13 +2580,21 @@
     },
     "#8|2": {
      "types": [
-      "flat:p"
+      "flat:p",
+      "pan:p:c"
      ],
      "detail": {
       "flat:p": {
        "drives": {
         "torx": [
          "steel-cadmium"
+        ]
+       }
+      },
+      "pan:p:c": {
+       "drives": {
+        "combo": [
+         "steel-zinc"
         ]
        }
       }
@@ -2514,13 +2616,32 @@
     },
     "#8|1.5": {
      "types": [
-      "flange:p:c"
+      "flange:p:c",
+      "hexwasher:p",
+      "pan:p"
      ],
      "detail": {
       "flange:p:c": {
        "drives": {
         "torx": [
          "steel-ceramic"
+        ]
+       }
+      },
+      "hexwasher:p": {
+       "drives": {
+        "hexslot": [
+         "steel-chrome"
+        ]
+       }
+      },
+      "pan:p": {
+       "drives": {
+        "combo": [
+         "steel-zinc"
+        ],
+        "phillips": [
+         "steel-zinc"
         ]
        }
       }
@@ -2557,7 +2678,8 @@
     "#6|1.625": {
      "types": [
       "trim:p",
-      "flat:p"
+      "flat:p",
+      "flat:p:c"
      ],
      "detail": {
       "trim:p": {
@@ -2571,6 +2693,14 @@
        "drives": {
         "phillips": [
          "steel-cadmium"
+        ]
+       }
+      },
+      "flat:p:c": {
+       "drives": {
+        "phillips": [
+         "steel-cadmium",
+         "steel-blackoxide"
         ]
        }
       }
@@ -2592,7 +2722,9 @@
     },
     "#7|1.25": {
      "types": [
-      "flat:p"
+      "flat:p",
+      "trim:p:c",
+      "pan:p"
      ],
      "detail": {
       "flat:p": {
@@ -2602,6 +2734,20 @@
         ],
         "phillips": [
          "steel-blackoxide"
+        ]
+       }
+      },
+      "trim:p:c": {
+       "drives": {
+        "torx": [
+         "steel-cadmium"
+        ]
+       }
+      },
+      "pan:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
         ]
        }
       }
@@ -2668,7 +2814,9 @@
     },
     "#8|1.75": {
      "types": [
-      "flat:p"
+      "flat:p",
+      "hexwasher:p",
+      "pan:p"
      ],
      "detail": {
       "flat:p": {
@@ -2677,8 +2825,259 @@
          "steel-blackoxide"
         ]
        }
+      },
+      "hexwasher:p": {
+       "drives": {
+        "hexslot": [
+         "steel-chrome"
+        ]
+       }
+      },
+      "pan:p": {
+       "drives": {
+        "combo": [
+         "steel-zinc"
+        ]
+       }
       }
      }
+    },
+    "#4|0.25": {
+     "types": [
+      "flat:p"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#4|0.375": {
+     "types": [
+      "pan:p",
+      "flat:p"
+     ],
+     "detail": {
+      "pan:p": {
+       "drives": {
+        "phillips": [
+         "steel-chrome"
+        ]
+       }
+      },
+      "flat:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc",
+         "steel-blackoxide"
+        ]
+       }
+      }
+     }
+    },
+    "#4|0.625": {
+     "types": [
+      "flat:p"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#4|0.75": {
+     "types": [
+      "flat:p"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc",
+         "brass"
+        ]
+       }
+      }
+     }
+    },
+    "#4|1": {
+     "types": [
+      "flat:p"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc",
+         "brass"
+        ]
+       }
+      }
+     }
+    },
+    "#2|0.25": {
+     "types": [
+      "flat:p"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "phillips": [
+         "brass"
+        ]
+       }
+      }
+     }
+    },
+    "#2|0.375": {
+     "types": [
+      "flat:p"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "phillips": [
+         "brass"
+        ]
+       }
+      }
+     }
+    },
+    "#2|0.5": {
+     "types": [
+      "flat:p"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "phillips": [
+         "brass"
+        ]
+       }
+      }
+     }
+    },
+    "#6|1.75": {
+     "types": [
+      "flat:p",
+      "pan:p"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "pan:p": {
+       "drives": {
+        "combo": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#6|2": {
+     "types": [
+      "flat:p"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#6|2.5": {
+     "types": [
+      "flat:p"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#7|0.375": {
+     "types": [
+      "truss:p"
+     ],
+     "detail": {
+      "truss:p": {
+       "drives": {
+        "phillips": [
+         "steel-chrome"
+        ]
+       }
+      }
+     }
+    },
+    "#6|1.5": {
+     "types": []
+    },
+    "#7|1.5": {
+     "types": [
+      "trim:p:c"
+     ],
+     "detail": {
+      "trim:p:c": {
+       "drives": {
+        "torx": [
+         "steel-cadmium"
+        ]
+       }
+      }
+     }
+    },
+    "#8|0.375": {
+     "types": [
+      "pan:p"
+     ],
+     "detail": {
+      "pan:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#9|1": {
+     "types": [],
+     "detail": {
+      "pan:p": {}
+     }
+    },
+    "#10|1.625": {
+     "types": [
+      "cheese:p"
+     ],
+     "detail": {
+      "cheese:p": {}
+     }
+    },
+    "#10|1.75": {
+     "types": [
+      "cheese:p"
+     ]
     }
    },
    "locknuts": [],
@@ -2841,5 +3240,5 @@
    ]
   }
  ],
- "rev": 819
+ "rev": 954
 }
