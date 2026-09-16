@@ -100,7 +100,10 @@ main { display:flex; gap:16px; padding:0 14px; flex:1; min-height:0; }
 <div id="settings"></div>
 <script src="/model.js"></script>
 <script>
-let data, cab, labels = {}, undoStack = [], view = 'all';
+let data, cab, labels = {}, undoStack = [];
+// which physical cabinets are shown: any combination, remembered in this browser (all of them until a toggle is turned off)
+const hidden = new Set((() => { try { return JSON.parse(localStorage.getItem('cabinetsHidden') || '[]'); } catch (e) { return []; } })());
+const rememberHidden = () => { try { localStorage.setItem('cabinetsHidden', JSON.stringify([...hidden])); } catch (e) {} };
 const $ = s => document.querySelector(s);
 const status = t => { $('#status').textContent = t; };
 // per-slot display split: 'cell' | 'type' | 'item' (session only; nothing in the data changes until a piece is dragged)
@@ -401,11 +404,11 @@ function drawerZones(el, c, n, d) {
 function render() {
   const P = M.positions(data), lay = P.layout;
   $('#cablegend').innerHTML = cab.cabinets.map(c => { const r = P.ranges.find(r => r.id === c.id); return `<span><i class="cab" style="background:${c.color}"></i>${c.title} (${r ? r.count : 0} drawers)</span>`; }).join('');
-  $('#tabs').innerHTML = [['all', 'All'], ...lay.cabinets.map(c => [c.id, c.title])].map(([id, t]) => `<span class="tab${view === id ? ' on' : ''}" data-v="${id}">${t}</span>`).join('');
-  $('#tabs').querySelectorAll('.tab').forEach(t => t.onclick = () => { view = t.dataset.v; render(); });
+  $('#tabs').innerHTML = lay.cabinets.map(c => `<span class="tab${hidden.has(c.id) ? '' : ' on'}" data-v="${c.id}" title="show / hide">${c.title}</span>`).join('');
+  $('#tabs').querySelectorAll('.tab').forEach(t => t.onclick = () => { if (hidden.has(t.dataset.v)) hidden.delete(t.dataset.v); else hidden.add(t.dataset.v); rememberHidden(); render(); });
   const wrap = $('#cabinets'); wrap.innerHTML = '';
   lay.cabinets.forEach((pc, cabIx) => {
-    if (view !== 'all' && view !== pc.id) return;
+    if (hidden.has(pc.id)) return;
     const kind = M.KINDS[pc.kind] || M.KINDS['8x8'];
     const box = document.createElement('section'); box.className = 'cabinet';
     box.innerHTML = `<h2>${pc.title} <span class="note" style="font-weight:400;color:var(--ink2);font-size:12px">${kind.title}</span></h2>`;
