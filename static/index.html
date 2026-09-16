@@ -40,6 +40,7 @@ td.washer { background:var(--none); }
 .ic .badge.bin { background:#2f6db5; }
 .ic .badge.mixed { background:var(--ink2); }
 #pop .locbtn { font-size:11px; padding:1px 5px; margin-left:auto; border-radius:8px; }
+#pop .varbtn { font-size:11px; padding:1px 5px; border-radius:8px; }
 #pop .locbtn.set { background:var(--accent); color:#fff; border-color:var(--accent); }
 #pop .locbtn.bin { background:#2f6db5; color:#fff; border-color:#2f6db5; }
 #pop .loc { display:flex; align-items:center; gap:8px; }
@@ -537,7 +538,7 @@ function openDetail(key, type, x, y) {
     h += `<h4>Tip</h4><label><input type="radio" name="tip" value="blunt" ${!v.pointed ? 'checked' : ''}>Blunt</label><label><input type="radio" name="tip" value="pointed" ${v.pointed ? 'checked' : ''}>Pointed</label>
       <label><input type="checkbox" id="popCut" ${v.cutting ? 'checked' : ''}>Cutting tip (${v.pointed ? 'self-drilling' : 'thread-forming'})</label>
       <h4>Captive washer</h4>` + [['k', 'Countersunk (finishing cup)'], ['f', 'Flat'], ['s', 'Split lock'], ['e', 'External tooth'], ['i', 'Internal tooth']].map(([c, l]) => `<label><input type="checkbox" class="popW" value="${c}" ${v.washers.includes(c) ? 'checked' : ''}>${l}</label>`).join('') +
-      `<div class="note">Changing these converts this head. <button type="button" id="popVar" class="locbtn">Add another variant…</button> keeps it and adds a second one (same drives and materials) with a different tip or washers.</div>`;
+      `<div class="note">Changing these converts this head. <button type="button" id="popVar" class="varbtn">Add another variant…</button> keeps it and adds a second one (same drives and materials) with a different tip or washers. A different drive, material or finish is just another tick below.</div>`;
   }
   h += `<h4>Location</h4><div class="loc"><span>${locSummary(info, '') || `as the cell (${locSummary(c, 'unset')})`}</span>${locBtn(info, '', '')}</div>`;
   if (drives.length) {
