@@ -15,8 +15,8 @@ const SHAPES = {
   // rounded heads, profiles after the usual supplier chart: pan = low with a flattish top and short sides; button = low dome;
   // round = a half-circle dome; truss = very wide, very low; cheese = tall cylinder; fillister = cylinder with a domed top;
   // binding = short cylinder with a domed top and a small undercut lip; pancake = a very thin wide disc
-  pan:      { base: 44, svg: `<path d="M22 44 V36 Q22 22 36 20 H64 Q78 22 78 36 V44 Z" ${HEAD.border}/><line x1="36" y1="24" x2="64" y2="24" stroke="${K}" stroke-width="3.5"/>` },
-  button:   { base: 44, svg: `<path d="M20 44 Q20 20 50 20 Q80 20 80 44 Z" ${HEAD.border}/>` },
+  pan:      { base: 44, svg: `<path d="M20 44 V40 Q20 26 38 26 H62 Q80 26 80 40 V44 Z" ${HEAD.border}/><line x1="38" y1="30" x2="62" y2="30" stroke="${K}" stroke-width="3.5"/>` },
+  button:   { base: 44, svg: `<path d="M22 44 Q22 32 30 24 Q36 18 50 18 Q64 18 70 24 Q78 32 78 44 Z" ${HEAD.border}/>` },
   round:    { base: 44, svg: `<path d="M24 44 A26 26 0 0 1 76 44 Z" ${HEAD.border}/>` },
   truss:    { base: 44, svg: `<path d="M12 44 V40 Q12 26 50 24 Q88 26 88 40 V44 Z" ${HEAD.border}/>` },
   cheese:   { base: 44, svg: `<path d="M30 44 V20 Q30 14 36 14 H64 Q70 14 70 20 V44 Z" ${HEAD.border}/><line x1="50" y1="14" x2="50" y2="28" stroke="${K}" stroke-width="3.5"/>` },
