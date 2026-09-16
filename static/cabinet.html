@@ -362,7 +362,8 @@ function binEl(id, entries) {
 function renderSettings() {
   const lay = M.layoutOf(data), P = M.positions(data);
   let h = `<b>Cabinets</b><div class="note">In physical order; drawer numbering runs across them, category by category.</div><table>` +
-    lay.cabinets.map((c, i) => `<tr><td><input class="sTitle" data-i="${i}" value="${c.title}" style="width:130px"></td><td><select class="sKind" data-i="${i}">${Object.entries(M.KINDS).map(([k, v]) => `<option value="${k}" ${c.kind === k ? 'selected' : ''}>${v.title}</option>`).join('')}</select></td>` +
+    lay.cabinets.map((c, i) => `<tr><td><input class="sTitle" data-i="${i}" value="${c.title}" style="width:130px"></td><td><select class="sKind" data-i="${i}">${Object.entries(M.KINDS).map(([k, v]) => `<option value="${k}" ${c.kind === k ? 'selected' : ''}>${v.title}</option>`).join('')}</select>` +
+      (M.KINDS[c.kind]?.bins ? ` <span class="note">first bin</span> B<input type="number" min="1" class="sFirst" data-i="${i}" value="${c.first || 1}" style="width:56px">` : '') + `</td>` +
       `<td><button type="button" class="sUp" data-i="${i}" title="move up">↑</button><button type="button" class="sDn" data-i="${i}" title="move down">↓</button><button type="button" class="sRm" data-i="${i}" title="remove">×</button></td></tr>`).join('') + `</table>
     <div class="row"><button type="button" id="sAdd">Add cabinet</button></div>
     <h3>Drawers per category</h3><table>` +
@@ -370,13 +371,16 @@ function renderSettings() {
     <div class="note">${P.drawers.length} drawer positions, ${P.bins.length} bin positions in all.</div>
     <div class="row"><button type="button" id="sSave">Save</button><button type="button" id="sClose">Close</button></div>`;
   const el = $('#settings'); el.innerHTML = h;
-  const read = () => { const l = M.layoutOf(data); l.cabinets = [...el.querySelectorAll('.sTitle')].map((t, i) => ({ ...l.cabinets[i], title: t.value.trim() || l.cabinets[i].title, kind: el.querySelector(`.sKind[data-i="${i}"]`).value })); el.querySelectorAll('.sCount').forEach(x => l.counts[x.dataset.id] = +x.value || 0); return l; };
+  const read = () => { const l = M.layoutOf(data); l.cabinets = [...el.querySelectorAll('.sTitle')].map((t, i) => { const c = { ...l.cabinets[i], title: t.value.trim() || l.cabinets[i].title, kind: el.querySelector(`.sKind[data-i="${i}"]`).value }; const f = el.querySelector(`.sFirst[data-i="${i}"]`); if (f) c.first = Math.max(1, +f.value || 1); return c; }); el.querySelectorAll('.sCount').forEach(x => l.counts[x.dataset.id] = +x.value || 0); return l; };
+  // a box added now starts after every bin already in use, so nothing gets swept into it
+  const nextFreeBin = () => Math.max(0, ...Object.keys(cab.bins).map(b => parseInt(b.slice(1)) || 0), ...M.positions(data).bins.map(b => parseInt(b.bin.slice(1)))) + 1;
   const restage = l => { data.layout = l; renderSettings(); };
   el.querySelectorAll('.sUp').forEach(b => b.onclick = () => { const l = read(), i = +b.dataset.i; if (i > 0) [l.cabinets[i - 1], l.cabinets[i]] = [l.cabinets[i], l.cabinets[i - 1]]; restage(l); });
   el.querySelectorAll('.sDn').forEach(b => b.onclick = () => { const l = read(), i = +b.dataset.i; if (i < l.cabinets.length - 1) [l.cabinets[i + 1], l.cabinets[i]] = [l.cabinets[i], l.cabinets[i + 1]]; restage(l); });
   el.querySelectorAll('.sRm').forEach(b => b.onclick = () => { const l = read(); l.cabinets.splice(+b.dataset.i, 1); restage(l); });
   $('#sAdd').onclick = () => { const l = read(); const n = l.cabinets.length + 1; l.cabinets.push({ id: 'c' + Date.now().toString(36), title: `Cabinet ${n}`, kind: '8x8' }); restage(l); };
-  el.querySelectorAll('.sKind, .sCount').forEach(x => x.onchange = () => restage(read()));
+  el.querySelectorAll('.sKind').forEach(x => x.onchange = () => { const l = read(), c = l.cabinets[+x.dataset.i]; if (M.KINDS[c.kind]?.bins && !c.first) c.first = nextFreeBin(); restage(l); });
+  el.querySelectorAll('.sCount, .sFirst').forEach(x => x.onchange = () => restage(read()));
   $('#sSave').onclick = async () => { data.layout = read(); snapshot(); if (await commit('layout saved')) { $('#settings').style.display = 'none'; } };
   $('#sClose').onclick = () => { $('#settings').style.display = 'none'; load(); };
 }

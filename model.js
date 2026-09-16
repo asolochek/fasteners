@@ -69,13 +69,14 @@ const KINDS = {
 };
 const DEFAULT_LAYOUT = { cabinets: [{ id: 'c1', title: 'Cabinet 1', kind: '8x8' }, { id: 'c2', title: 'Cabinet 2', kind: '8x8' }, { id: 'c3', title: 'Cabinet 3', kind: '8x8' }], counts: { imperial: 88, metric: 64 } };
 const layoutOf = d => ({ ...DEFAULT_LAYOUT, ...(d?.layout || {}), cabinets: (d?.layout?.cabinets || DEFAULT_LAYOUT.cabinets), counts: { ...DEFAULT_LAYOUT.counts, ...(d?.layout?.counts || {}) } });
-// the physical positions: drawers numbered 1.. across the drawer cabinets in order, bins 1.. across the bin cabinets
+// the physical positions: drawers numbered 1.. across the drawer cabinets in order; a box's bins start at its `first`
+// bin number (so loose bins already in use keep their numbers), or run on from the previous box
 function positions(d) {
   const lay = layoutOf(d), out = [], bins = []; let pos = 0, bin = 0;
   lay.cabinets.forEach((c, cabIx) => {
     const k = KINDS[c.kind] || KINDS['8x8'];
     for (let i = 1; i <= k.drawers; i++) out.push({ pos: ++pos, cabIx, index: i, wide: !!k.wide && i > k.drawers - k.wide });
-    for (let i = 1; i <= (k.bins || 0); i++) bins.push({ bin: `B${++bin}`, cabIx, index: i });
+    if (k.bins) { if (+c.first > 0) bin = +c.first - 1; for (let i = 1; i <= k.bins; i++) bins.push({ bin: `B${++bin}`, cabIx, index: i }); }
   });
   // categories take their counts in order; the last one takes whatever is left
   const ranges = []; let start = 1;
