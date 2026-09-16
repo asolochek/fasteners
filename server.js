@@ -59,7 +59,7 @@ function qualifier(page, pt) {
     if (mine.length >= whole.length) continue;
     const md = u(mine, i => i.drive), mm = u(mine, i => i.material);
     if (md.length && md.length < u(whole, i => i.drive).length) md.forEach(x => ds.add(M.DRIVE_SHORT[x] || x));
-    if (mm.length && mm.length < u(whole, i => i.material).length) mm.forEach(x => ms.add(M.MAT_SHORT[x] || x));
+    if (mm.length && mm.length < u(whole, i => i.material).length) mm.forEach(x => ms.add(M.matShort(x)));
   }
   return { drives: [...ds], materials: [...ms] };
 }

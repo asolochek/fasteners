@@ -41,6 +41,7 @@ td.washer { background:var(--none); }
 .ic .badge.mixed { background:var(--ink2); }
 #pop .locbtn { font-size:11px; padding:1px 5px; margin-left:auto; border-radius:8px; }
 #pop .varbtn { font-size:11px; padding:1px 5px; border-radius:8px; }
+#pop .finbtn { display:block; font-size:11px; padding:1px 6px; margin:1px 0 2px 22px; border-radius:8px; color:var(--ink2); }
 #pop .locbtn.set { background:var(--accent); color:#fff; border-color:var(--accent); }
 #pop .locbtn.bin { background:#2f6db5; color:#fff; border-color:#2f6db5; }
 #pop .loc { display:flex; align-items:center; gap:8px; }
@@ -508,7 +509,7 @@ const defVariant = (p, shape) => vKey({ shape, pointed: p.class !== 'machine' &&
 const shapeOf = t => vParse(t).shape;
 // head shapes a class can have at all; a cell shows the page's primary shapes plus whatever else is ticked, and "…" offers the rest
 // every shape is available on every page through "…"; the order just puts the usual ones for that class first
-const HEAD_SHAPES = ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'hexwasher', 'flange', 'thumb', 'carriage', 'trim', 'shoulder', 'setscrew'];
+const HEAD_SHAPES = ['flat', 'oval', 'pan', 'button', 'round', 'truss', 'pancake', 'binding', 'cheese', 'fillister', 'socket', 'hex', 'hexwasher', 'flange', 'thumb', 'carriage', 'trim', 'shoulder', 'setscrew'];
 const HEAD_UNIVERSE = { machine: HEAD_SHAPES,
                         tapping: ['flat', 'pan', 'button', 'truss', 'oval', 'hexwasher', 'flange', 'trim', ...HEAD_SHAPES.filter(x => !['flat', 'pan', 'button', 'truss', 'oval', 'hexwasher', 'flange', 'trim'].includes(x))],
                         wood: ['flat', 'trim', 'flange', 'pan', 'button', 'truss', 'oval', 'hexwasher', ...HEAD_SHAPES.filter(x => !['flat', 'trim', 'flange', 'pan', 'button', 'truss', 'oval', 'hexwasher'].includes(x))] };
@@ -527,13 +528,25 @@ function openMore(key, universe, x, y) {
   $('#popClose').onclick = closePop; placePop(x, y);
 }
 function cellTextClient(p, key) { if (M.isList(p)) return M.cellText(p, key); const [a, b] = key.split('|'); const hw = HW.find(h => h[1] === b); if (hw && hw[2] === 'dia') return `${a} ${hw[3]}`; const r = p.rows.find(x => x.id === a); if (!r) return key; if (hw) return `${r.label} ${hw[3]}`; return `${r.label} × ${lengthText(p, +b)}`; }
+// "Steel, zinc" for a material key, plain or with a finish
+function matName(mats, key) { const [b, f] = key.split('-'); const m = mats.find(x => x[0] === b); if (!m) return key; if (!f) return m[1]; const fin = (m[2] || []).find(x => x[0] === f); return fin ? `${m[1]}, ${fin[1]}` : key; }
 // per-head detail: own drawer, drive types, materials per drive (washers and nuts: materials only)
 function openDetail(key, type, x, y) {
   const c = cell(key), p = page(); c.detail = c.detail || {}; const info = c.detail[type] = c.detail[type] || {};
   const v = vParse(type), isHead = HEAD_SHAPES.includes(v.shape), isWasher = key.split('|')[1].endsWith('washer');
   const mats = isWasher ? MAT_WASHER : MAT_SCREW, fixed = isHead ? FIXED_DRIVE[v.shape] : undefined;
   const drives = isHead && fixed === undefined ? (DRIVES_FOR[v.shape] ? DRIVES.filter(d => DRIVES_FOR[v.shape].includes(d[0])) : DRIVES) : (fixed && fixed !== 'none' ? [[fixed, DRIVES.find(d => d[0] === fixed)[1] + ' (always)']] : []);
-  const matList = (drive) => `<div class="sub">` + mats.map(([m, l]) => { const on = ((drive ? (info.drives || {})[drive] : info.materials) || []).includes(m); return `<label><input type="checkbox" data-drive="${drive}" data-m="${m}" ${on ? 'checked' : ''}>${l}${on ? locBtn(itemOf(drive, m), drive, m) : ''}</label>`; }).join('') + `</div>`;
+  // one row per material ("plain"), and for the metals a fold-out list of finishes, each its own tick
+  const matList = (drive) => {
+    const list = (drive ? (info.drives || {})[drive] : info.materials) || [];
+    const row = (m, l, cls = '') => { const on = list.includes(m); return `<label class="${cls}"><input type="checkbox" data-drive="${drive}" data-m="${m}" ${on ? 'checked' : ''}>${l}${on ? locBtn(itemOf(drive, m), drive, m) : ''}</label>`; };
+    return `<div class="sub">` + mats.map(([m, l, fins]) => {
+      if (!fins.length) return row(m, l);
+      const open = openFin.has(drive + '|' + m) || fins.some(([f]) => list.includes(`${m}-${f}`));
+      return row(m, `${l}, plain`) + `<button type="button" class="finbtn" data-fin="${drive}|${m}">${l} finishes ${open ? '▾' : '▸'}</button>` +
+        (open ? `<div class="sub">` + fins.map(([f, fl]) => row(`${m}-${f}`, `${l}, ${fl}`)).join('') + `</div>` : '');
+    }).join('') + `</div>`;
+  };
   const locBtn = (o, d, m) => `<button type="button" class="locbtn${M.locOf(o) ? (M.locOf(o).kind === 'bin' ? ' bin' : ' set') : ''}" data-drive="${d}" data-m="${m}" title="location of this drive + material">${locSummary(o, '') || 'location'}</button>`;
   const itemOf = (d, m) => ((info.items || {})[`${d}|${m}`] || {});
   let h = `<h3>${iconSvg(type)} ${iconLabel(type)} · ${cellTextClient(p, key)}</h3>`;
@@ -568,9 +581,10 @@ function openDetail(key, type, x, y) {
     const d = b.dataset.drive, m = b.dataset.m, what = `${iconLabel(type)} · ${cellTextClient(p, key)}`;
     if (!d && !m) return openLoc(key, info, what, e.clientX, e.clientY, here);
     info.items = info.items || {}; const it = info.items[`${d}|${m}`] = info.items[`${d}|${m}`] || {};
-    const mat = (mats.find(x => x[0] === m) || [])[1] || '', drv = (DRIVES.find(x => x[0] === d) || [])[1] || '';
+    const mat = matName(mats, m), drv = (DRIVES.find(x => x[0] === d) || [])[1] || '';
     openLoc(key, it, `${what} · ${[drv, mat].filter(Boolean).join(', ')}`, e.clientX, e.clientY, () => { if (!Object.keys(it).length) delete info.items[`${d}|${m}`]; here(); });
   });
+  $('#pop').querySelectorAll('.finbtn').forEach(b => b.onclick = () => { const k = b.dataset.fin; if (openFin.has(k)) openFin.delete(k); else openFin.add(k); here(); });
   $('#pop').querySelectorAll('input[type=checkbox]:not(#popCut):not(.popW)').forEach(i => i.onchange = () => {
     if (i.dataset.m !== undefined) {   // a material
       const list = i.dataset.drive ? (info.drives = info.drives || {}, info.drives[i.dataset.drive] = info.drives[i.dataset.drive] || []) : (info.materials = info.materials || []);
@@ -605,12 +619,18 @@ function openVariant(key, type, x, y) {
 const DRIVES = [['slotted', 'Slotted'], ['phillips', 'Phillips'], ['combo', 'Slotted + Phillips combo'], ['hexslot', 'Hex + slotted'], ['pozidriv', 'Pozidriv'], ['jis', 'JIS'], ['torx', 'Torx'], ['hex', 'Hex'], ['square', 'Square']];
 const FIXED_DRIVE = { socket: 'hex', shoulder: 'hex', setscrew: 'hex', thumb: 'none' };   // by shape
 const DRIVES_FOR = { hex: ['hex', 'hexslot'], hexwasher: ['hex', 'hexslot'] };   // shapes with a restricted drive choice   // carriage bolts: usually none, but some carry a slot, so the normal list applies   // heads whose drive is a given
-const MAT_SCREW = [['aluminum', 'Aluminum'], ['steel', 'Steel, plain'], ['steel-blackoxide', 'Steel, black oxide'], ['steel-zinc', 'Steel, zinc'], ['steel-cadmium', 'Steel, cadmium'], ['steel-chrome', 'Steel, chrome'], ['steel-nickel', 'Steel, nickel'], ['steel-ceramic', 'Steel, ceramic coated (exterior)'], ['stainless', 'Stainless steel'], ['brass', 'Brass'], ['brass-chrome', 'Brass, chrome'], ['brass-nickel', 'Brass, nickel'],
-                   ['nylon', 'Nylon'], ['ptfe', 'PTFE'], ['phenolic', 'Phenolic'], ['pei', 'PEI (Ultem)'], ['polycarbonate', 'Polycarbonate'], ['plastic', 'Plastic, other']];
-const MAT_WASHER = [...MAT_SCREW, ['fiber', 'Fiber'], ['copper', 'Copper'], ['bronze', 'Bronze']];
+// materials: [key, name, finishes]; a finish is stored as `${material}-${finish}` (plain = the bare material key)
+const MAT_SCREW = [
+  ['steel', 'Steel', [['blackoxide', 'black oxide'], ['brass', 'brass plated'], ['bronze', 'bronze plated'], ['cadmium', 'cadmium'], ['chrome', 'chrome'], ['nickel', 'nickel'], ['galvanized', 'galvanized'], ['zinc', 'zinc'], ['zincyellow', 'zinc yellow chromate'], ['tin', 'TiN'], ['ceramic', 'ceramic (exterior)']]],
+  ['stainless', 'Stainless steel', [['chrome', 'chrome'], ['blackoxide', 'black oxide'], ['zinc', 'zinc'], ['zincyellow', 'zinc yellow chromate'], ['ticn', 'TiCN']]],
+  ['aluminum', 'Aluminum', [['anodized', 'anodized'], ['blackoxide', 'black oxide'], ['cadmium', 'cadmium'], ['chrome', 'chrome'], ['nickel', 'nickel'], ['tinzinc', 'tin zinc'], ['zinc', 'zinc'], ['zincyellow', 'zinc yellow chromate']]],
+  ['brass', 'Brass', [['bronze', 'bronze plated'], ['chrome', 'chrome'], ['nickel', 'nickel'], ['tin', 'tin'], ['zinc', 'zinc'], ['gold', 'gold']]],
+  ['nylon', 'Nylon', []], ['ptfe', 'PTFE', []], ['phenolic', 'Phenolic', []], ['pei', 'PEI (Ultem)', []], ['polycarbonate', 'Polycarbonate', []], ['plastic', 'Plastic, other', []]];
+const MAT_WASHER = [...MAT_SCREW, ['fiber', 'Fiber', []], ['copper', 'Copper', []], ['bronze', 'Bronze', []]];
+const openFin = new Set();   // material rows whose finish list is unfolded in the detail popup
 // hardware columns: [page list, cell key suffix, per row or per diameter, label]
 const HW = [['locknuts', 'locknut', 'row', 'Lock Nut'], ['nuts', 'nut', 'row', 'Nut'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer'], ['washers', 'washer', 'dia', 'Washer']];
-const GROUPS = [['heads', 'Heads', ['flat', 'oval', 'pan', 'button', 'truss', 'cheese', 'fillister', 'socket', 'hex', 'hexwasher', 'flange', 'thumb', 'carriage', 'trim', 'shoulder', 'setscrew']], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'undersized', 'fender', 'thinw', 'cup', 'sleeved']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed', 'inextooth']]];
+const GROUPS = [['heads', 'Heads', HEAD_SHAPES], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'undersized', 'fender', 'thinw', 'cup', 'sleeved']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed', 'inextooth']]];
 function renderTypes() {
   const p = page();
   $('#types').innerHTML = GROUPS.map(([k, title, all]) => `<h3>${title}</h3>` + all.map(t => { const sh = k === 'heads' ? defVariant(p, t) : t; return `<label><input type="checkbox" data-group="${k}" data-type="${t}" ${(p[k] || []).includes(t) ? 'checked' : ''}>${iconSvg(sh)}${iconLabel(sh)}</label>`; }).join('')).join('');

@@ -12,17 +12,23 @@ const HEAD = { border: `fill="none" stroke="${K}" stroke-width="${SW}" stroke-li
 const SHAPES = {
   flat:     { base: 44, svg: `<path d="M20 22 H80 L62 44 H38 Z" ${HEAD.border}/><line x1="50" y1="22" x2="50" y2="34" stroke="${K}" stroke-width="3.5"/>` },
   oval:     { base: 48, svg: `<path d="M20 30 Q50 8 80 30 L62 48 H38 Z" ${HEAD.border}/><line x1="50" y1="24" x2="50" y2="38" stroke="${K}" stroke-width="3.5"/>` },
-  pan:      { base: 44, svg: `<path d="M24 44 V32 Q24 18 40 18 H60 Q76 18 76 32 V44 Z" ${HEAD.border}/><line x1="36" y1="22" x2="64" y2="22" stroke="${K}" stroke-width="3.5"/>` },
-  button:   { base: 44, svg: `<path d="M22 44 Q22 16 50 16 Q78 16 78 44 Z" ${HEAD.border}/>` },
-  truss:    { base: 44, svg: `<path d="M14 44 Q14 24 50 22 Q86 24 86 44 Z" ${HEAD.border}/>` },
-  cheese:   { base: 44, svg: `<rect x="30" y="16" width="40" height="28" fill="none" stroke="${K}" stroke-width="${SW}"/><line x1="50" y1="16" x2="50" y2="30" stroke="${K}" stroke-width="3.5"/>` },
-  fillister:{ base: 44, svg: `<path d="M30 44 V26 Q30 14 50 14 Q70 14 70 26 V44 Z" ${HEAD.border}/><line x1="50" y1="16" x2="50" y2="30" stroke="${K}" stroke-width="3.5"/>` },
+  // rounded heads, profiles after the usual supplier chart: pan = low with a flattish top and short sides; button = low dome;
+  // round = a half-circle dome; truss = very wide, very low; cheese = tall cylinder; fillister = cylinder with a domed top;
+  // binding = short cylinder with a domed top and a small undercut lip; pancake = a very thin wide disc
+  pan:      { base: 44, svg: `<path d="M22 44 V36 Q22 22 36 20 H64 Q78 22 78 36 V44 Z" ${HEAD.border}/><line x1="36" y1="24" x2="64" y2="24" stroke="${K}" stroke-width="3.5"/>` },
+  button:   { base: 44, svg: `<path d="M20 44 Q20 20 50 20 Q80 20 80 44 Z" ${HEAD.border}/>` },
+  round:    { base: 44, svg: `<path d="M24 44 A26 26 0 0 1 76 44 Z" ${HEAD.border}/>` },
+  truss:    { base: 44, svg: `<path d="M12 44 V40 Q12 26 50 24 Q88 26 88 40 V44 Z" ${HEAD.border}/>` },
+  cheese:   { base: 44, svg: `<path d="M30 44 V20 Q30 14 36 14 H64 Q70 14 70 20 V44 Z" ${HEAD.border}/><line x1="50" y1="14" x2="50" y2="28" stroke="${K}" stroke-width="3.5"/>` },
+  fillister:{ base: 44, svg: `<path d="M30 44 V26 Q30 12 50 12 Q70 12 70 26 V44 Z" ${HEAD.border}/><line x1="50" y1="14" x2="50" y2="28" stroke="${K}" stroke-width="3.5"/>` },
+  binding:  { base: 44, svg: `<path d="M28 44 V40 H26 V30 Q26 18 40 18 H60 Q74 18 74 30 V40 H72 V44 Z" ${HEAD.border}/><line x1="50" y1="18" x2="50" y2="30" stroke="${K}" stroke-width="3.5"/>` },
+  pancake:  { base: 44, svg: `<path d="M12 44 V38 Q12 32 18 32 H82 Q88 32 88 38 V44 Z" ${HEAD.border}/>` },
   socket:   { base: 44, svg: `<rect x="26" y="14" width="48" height="30" rx="3" fill="none" stroke="${K}" stroke-width="${SW}"/>` },
   hex:      { base: 44, svg: `<path d="M22 20 H78 V44 H22 Z" ${HEAD.border}/><line x1="40" y1="20" x2="40" y2="44" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="44" stroke="${K}" stroke-width="3"/>` },
   hexwasher:{ base: 44, svg: `<path d="M22 20 H78 V38 H22 Z" ${HEAD.border}/><line x1="40" y1="20" x2="40" y2="38" stroke="${K}" stroke-width="3"/><line x1="60" y1="20" x2="60" y2="38" stroke="${K}" stroke-width="3"/><line x1="16" y1="44" x2="84" y2="44" stroke="${K}" stroke-width="${SW}"/><line x1="22" y1="38" x2="22" y2="44" stroke="${K}" stroke-width="${SW}"/><line x1="78" y1="38" x2="78" y2="44" stroke="${K}" stroke-width="${SW}"/>` },
   flange:   { base: 44, svg: `<path d="M30 36 V30 Q30 18 42 18 H58 Q70 18 70 30 V36 Z" ${HEAD.border}/><path d="M16 36 H84 V44 H16 Z" ${HEAD.border}/>` },
   thumb:    { base: 44, svg: `<path d="M30 14 H70 V44 H30 Z" ${HEAD.border}/>${[36, 43, 50, 57, 64].map(x => `<line x1="${x}" y1="18" x2="${x}" y2="40" stroke="${K}" stroke-width="2.5"/>`).join('')}` },
-  carriage: { base: 44, svg: `<path d="M20 30 Q50 6 80 30 Z" ${HEAD.border}/><rect x="40" y="30" width="20" height="14" fill="none" stroke="${K}" stroke-width="${SW}"/>` },
+  carriage: { base: 44, svg: `<path d="M16 32 Q16 8 50 8 Q84 8 84 32 Z" ${HEAD.border}/><rect x="40" y="32" width="20" height="12" fill="none" stroke="${K}" stroke-width="${SW}"/>` },
   trim:     { base: 36, svg: `<path d="M38 22 H62 L56 36 H44 Z" ${HEAD.border}/>` },
   // whole-body shapes: no washers or tips are composed onto these
   shoulder: { whole: `<rect x="30" y="10" width="40" height="24" rx="3" fill="none" stroke="${K}" stroke-width="${SW}"/><rect x="38" y="34" width="24" height="34" fill="none" stroke="${K}" stroke-width="${SW}"/>${shank(50, 68, 92)}${threads(50, 68, 92)}` },
@@ -162,7 +168,7 @@ function label(name) {
 }
 // icon groups for the glyph picker (list pages)
 const GROUPS = { 'Connectors & test': Object.keys(MISC), Heads: Object.keys(SHAPES), Nuts: Object.keys(NUTS), Washers: Object.keys(WASHERS).filter(k => !['nylonw'].includes(k)) };
-const LABELS = { flat: 'Flat', oval: 'Oval', pan: 'Pan', button: 'Button', truss: 'Truss', cheese: 'Cheese', fillister: 'Fillister', socket: 'Socket cap', hex: 'Hex', hexwasher: 'Hex washer', flange: 'Flange', thumb: 'Thumb', carriage: 'Carriage bolt', trim: 'Trim head', shoulder: 'Shoulder', setscrew: 'Set screw',
+const LABELS = { flat: 'Flat', oval: 'Oval', pan: 'Pan', button: 'Button', round: 'Round', truss: 'Truss', cheese: 'Cheese', fillister: 'Fillister', binding: 'Binding', pancake: 'Pancake', socket: 'Socket cap', hex: 'Hex', hexwasher: 'Hex washer', flange: 'Flange', thumb: 'Thumb', carriage: 'Carriage bolt', trim: 'Trim head', shoulder: 'Shoulder', setscrew: 'Set screw',
   nut: 'Nut', thin: 'Jam nut (thin)', lock: 'Lock nut (prevailing torque)', nylock: 'Nylon insert', toothednut: 'Toothed flange', pressfit: 'Press-fit nut', square: 'Square nut', wing: 'Wing nut', washer: 'Washer', fender: 'Fender', thinw: 'Thin washer', undersized: 'Undersized (small OD)', cup: 'Cup', sleeved: 'Sleeved', split: 'Split', spring: 'Spring', inttooth: 'Internal tooth', toothed: 'External tooth', inextooth: 'Internal + external tooth',
   banana: 'Banana plug', bananastack: 'Stackable banana plug', bananadual: 'Dual banana plug', bananajack: 'Banana jack', bindingpost: 'Binding post', terminalstrip: 'Terminal strip', shunt: '100 mil shunt', minigrabber: 'Mini grabber', alligator: 'Alligator clip', db9: 'DB9', ffc: 'Flat flex cable end', xt60: 'XT60', xt30: 'XT30', deans: 'Deans / T-plug', jstxh: 'JST-XH', ec3: 'EC3', tamiya: 'Tamiya',
   gpib: 'GPIB (IEEE-488)', toggle: 'Toggle switch', rocker: 'Rocker switch', pushbutton: 'Push button', heatsink: 'Heat sink', header100: '100 mil pin header', socket100: '100 mil socket', header2mm: '2 mm pin header', socket2mm: '2 mm socket', bullet: 'Bullet connector', mt60: 'MT60', mt30: 'MT30', mr30: 'MR30' };

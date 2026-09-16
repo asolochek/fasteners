@@ -163,7 +163,7 @@ function setCardLoc(card, loc) {
 function setWhole(card, on) { for (const part of card.parts) { const o = objectAt(card.pageId, part, 'cell'); if (o) { if (on) o.whole = true; else delete o.whole; } } }
 
 // ---- cards: one per label, or the pieces of a split slot ----
-const short = { drive: d => M.DRIVE_SHORT[d] || d, mat: m => M.MAT_SHORT[m] || m };
+const short = { drive: d => M.DRIVE_SHORT[d] || d, mat: m => M.matShort(m) };
 function cardsOf(entries, loc) {
   const mode = loc ? splitMode[slotKey(loc)] : '';
   const out = [];

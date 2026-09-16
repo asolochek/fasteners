@@ -159,7 +159,14 @@ function bins(page) {
   return [...out].sort((a, b) => (parseInt(a.slice(1)) - parseInt(b.slice(1))) || a.localeCompare(b));
 }
 // short names for the label qualifiers (an item that is only part of its cell's stock says what sets it apart)
-const MAT_SHORT = { aluminum: 'Al', steel: 'steel', 'steel-blackoxide': 'blk oxide', 'steel-zinc': 'zinc', 'steel-cadmium': 'cad', 'steel-chrome': 'chrome', 'steel-nickel': 'nickel', 'steel-ceramic': 'ceramic', stainless: 'SS', 'brass-chrome': 'brass chrome', 'brass-nickel': 'brass nickel', brass: 'brass', nylon: 'nylon', plastic: 'plastic', fiber: 'fiber', copper: 'Cu', bronze: 'bronze', ptfe: 'PTFE', phenolic: 'phenolic', pei: 'PEI', polycarbonate: 'PC' };
+// label short names: a plain material, or material + finish ("zinc" for plain-steel finishes, "SS chrome", "Al anodized", "brass nickel")
+const MAT_SHORT = { aluminum: 'Al', steel: 'steel', stainless: 'SS', brass: 'brass', nylon: 'nylon', plastic: 'plastic', fiber: 'fiber', copper: 'Cu', bronze: 'bronze', ptfe: 'PTFE', phenolic: 'phenolic', pei: 'PEI', polycarbonate: 'PC' };
+const FIN_SHORT = { blackoxide: 'blk oxide', zincyellow: 'yellow zinc', galvanized: 'galv', tinzinc: 'tin-zinc', cadmium: 'cad', anodized: 'anodized', ticn: 'TiCN', chrome: 'chrome', nickel: 'nickel', zinc: 'zinc', ceramic: 'ceramic', gold: 'gold', bronze: 'bronze', brass: 'brass', tin: 'tin' };
+function matShort(key) {
+  const [b, f] = String(key || '').split('-'); if (!f) return MAT_SHORT[b] || b;
+  const fin = b === 'steel' && f === 'tin' ? 'TiN' : (FIN_SHORT[f] || f);
+  return b === 'steel' ? fin : `${MAT_SHORT[b] || b} ${fin}`;
+}
 const DRIVE_SHORT = { slotted: 'slotted', phillips: 'Phillips', combo: 'combo', hexslot: 'hex+slot', pozidriv: 'Pozi', jis: 'JIS', torx: 'Torx', hex: 'hex', square: 'square' };
 // print order: labels with a drawer first, by drawer number then rear before front; the rest in reading order
 function drawerOrder(page, groups) {
@@ -167,6 +174,6 @@ function drawerOrder(page, groups) {
   const key = g => { const c = g[0]; return c.kind === 'drawer' ? [0, cabIx(c.cabinet), +c.drawer, c.half === 'front' ? 1 : 0] : c.kind === 'bin' ? [1, 0, 0, 0] : [2, 0, 0, 0]; };
   return groups.map((g, i) => [g, key(g), i]).sort((a, b) => (a[1][0] - b[1][0]) || (a[1][1] - b[1][1]) || (a[1][2] - b[1][2]) || (a[1][3] - b[1][3]) || (a[2] - b[2])).map(x => x[0]);
 }
-const api = { CABINETS, KINDS, DEFAULT_LAYOUT, layoutOf, positions, positionOf, atPosition, cabinetById, cabinetByPrefix, inCabinet, isList, listItem, lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, items, portions, portionSlot, slotOf, locOf, overflowOf, locText, locLong, parseLoc, parseLocs, bins, drawerOrder, HW, MAT_SHORT, DRIVE_SHORT };
+const api = { CABINETS, KINDS, DEFAULT_LAYOUT, layoutOf, positions, positionOf, atPosition, cabinetById, cabinetByPrefix, inCabinet, isList, listItem, lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, items, portions, portionSlot, slotOf, locOf, overflowOf, locText, locLong, parseLoc, parseLocs, bins, drawerOrder, HW, MAT_SHORT, FIN_SHORT, matShort, DRIVE_SHORT };
 if (typeof module !== 'undefined') module.exports = api; else window.M = api;   // the same file is served to the browser
 })();
