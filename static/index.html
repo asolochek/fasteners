@@ -630,7 +630,7 @@ const MAT_WASHER = [...MAT_SCREW, ['fiber', 'Fiber', []], ['copper', 'Copper', [
 const openFin = new Set();   // material rows whose finish list is unfolded in the detail popup
 // hardware columns: [page list, cell key suffix, per row or per diameter, label]
 const HW = [['locknuts', 'locknut', 'row', 'Lock Nut'], ['nuts', 'nut', 'row', 'Nut'], ['lockwashers', 'lockwasher', 'dia', 'Lock Washer'], ['washers', 'washer', 'dia', 'Washer']];
-const GROUPS = [['heads', 'Heads', HEAD_SHAPES], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'undersized', 'fender', 'thinw', 'cup', 'sleeved']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed', 'inextooth']]];
+const GROUPS = [['heads', 'Heads', HEAD_SHAPES], ['nuts', 'Nuts', ['nut', 'thin', 'square', 'pressfit', 'wing', 'capnut']], ['locknuts', 'Lock nuts', ['nylock', 'toothednut', 'lock']], ['washers', 'Washers', ['washer', 'undersized', 'fender', 'thinw', 'cup', 'sleeved']], ['lockwashers', 'Lock washers', ['split', 'spring', 'inttooth', 'toothed', 'inextooth']]];
 function renderTypes() {
   const p = page();
   $('#types').innerHTML = GROUPS.map(([k, title, all]) => `<h3>${title}</h3>` + all.map(t => { const sh = k === 'heads' ? defVariant(p, t) : t; return `<label><input type="checkbox" data-group="${k}" data-type="${t}" ${(p[k] || []).includes(t) ? 'checked' : ''}>${iconSvg(sh)}${iconLabel(sh)}</label>`; }).join('')).join('');
