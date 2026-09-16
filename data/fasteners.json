@@ -5314,7 +5314,7 @@
    ]
   }
  ],
- "rev": 1570,
+ "rev": 1571,
  "layout": {
   "cabinets": [
    {
@@ -5335,8 +5335,7 @@
    {
     "id": "cmu4dzot3",
     "title": "Cabinet 4",
-    "kind": "bins6x2",
-    "first": 6
+    "kind": "bins6x2"
    }
   ],
   "counts": {

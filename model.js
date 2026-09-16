@@ -69,14 +69,17 @@ const KINDS = {
 };
 const DEFAULT_LAYOUT = { cabinets: [{ id: 'c1', title: 'Cabinet 1', kind: '8x8' }, { id: 'c2', title: 'Cabinet 2', kind: '8x8' }, { id: 'c3', title: 'Cabinet 3', kind: '8x8' }], counts: { imperial: 88, metric: 64 } };
 const layoutOf = d => ({ ...DEFAULT_LAYOUT, ...(d?.layout || {}), cabinets: (d?.layout?.cabinets || DEFAULT_LAYOUT.cabinets), counts: { ...DEFAULT_LAYOUT.counts, ...(d?.layout?.counts || {}) } });
-// the physical positions: drawers numbered 1.. across the drawer cabinets in order; a box's bins start at its `first`
-// bin number (so loose bins already in use keep their numbers), or run on from the previous box
+// the physical positions: drawers numbered 1.. across the drawer cabinets in order. Bins are named by a letter and a
+// number: each box has its own letter (box.prefix: A1…A24), loose bins not in any box are B-numbered, so a box never
+// captures bins that already exist. I, M and W are the drawer-category prefixes and cannot be bin letters.
+const BIN_LETTERS = 'ACDEFGHJKLNOPQRSTUVXYZ'.split('');
+const boxPrefix = (lay, i) => lay.cabinets[i].prefix || BIN_LETTERS[lay.cabinets.slice(0, i).filter(c => (KINDS[c.kind] || {}).bins).length] || 'Z';
 function positions(d) {
-  const lay = layoutOf(d), out = [], bins = []; let pos = 0, bin = 0;
+  const lay = layoutOf(d), out = [], bins = []; let pos = 0;
   lay.cabinets.forEach((c, cabIx) => {
     const k = KINDS[c.kind] || KINDS['8x8'];
     for (let i = 1; i <= k.drawers; i++) out.push({ pos: ++pos, cabIx, index: i, wide: !!k.wide && i > k.drawers - k.wide });
-    if (k.bins) { if (+c.first > 0) bin = +c.first - 1; for (let i = 1; i <= k.bins; i++) bins.push({ bin: `B${++bin}`, cabIx, index: i }); }
+    if (k.bins) { const pre = boxPrefix(lay, cabIx); for (let i = 1; i <= k.bins; i++) bins.push({ bin: `${pre}${i}`, cabIx, index: i }); }
   });
   // categories take their counts in order; the last one takes whatever is left
   const ranges = []; let start = 1;
@@ -148,18 +151,19 @@ const locText = (l, home) => !l ? '' : l.kind === 'bin' ? l.bin : prefixFor(l, h
 const locLong = (l, home) => !l ? '' : l.kind === 'bin' ? `bin ${l.bin}` : `${l.cabinet && l.cabinet !== home ? cabinetById(l.cabinet)?.title.replace(/ screws$/, '') + ' ' : ''}drawer ${l.drawer}${l.half === 'back' ? ' rear' : l.half === 'front' ? ' front' : ''}`;
 function parseLoc(text) {
   const t = String(text || '').trim(); if (!t) return null;
-  let m = /^(?:bin\s*)?b\s*(\d+)$/i.exec(t); if (m) return { kind: 'bin', bin: `B${+m[1]}` };
+  let m = /^(?:bin\s*)?([a-hj-ln-vx-z])\s*(\d+)$/i.exec(t); if (m) return { kind: 'bin', bin: `${m[1].toUpperCase()}${+m[2]}` };   // B = loose bins, any other letter = a box
   m = /^([imw])?\s*(\d+)\s*(r|rear|b|back|f|front)?$/i.exec(t); if (!m) return undefined;   // undefined = not understood
   const h = (m[3] || '').toLowerCase();
   return { kind: 'drawer', drawer: m[2], half: /^(r|rear|b|back)$/.test(h) ? 'back' : /^(f|front)$/.test(h) ? 'front' : '', ...(m[1] ? { cabinet: cabinetByPrefix(m[1]).id } : {}) };
 }
-const parseLocs = text => String(text || '').replace(/bin\s+(?=\d)/gi, 'B').replace(/(\d)\s+(r|rear|b|back|f|front)\b/gi, '$1$2').split(/[,;\s]+/).filter(Boolean).map(parseLoc);
+const parseLocs = text => String(text || '').replace(/bin\s+(?=\d)/gi, 'B').replace(/([a-z])\s+(?=\d)/gi, '$1').replace(/(\d)\s+(r|rear|b|back|f|front)\b/gi, '$1$2').split(/[,;\s]+/).filter(Boolean).map(parseLoc);
 // every bin named anywhere on a page (primary or overflow, at any level)
 function bins(page) {
   const out = new Set();
   for (const k of populated(page)) for (const it of items(page, k)) { if (it.loc?.kind === 'bin') out.add(it.loc.bin); for (const o of it.overflow) if (o.kind === 'bin') out.add(o.bin); }
-  return [...out].sort((a, b) => (parseInt(a.slice(1)) - parseInt(b.slice(1))) || a.localeCompare(b));
+  return [...out].sort(binOrder);
 }
+const binOrder = (a, b) => a[0].localeCompare(b[0]) || (parseInt(a.slice(1)) - parseInt(b.slice(1)));
 // short names for the label qualifiers (an item that is only part of its cell's stock says what sets it apart)
 // label short names: a plain material, or material + finish ("zinc" for plain-steel finishes, "SS chrome", "Al anodized", "brass nickel")
 const MAT_SHORT = { aluminum: 'Al', steel: 'steel', stainless: 'SS', brass: 'brass', nylon: 'nylon', plastic: 'plastic', fiber: 'fiber', copper: 'Cu', bronze: 'bronze', ptfe: 'PTFE', phenolic: 'phenolic', pei: 'PEI', polycarbonate: 'PC' };
@@ -176,6 +180,6 @@ function drawerOrder(page, groups) {
   const key = g => { const c = g[0]; return c.kind === 'drawer' ? [0, cabIx(c.cabinet), +c.drawer, c.half === 'front' ? 1 : 0] : c.kind === 'bin' ? [1, 0, 0, 0] : [2, 0, 0, 0]; };
   return groups.map((g, i) => [g, key(g), i]).sort((a, b) => (a[1][0] - b[1][0]) || (a[1][1] - b[1][1]) || (a[1][2] - b[1][2]) || (a[1][3] - b[1][3]) || (a[2] - b[2])).map(x => x[0]);
 }
-const api = { CABINETS, KINDS, DEFAULT_LAYOUT, layoutOf, positions, positionOf, atPosition, cabinetById, cabinetByPrefix, inCabinet, isList, listItem, lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, items, portions, portionSlot, slotOf, locOf, overflowOf, locText, locLong, parseLoc, parseLocs, bins, drawerOrder, HW, MAT_SHORT, FIN_SHORT, matShort, DRIVE_SHORT };
+const api = { CABINETS, KINDS, DEFAULT_LAYOUT, BIN_LETTERS, boxPrefix, binOrder, layoutOf, positions, positionOf, atPosition, cabinetById, cabinetByPrefix, inCabinet, isList, listItem, lengthText, lengths, screwKey, nutKey, washerKey, cellText, populated, items, portions, portionSlot, slotOf, locOf, overflowOf, locText, locLong, parseLoc, parseLocs, bins, drawerOrder, HW, MAT_SHORT, FIN_SHORT, matShort, DRIVE_SHORT };
 if (typeof module !== 'undefined') module.exports = api; else window.M = api;   // the same file is served to the browser
 })();
