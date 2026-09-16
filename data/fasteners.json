@@ -1897,7 +1897,6 @@
      50
     ],
     "skip": [
-     18,
      22,
      24,
      26,
@@ -2058,9 +2057,8 @@
       }
      },
      "loc": {
-      "kind": "drawer",
-      "drawer": "1",
-      "half": "back"
+      "kind": "bin",
+      "bin": "A1"
      }
     },
     "M1.6|4": {
@@ -2093,9 +2091,8 @@
       }
      },
      "loc": {
-      "kind": "drawer",
-      "drawer": "1",
-      "half": "front"
+      "kind": "bin",
+      "bin": "A2"
      }
     },
     "M1.6|5": {
@@ -2120,9 +2117,8 @@
       }
      },
      "loc": {
-      "kind": "drawer",
-      "drawer": "2",
-      "half": "back"
+      "kind": "bin",
+      "bin": "A3"
      }
     },
     "M1.6|6": {
@@ -2147,9 +2143,8 @@
       }
      },
      "loc": {
-      "kind": "drawer",
-      "drawer": "2",
-      "half": "front"
+      "kind": "bin",
+      "bin": "A4"
      }
     },
     "M1.6|8": {
@@ -2182,9 +2177,8 @@
       }
      },
      "loc": {
-      "kind": "drawer",
-      "drawer": "3",
-      "half": "back"
+      "kind": "bin",
+      "bin": "A5"
      }
     },
     "M1.6|10": {
@@ -2209,9 +2203,8 @@
       }
      },
      "loc": {
-      "kind": "drawer",
-      "drawer": "3",
-      "half": "front"
+      "kind": "bin",
+      "bin": "A6"
      }
     },
     "M1.6|12": {
@@ -2236,9 +2229,8 @@
       }
      },
      "loc": {
-      "kind": "drawer",
-      "drawer": "4",
-      "half": "back"
+      "kind": "bin",
+      "bin": "A7"
      }
     },
     "M1.6|14": {
@@ -2255,9 +2247,8 @@
       }
      },
      "loc": {
-      "kind": "drawer",
-      "drawer": "4",
-      "half": "front"
+      "kind": "bin",
+      "bin": "A8"
      }
     },
     "M1.6|16": {
@@ -2274,9 +2265,8 @@
       }
      },
      "loc": {
-      "kind": "drawer",
-      "drawer": "5",
-      "half": "back"
+      "kind": "bin",
+      "bin": "A9"
      }
     },
     "M1.6|20": {
@@ -2304,9 +2294,8 @@
       }
      },
      "loc": {
-      "kind": "drawer",
-      "drawer": "5",
-      "half": "front"
+      "kind": "bin",
+      "bin": "A10"
      }
     },
     "M1.6|washer": {
@@ -2314,9 +2303,8 @@
       "washer"
      ],
      "loc": {
-      "kind": "drawer",
-      "drawer": "8",
-      "half": "front"
+      "kind": "bin",
+      "bin": "A12"
      }
     },
     "M1.6|nut": {
@@ -2332,9 +2320,8 @@
       }
      },
      "loc": {
-      "kind": "drawer",
-      "drawer": "7",
-      "half": "front"
+      "kind": "bin",
+      "bin": "A11"
      }
     },
     "M2|3": {
@@ -2355,7 +2342,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "9",
+      "drawer": "1",
       "half": "back"
      }
     },
@@ -2413,7 +2400,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "9",
+      "drawer": "1",
       "half": "front"
      }
     },
@@ -2473,7 +2460,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "10",
+      "drawer": "2",
       "half": "back"
      }
     },
@@ -2517,7 +2504,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "10",
+      "drawer": "2",
       "half": "front"
      }
     },
@@ -2569,7 +2556,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "11",
+      "drawer": "3",
       "half": "back"
      }
     },
@@ -2604,7 +2591,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "11",
+      "drawer": "3",
       "half": "front"
      }
     },
@@ -2623,7 +2610,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "12",
+      "drawer": "4",
       "half": "back"
      }
     },
@@ -2642,7 +2629,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "12",
+      "drawer": "4",
       "half": "front"
      }
     },
@@ -2661,7 +2648,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "13",
+      "drawer": "5",
       "half": "front"
      }
     },
@@ -2680,7 +2667,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "14",
+      "drawer": "6",
       "half": "back"
      }
     },
@@ -2699,7 +2686,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "14",
+      "drawer": "6",
       "half": "front"
      }
     },
@@ -2718,7 +2705,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "16",
+      "drawer": "8",
       "half": "back"
      }
     },
@@ -2743,7 +2730,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "16",
+      "drawer": "8",
       "half": "front"
      }
     },
@@ -2790,7 +2777,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "18",
+      "drawer": "10",
       "half": "front"
      }
     },
@@ -2817,7 +2804,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "17",
+      "drawer": "9",
       "half": "back"
      }
     },
@@ -2845,7 +2832,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "17",
+      "drawer": "9",
       "half": "front"
      }
     },
@@ -2872,7 +2859,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "18",
+      "drawer": "10",
       "half": "back"
      }
     },
@@ -2908,7 +2895,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "19",
+      "drawer": "11",
       "half": "back"
      }
     },
@@ -2951,7 +2938,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "19",
+      "drawer": "11",
       "half": "front"
      }
     },
@@ -3001,7 +2988,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "27",
+      "drawer": "19",
       "half": "front"
      }
     },
@@ -3045,7 +3032,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "20",
+      "drawer": "12",
       "half": "back"
      }
     },
@@ -3064,7 +3051,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "21",
+      "drawer": "13",
       "half": "back"
      }
     },
@@ -3083,7 +3070,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "21",
+      "drawer": "13",
       "half": "front"
      }
     },
@@ -3102,7 +3089,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "22",
+      "drawer": "14",
       "half": "back"
      }
     },
@@ -3120,7 +3107,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "24",
+      "drawer": "16",
       "half": "back"
      }
     },
@@ -3138,13 +3125,14 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "24",
+      "drawer": "16",
       "half": "front"
      }
     },
     "M2.5|nut": {
      "types": [
-      "nut"
+      "nut",
+      "square"
      ],
      "detail": {
       "nut": {
@@ -3153,11 +3141,16 @@
         "stainless",
         "steel-blackoxide"
        ]
+      },
+      "square": {
+       "materials": [
+        "stainless"
+       ]
       }
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "23",
+      "drawer": "15",
       "half": "front"
      }
     },
@@ -3200,7 +3193,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "25",
+      "drawer": "17",
       "half": "back"
      }
     },
@@ -3227,7 +3220,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "25",
+      "drawer": "17",
       "half": "front"
      }
     },
@@ -3271,7 +3264,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "26",
+      "drawer": "18",
       "half": "back"
      }
     },
@@ -3315,7 +3308,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "26",
+      "drawer": "18",
       "half": "front"
      }
     },
@@ -3359,7 +3352,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "27",
+      "drawer": "19",
       "half": "back"
      }
     },
@@ -3405,7 +3398,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "28",
+      "drawer": "20",
       "half": "back"
      }
     },
@@ -3432,7 +3425,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "28",
+      "drawer": "20",
       "half": "front"
      }
     },
@@ -3471,7 +3464,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "29",
+      "drawer": "21",
       "half": "back"
      }
     },
@@ -3506,7 +3499,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "29",
+      "drawer": "21",
       "half": "front"
      }
     },
@@ -3542,7 +3535,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "30",
+      "drawer": "22",
       "half": "back"
      }
     },
@@ -3580,7 +3573,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "30",
+      "drawer": "22",
       "half": "front"
      }
     },
@@ -3616,7 +3609,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "32",
+      "drawer": "24",
       "half": "back"
      }
     },
@@ -3647,7 +3640,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "31",
+      "drawer": "23",
       "half": "front"
      }
     },
@@ -3664,7 +3657,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "31",
+      "drawer": "23",
       "half": "back"
      }
     },
@@ -3694,12 +3687,62 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "32",
+      "drawer": "24",
       "half": "front"
      }
     },
     "M3.5|nut": {
      "types": []
+    },
+    "M2|18": {
+     "types": [
+      "flat"
+     ],
+     "detail": {
+      "flat": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "5",
+      "half": "back"
+     }
+    },
+    "M2|nut": {
+     "types": [
+      "nut"
+     ],
+     "detail": {
+      "nut": {
+       "materials": [
+        "steel-zinc",
+        "stainless",
+        "steel-blackoxide"
+       ]
+      }
+     }
+    },
+    "M2.5|locknut": {
+     "types": [
+      "nylock"
+     ],
+     "loc": {
+      "kind": "drawer",
+      "drawer": "15",
+      "half": "back"
+     },
+     "detail": {
+      "nylock": {
+       "materials": [
+        "stainless"
+       ]
+      }
+     }
     }
    },
    "locknuts": [
@@ -5314,7 +5357,7 @@
    ]
   }
  ],
- "rev": 1571,
+ "rev": 1650,
  "layout": {
   "cabinets": [
    {
