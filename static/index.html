@@ -204,7 +204,7 @@ function openLoc(key, target, title, x, y, back) {
   $('#pop').innerHTML = `<h3>Location · ${title}</h3>
     <h4>Primary</h4><input type="text" id="popLoc" placeholder="${target === page().cells?.[key] || M.isList(page()) ? 'e.g. 12, 12R, 12F or B3' : 'blank = as the level above; e.g. 12R or B3'}" value="${M.locText(M.locOf(target), page().cabinet)}">
     <h4>Overflow</h4><input type="text" id="popOver" placeholder="e.g. B2, 13F" value="${M.overflowOf(target).map(x => M.locText(x, page().cabinet)).join(', ')}">
-    <div class="note">Drawers: number, then R (rear) or F (front) if divided; bare numbers are the ${cabHint()}. Bins: B and a number. Overflow: a list.</div>
+    <div class="note">Drawers: number, then R (rear) or F (front) if divided; bare numbers are the ${cabHint()}. Bins: B and a number for a loose bin, a box's letter and number (A3) for a bin in a box. Overflow: a list.</div>
     <div class="row"><button type="button" id="popGo">Save</button><button type="button" id="popClose">Cancel</button></div>`;
   const done = () => { closePop(); if (back) back(); };
   $('#popGo').onclick = () => {
@@ -672,7 +672,7 @@ $('#helperBtn').onclick = () => { const t = $('#helper'); if (t.style.display ==
 $('#cabinetBtn').onclick = () => window.open(`cabinet.html?page=${encodeURIComponent(pageId)}`, '_blank');
 $('#printAll').onclick = () => printKeys('all');
 $('#printDrawers').onclick = () => { const v = prompt(`Drawers to print: a list or ranges, R/F for one half of a divided drawer; bare numbers are the ${cabHint()}. e.g. 12-16, 20, 30R, M3-5`); if (v) printKeys(null, { drawers: v, page: pageId }); };
-$('#printBins').onclick = () => { const v = prompt('Bins to print (18 mm labels): a list or ranges, or "all". e.g. B1, B3-5'); if (v) printKeys(null, { bins: v.trim().toLowerCase() === 'all' ? 'all' : v }); };
+$('#printBins').onclick = () => { const v = prompt('Bins to print (18 mm labels): a list or ranges, or "all". e.g. B1, B3-5, A2-4'); if (v) printKeys(null, { bins: v.trim().toLowerCase() === 'all' ? 'all' : v }); };
 $('#printNew').onclick = () => printKeys('new');
 $('#markPrinted').onclick = async () => {
   if (!confirm('Record every populated cell on this page as printed with its current text?')) return;

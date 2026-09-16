@@ -363,7 +363,7 @@ function renderSettings() {
   const lay = M.layoutOf(data), P = M.positions(data);
   let h = `<b>Cabinets</b><div class="note">In physical order; drawer numbering runs across them, category by category.</div><table>` +
     lay.cabinets.map((c, i) => `<tr><td><input class="sTitle" data-i="${i}" value="${c.title}" style="width:130px"></td><td><select class="sKind" data-i="${i}">${Object.entries(M.KINDS).map(([k, v]) => `<option value="${k}" ${c.kind === k ? 'selected' : ''}>${v.title}</option>`).join('')}</select>` +
-      (M.KINDS[c.kind]?.bins ? ` <span class="note">first bin</span> B<input type="number" min="1" class="sFirst" data-i="${i}" value="${c.first || 1}" style="width:56px">` : '') + `</td>` +
+      (M.KINDS[c.kind]?.bins ? ` <span class="note">bin letter</span> <input class="sPrefix" data-i="${i}" value="${M.boxPrefix(lay, i)}" maxlength="1" style="width:28px;text-transform:uppercase" title="its bins are this letter + number; B is for loose bins, I/M/W are the drawer categories">` : '') + `</td>` +
       `<td><button type="button" class="sUp" data-i="${i}" title="move up">↑</button><button type="button" class="sDn" data-i="${i}" title="move down">↓</button><button type="button" class="sRm" data-i="${i}" title="remove">×</button></td></tr>`).join('') + `</table>
     <div class="row"><button type="button" id="sAdd">Add cabinet</button></div>
     <h3>Drawers per category</h3><table>` +
@@ -371,16 +371,13 @@ function renderSettings() {
     <div class="note">${P.drawers.length} drawer positions, ${P.bins.length} bin positions in all.</div>
     <div class="row"><button type="button" id="sSave">Save</button><button type="button" id="sClose">Close</button></div>`;
   const el = $('#settings'); el.innerHTML = h;
-  const read = () => { const l = M.layoutOf(data); l.cabinets = [...el.querySelectorAll('.sTitle')].map((t, i) => { const c = { ...l.cabinets[i], title: t.value.trim() || l.cabinets[i].title, kind: el.querySelector(`.sKind[data-i="${i}"]`).value }; const f = el.querySelector(`.sFirst[data-i="${i}"]`); if (f) c.first = Math.max(1, +f.value || 1); return c; }); el.querySelectorAll('.sCount').forEach(x => l.counts[x.dataset.id] = +x.value || 0); return l; };
-  // a box added now starts after every bin already in use, so nothing gets swept into it
-  const nextFreeBin = () => Math.max(0, ...Object.keys(cab.bins).map(b => parseInt(b.slice(1)) || 0), ...M.positions(data).bins.map(b => parseInt(b.bin.slice(1)))) + 1;
+  const read = () => { const l = M.layoutOf(data); l.cabinets = [...el.querySelectorAll('.sTitle')].map((t, i) => { const c = { ...l.cabinets[i], title: t.value.trim() || l.cabinets[i].title, kind: el.querySelector(`.sKind[data-i="${i}"]`).value }; delete c.first; const f = el.querySelector(`.sPrefix[data-i="${i}"]`); if (f) { const v = f.value.trim().toUpperCase(); if (M.BIN_LETTERS.includes(v)) c.prefix = v; } return c; }); el.querySelectorAll('.sCount').forEach(x => l.counts[x.dataset.id] = +x.value || 0); return l; };
   const restage = l => { data.layout = l; renderSettings(); };
   el.querySelectorAll('.sUp').forEach(b => b.onclick = () => { const l = read(), i = +b.dataset.i; if (i > 0) [l.cabinets[i - 1], l.cabinets[i]] = [l.cabinets[i], l.cabinets[i - 1]]; restage(l); });
   el.querySelectorAll('.sDn').forEach(b => b.onclick = () => { const l = read(), i = +b.dataset.i; if (i < l.cabinets.length - 1) [l.cabinets[i + 1], l.cabinets[i]] = [l.cabinets[i], l.cabinets[i + 1]]; restage(l); });
   el.querySelectorAll('.sRm').forEach(b => b.onclick = () => { const l = read(); l.cabinets.splice(+b.dataset.i, 1); restage(l); });
   $('#sAdd').onclick = () => { const l = read(); const n = l.cabinets.length + 1; l.cabinets.push({ id: 'c' + Date.now().toString(36), title: `Cabinet ${n}`, kind: '8x8' }); restage(l); };
-  el.querySelectorAll('.sKind').forEach(x => x.onchange = () => { const l = read(), c = l.cabinets[+x.dataset.i]; if (M.KINDS[c.kind]?.bins && !c.first) c.first = nextFreeBin(); restage(l); });
-  el.querySelectorAll('.sCount, .sFirst').forEach(x => x.onchange = () => restage(read()));
+  el.querySelectorAll('.sKind, .sCount, .sPrefix').forEach(x => x.onchange = () => restage(read()));
   $('#sSave').onclick = async () => { data.layout = read(); snapshot(); if (await commit('layout saved')) { $('#settings').style.display = 'none'; } };
   $('#sClose').onclick = () => { $('#settings').style.display = 'none'; load(); };
 }
@@ -438,11 +435,11 @@ function render() {
   });
   const bg = $('#bins'); bg.innerHTML = '';
   const inCab = new Set(P.bins.map(b => b.bin));
-  const ids = Object.keys(cab.bins).filter(id => !inCab.has(id)).sort((a, b) => (parseInt(a.slice(1)) - parseInt(b.slice(1))) || a.localeCompare(b));
+  const ids = Object.keys(cab.bins).filter(id => !inCab.has(id)).sort(M.binOrder);
   $('#binsTitle').textContent = inCab.size ? 'Loose bins (not in a bin cabinet)' : 'Bins (18 mm labels)';
   for (const id of ids) bg.appendChild(binEl(id, cab.bins[id]));
   const nb = document.createElement('div'); nb.className = 'bin new'; nb.textContent = 'drop here for a new bin';
-  dropZone(nb, card => { const v = prompt('Bin id (a number)', String((ids.length ? Math.max(...ids.map(x => parseInt(x.slice(1)) || 0)) : 0) + 1)); if (!v) return; const l = M.parseLoc(/^b/i.test(v) ? v : 'B' + v); if (!l || l.kind !== 'bin') return alert('Use a number, e.g. 4'); dropOnBin(card, l.bin); });
+  dropZone(nb, card => { const v = prompt('Loose bin number', String((ids.length ? Math.max(...ids.map(x => parseInt(x.slice(1)) || 0)) : 0) + 1)); if (!v) return; const l = M.parseLoc(/^[a-z]/i.test(v) ? v : 'B' + v); if (!l || l.kind !== 'bin') return alert('Use a number, e.g. 4'); dropOnBin(card, l.bin); });
   bg.appendChild(nb);
   const ua = $('#unassigned'); ua.innerHTML = '';
   for (const card of cardsOf(cab.unassigned, null)) ua.appendChild(makeCard(card));

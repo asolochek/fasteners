@@ -50,7 +50,7 @@ records what has been printed.
   (blue), Wood & sheet metal screws (red). Physically they fill a row of cabinets in that order, a category's numbering
   running on across cabinets (Imperial 65–88 are the top rows of cabinet 2). **Cabinets…** on the map sets the physical
   cabinets (8 × 8 drawers, 4 × 4, 4 × 4 with three wide drawers down each side, or a 6 × 4 or 6 × 2 box of bins), their order, and how many
-  drawers each category has; the last category takes the rest. Boxes hold bins B1, B2, … in order. A page belongs
+  drawers each category has; the last category takes the rest. Each box has a letter of its own and holds bins A1, A2, …; loose bins not in a box are B-numbered. A page belongs
   to a category, so a bare drawer number means that category; a prefix reaches another (`I12R`, `M3`, `W40F`), and a list
   page with no category of its own always needs the prefix.
 - **Cabinet** opens the drawer map, all pages at once, with a tab per physical cabinet (the Unassigned list is the same on every tab), each drawer badged with its category colour and number: every label

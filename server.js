@@ -155,7 +155,7 @@ function binLabel(d, bin) {
   return { kind: 'bin', ...lab, pinout: null, glyphSvg: types.length ? I.icons(types, lay.rows) : null, glyphMaxW: lay.maxW, generic: true, _n: types.length || entries.length,
            _sig: entries.map(e => e.sig).join(';'), _slot: `B:${bin}`, _bin: bin, _entries: entries };
 }
-const allBins = d => [...new Set(d.pages.flatMap(p => M.bins(p)))].sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
+const allBins = d => [...new Set(d.pages.flatMap(p => M.bins(p)))].sort(M.binOrder);
 // drawer spec: "12-16, 20, 30R, M3-5" -> predicate on (cabinet, drawer, half). A bare number matches both halves of a divided
 // drawer; a term without a cabinet prefix (I, M, W) means `home`, the cabinet of the page the request came from
 function drawerMatcher(spec, home) {
@@ -167,15 +167,16 @@ function drawerMatcher(spec, home) {
   if (terms.some(t => !t)) return null;
   return (cabinet, drawer, half) => { const n = +drawer; return terms.some(t => t.cabinet === (cabinet || '') && n >= t.lo && n <= t.hi && (!t.half || t.half === (half || ''))); };
 }
-// bin spec: "all" | ["B1", ...] | "B1, B3-5, 7" -> list of bin ids (only ones that hold something)
+// bin spec: "all" | ["B1", ...] | "B1, B3-5, A2-4, 7" -> list of bin ids (only ones that hold something); a bare number is a loose (B) bin
 function binList(d, spec) {
   const have = allBins(d);
   if (spec === 'all') return have;
   if (Array.isArray(spec)) return have.filter(b => spec.includes(b));
   const want = new Set();
   for (const t of String(spec).split(/[,\s]+/).filter(Boolean)) {
-    const m = /^b?(\d+)(?:-b?(\d+))?$/i.exec(t); if (!m) return null;
-    for (let n = +m[1]; n <= +(m[2] || m[1]); n++) want.add(`B${n}`);
+    const m = /^([a-hj-ln-vx-z])?(\d+)(?:-(\d+))?$/i.exec(t); if (!m) return null;
+    const pre = (m[1] || 'B').toUpperCase();
+    for (let n = +m[2]; n <= +(m[3] || m[2]); n++) want.add(`${pre}${n}`);
   }
   return have.filter(b => want.has(b));
 }
@@ -198,7 +199,7 @@ async function sendPdf(res, labels, name, bins) {
 app.post('/api/labels', async (req, res) => {
   const d = load();
   if (req.body.bins !== undefined) {
-    const bins = binList(d, req.body.bins); if (!bins) return res.status(400).json({ error: 'bad bin list; use e.g. B1, B3-5' });
+    const bins = binList(d, req.body.bins); if (!bins) return res.status(400).json({ error: 'bad bin list; use e.g. B1, B3-5, A2' });
     let labels = bins.map(b => binLabel(d, b)).filter(l => l._n > 0);
     if (req.body.only === 'new') { const pr = loadPrinted(); labels = labels.filter(l => pr[`bin|${l._bin}`] !== l._sig); }
     return sendPdf(res, labels, 'bins-' + (req.body.bins === 'all' ? 'all' : labels.map(l => l._bin).join('_')));
