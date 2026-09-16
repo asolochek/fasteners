@@ -59,12 +59,13 @@ function populated(page) {
 const CABINETS = [{ id: 'imperial', prefix: 'I', title: 'Imperial machine screws', color: '#2e9e4f' },
                   { id: 'metric', prefix: 'M', title: 'Metric machine screws', color: '#2f6db5' },
                   { id: 'wood', prefix: 'W', title: 'Wood & sheet metal screws', color: '#c0392b' }];
-// cabinet kinds: a grid of standard drawers, or of bins; '4x4w' adds three double-wide drawers down each side (positions 17–22)
+// cabinet kinds: a grid of standard drawers, or a box of bins; '4x4w' adds three double-wide drawers down each side (positions 17–22)
 const KINDS = {
   '8x8':     { title: '8 × 8 drawers', cols: 8, rows: 8, drawers: 64 },
   '4x4':     { title: '4 × 4 drawers', cols: 4, rows: 4, drawers: 16 },
   '4x4w':    { title: '4 × 4 drawers with 3 wide drawers each side', cols: 4, rows: 4, drawers: 22, wide: 6 },
-  'bins6x4': { title: '6 × 4 bins', cols: 6, rows: 4, drawers: 0, bins: 24 },
+  'bins6x4': { title: '6 × 4 box', cols: 6, rows: 4, drawers: 0, bins: 24 },
+  'bins6x2': { title: '6 × 2 box', cols: 6, rows: 2, drawers: 0, bins: 12 },
 };
 const DEFAULT_LAYOUT = { cabinets: [{ id: 'c1', title: 'Cabinet 1', kind: '8x8' }, { id: 'c2', title: 'Cabinet 2', kind: '8x8' }, { id: 'c3', title: 'Cabinet 3', kind: '8x8' }], counts: { imperial: 88, metric: 64 } };
 const layoutOf = d => ({ ...DEFAULT_LAYOUT, ...(d?.layout || {}), cabinets: (d?.layout?.cabinets || DEFAULT_LAYOUT.cabinets), counts: { ...DEFAULT_LAYOUT.counts, ...(d?.layout?.counts || {}) } });
