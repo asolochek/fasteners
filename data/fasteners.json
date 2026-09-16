@@ -682,6 +682,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "26",
+      "half": "back"
      }
     },
     "1-64|nut": {
@@ -744,8 +749,11 @@
      "types": [
       "flat"
      ],
-     "drawer": "41",
-     "half": "front"
+     "loc": {
+      "kind": "drawer",
+      "drawer": "42",
+      "half": "back"
+     }
     },
     "8-32|0.1875": {
      "types": [
@@ -761,8 +769,11 @@
       "pan",
       "socket"
      ],
-     "drawer": "42",
-     "half": "back"
+     "loc": {
+      "kind": "drawer",
+      "drawer": "42",
+      "half": "front"
+     }
     },
     "8-32|0.5": {
      "types": [
@@ -1648,6 +1659,10 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "bin",
+      "bin": "B4"
      }
     },
     "3/8-16|locknut": {
@@ -1801,6 +1816,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "41",
+      "half": "front"
      }
     }
    },
@@ -2740,5 +2760,5 @@
    ]
   }
  ],
- "rev": 794
+ "rev": 797
 }

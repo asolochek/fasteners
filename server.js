@@ -270,11 +270,14 @@ app.get('/api/cabinet', (req, res) => {
   for (const page of pages) {
     for (const g of groupBySlot(page, M.populated(page))) {
       const c = g[0], t = groupText(page, g);
-      // gap check per row: the lengths assigned here must be consecutive in the page's length list
-      const lens = M.lengths(page); let gap = false;
-      const byRow = {};
-      for (const pt of g) { const [a, b] = pt.key.split('|'); if (!isNaN(+b)) (byRow[a] = byRow[a] || []).push(lens.indexOf(+b)); }
-      for (const idx of Object.values(byRow)) { idx.sort((x, y) => x - y); for (let i = 1; i < idx.length; i++) if (idx[i] !== idx[i - 1] + 1) gap = true; }
+      // gap check per row: the lengths of one size held here must be consecutive among the lengths that size actually has
+      // (a column the size has no stock in does not count as a gap)
+      let gap = false; const byRow = {};
+      for (const pt of g) { const [a, b] = pt.key.split('|'); if (!isNaN(+b)) (byRow[a] = byRow[a] || []).push(+b); }
+      for (const [row, lens] of Object.entries(byRow)) {
+        const have = M.lengths(page).filter(l => (page.cells[`${row}|${l}`]?.types || []).length), idx = lens.map(l => have.indexOf(l)).sort((x, y) => x - y);
+        for (let i = 1; i < idx.length; i++) if (idx[i] !== idx[i - 1] + 1) gap = true;
+      }
       const parts = g.flatMap(pt => pt.items.map(it => ({ key: it.key, type: it.type, drive: it.drive, material: it.material, overflow: pt.overflow, level: pt.overflow ? it.overLevel : it.locLevel })));
       const entry = { text: t.pn + (t.value ? '  ' + t.value : '') + (t.qual ? '  ' + t.qual : ''), page: page.title, pageId: page.id, keys: g.map(pt => pt.key), gap,
                       overflow: g.every(pt => pt.overflow), whole: g.some(pt => pt.items.some(it => it.whole)), parts };
