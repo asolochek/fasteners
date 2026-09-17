@@ -328,7 +328,7 @@ function diaValue(dia) {   // major diameter in inches, for ordering
   if (dia.startsWith('#')) { const t = dia.slice(1); if (/^0+$/.test(t)) return 0.06 - 0.013 * (t.length - 1); return 0.06 + 0.013 * +t; }   // #0 = .060, #00 = .047, #000 = .034
   if (dia.startsWith('M')) return +dia.slice(1) / 25.4; const [n, d] = dia.split('/'); return d ? n / d : +dia;
 }
-function rowKey(p, r) { return [diaValue(r.dia), p.units === 'mm' ? -r.pitch : r.pitch]; }   // metric: larger pitch (coarse) first; SAE: fewer threads (coarse) first
+function rowKey(p, r) { return [diaValue(r.dia), p.units === 'mm' ? -r.pitch : r.pitch]; }   // metric: larger pitch (coarse) first; imperial: fewer threads (coarse) first
 function sortRows(p) { p.rows.sort((a, b) => { const [ka, pa] = rowKey(p, a), [kb, pb] = rowKey(p, b); return (ka - kb) || (pa - pb); }); }
 function rowKeys(p, r) {   // reading order within the row: lengths, then lock nut, nut, lock washer, washer (the server puts drawers first)
   const has = k => (p.cells[k]?.types || []).length;
@@ -530,6 +530,21 @@ function openMore(key, universe, x, y) {
   $('#popClose').onclick = closePop; placePop(x, y);
 }
 function cellTextClient(p, key) { if (M.isList(p)) return M.cellText(p, key); const [a, b] = key.split('|'); const hw = HW.find(h => h[1] === b); if (hw && hw[2] === 'dia') return `${a} ${hw[3]}`; const r = p.rows.find(x => x.id === a); if (!r) return key; if (hw) return `${r.label} ${hw[3]}`; return `${r.label} × ${lengthText(p, +b)}`; }
+// move one head (variant + detail) from this page's cell to the same row and length on another page of the same kind,
+// creating the row or length there if needed; the pages share a cabinet, so locations stay valid
+function moveHead(key, type, pageId2) {
+  const p = page(), q = data.pages.find(x => x.id === pageId2), c = p.cells[key]; if (!q || !c) return;
+  const [rowId, len] = key.split('|'), row = p.rows.find(r => r.id === rowId);
+  const isLen = !isNaN(+len);
+  if (row && !q.rows.some(r => r.id === row.id)) { q.rows.push({ ...row }); sortRows(q); }
+  if (isLen && !lengths(q).includes(+len)) { q.lengths.skip = (q.lengths.skip || []).filter(x => x !== +len); (q.lengths.extra = q.lengths.extra || []).push(+len); }
+  const t = q.cells[key] = q.cells[key] || { types: [] };
+  if (t.types.includes(type)) return alert(`${iconLabel(type)} is already in ${cellTextClient(q, key)} on ${q.title}. Merge them by hand.`);
+  t.types.push(type); t.detail = t.detail || {}; t.detail[type] = (c.detail || {})[type] || {};
+  const cl = M.locOf(c); if (cl && !M.locOf(t) && !M.locOf(t.detail[type])) t.detail[type].loc = cl;   // the head keeps its old cell's location
+  c.types = c.types.filter(x => x !== type); if (c.detail) delete c.detail[type];
+  save(); closePop(); render(); status(`${iconLabel(type)} moved to ${q.title}`);
+}
 // "Steel, zinc" for a material key, plain or with a finish
 function matName(mats, key) { const [b, f] = key.split('-'); const m = mats.find(x => x[0] === b); if (!m) return key; if (!f) return m[1]; const fin = (m[2] || []).find(x => x[0] === f); return fin ? `${m[1]}, ${fin[1]}` : key; }
 // per-head detail: own drawer, drive types, materials per drive (washers and nuts: materials only)
@@ -559,6 +574,10 @@ function openDetail(key, type, x, y) {
       `<div class="note">Changing these converts this head. <button type="button" id="popVar" class="varbtn">Add another variant…</button> keeps it and adds a second one (same drives and materials) with a different tip or washers. A different drive, material or finish is just another tick below.</div>`;
   }
   h += `<h4>Location</h4><div class="loc"><span>${locSummary(info, '') || `as the cell (${locSummary(c, 'unset')})`}</span>${locBtn(info, '', '')}</div>`;
+  // a wood screw that turns out to be a sheet metal screw (or the reverse): move this head, with its detail, to the same
+  // size and length on the other page
+  const others = isHead ? data.pages.filter(x => x !== p && ['wood', 'tapping'].includes(x.class) && ['wood', 'tapping'].includes(p.class)) : [];
+  if (others.length) h += `<h4>Move to</h4>` + others.map(x => `<button type="button" class="varbtn movebtn" data-page="${x.id}">${x.title}</button>`).join(' ');
   if (drives.length) {
     // a drive with no material ticked is one item of its own, so it gets a location button of its own
     h += `<h4>Drive</h4>` + drives.map(([d, l]) => `<label><input type="checkbox" data-drive="${d}" ${(info.drives || {})[d] ? 'checked' : ''} ${fixed ? 'disabled checked' : ''}>${l}${(info.drives || {})[d] && !info.drives[d].length ? locBtn(itemOf(d, ''), d, '') : ''}</label>` + ((info.drives || {})[d] || fixed ? `<div class="note sub">materials</div>` + matList(d) : '')).join('');
@@ -587,6 +606,7 @@ function openDetail(key, type, x, y) {
     openLoc(key, it, `${what} · ${[drv, mat].filter(Boolean).join(', ')}`, e.clientX, e.clientY, () => { if (!Object.keys(it).length) delete info.items[`${d}|${m}`]; here(); });
   });
   $('#pop').querySelectorAll('.finbtn').forEach(b => b.onclick = () => { const k = b.dataset.fin; if (openFin.has(k)) openFin.delete(k); else openFin.add(k); here(); });
+  $('#pop').querySelectorAll('.movebtn').forEach(b => b.onclick = () => moveHead(key, type, b.dataset.page));
   $('#pop').querySelectorAll('input[type=checkbox]:not(#popCut):not(.popW)').forEach(i => i.onchange = () => {
     if (i.dataset.m !== undefined) {   // a material
       const list = i.dataset.drive ? (info.drives = info.drives || {}, info.drives[i.dataset.drive] = info.drives[i.dataset.drive] || []) : (info.materials = info.materials || []);

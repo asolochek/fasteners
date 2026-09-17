@@ -3,7 +3,7 @@
  "pages": [
   {
    "id": "sae-machine",
-   "title": "SAE Machine Screws",
+   "title": "Imperial Machine Screws",
    "class": "machine",
    "units": "in",
    "lengths": {
@@ -5141,7 +5141,8 @@
     },
     "M8|35": {
      "types": [
-      "button"
+      "button",
+      "round"
      ],
      "detail": {
       "button": {
@@ -5150,13 +5151,47 @@
          "steel-blackoxide"
         ]
        }
+      },
+      "round": {
+       "drives": {
+        "hex": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "M8|30": {
+     "types": [
+      "pan"
+     ],
+     "detail": {
+      "pan": {
+       "drives": {
+        "combo": [
+         "steel-blackoxide"
+        ]
+       }
+      }
+     }
+    },
+    "M8|locknut": {
+     "types": [
+      "serratedflange"
+     ],
+     "detail": {
+      "serratedflange": {
+       "materials": [
+        "steel-blackoxide"
+       ]
       }
      }
     }
    },
    "locknuts": [
     "nylock",
-    "toothednut"
+    "toothednut",
+    "serratedflange"
    ],
    "lockwashers": [
     "split",
@@ -5604,7 +5639,6 @@
      "types": [
       "flat:p",
       "button:p",
-      "pan:p:c",
       "pan:p"
      ],
      "detail": {
@@ -6682,6 +6716,34 @@
        }
       }
      }
+    },
+    "1/4|1.5": {
+     "types": [
+      "hexwasher:p:c"
+     ],
+     "detail": {
+      "hexwasher:p:c": {
+       "drives": {
+        "hex": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#10|1": {
+     "types": [
+      "pan:p:c"
+     ],
+     "detail": {
+      "pan:p:c": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      }
+     }
     }
    },
    "cabinet": "wood"
@@ -6767,7 +6829,7 @@
    ]
   }
  ],
- "rev": 2081,
+ "rev": 2099,
  "layout": {
   "cabinets": [
    {
