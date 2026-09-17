@@ -1895,7 +1895,8 @@
      3,
      5,
      50,
-     65
+     65,
+     60
     ],
     "skip": [
      24,
@@ -1912,6 +1913,7 @@
     "flat",
     "pan",
     "button",
+    "round",
     "truss",
     "cheese",
     "socket",
@@ -4217,13 +4219,18 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "33",
+      "half": "back"
      }
     },
     "M5|10": {
      "types": [
       "round",
       "socket",
-      "hex"
+      "hex:wfs"
      ],
      "detail": {
       "round": {
@@ -4242,7 +4249,330 @@
          "steel-chrome"
         ]
        }
+      },
+      "hex:wfs": {
+       "drives": {
+        "jis": [
+         "stainless"
+        ]
+       }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "33",
+      "half": "front"
+     }
+    },
+    "M5|12": {
+     "types": [
+      "button",
+      "pan",
+      "round",
+      "socket"
+     ],
+     "detail": {
+      "button": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ],
+        "torx": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "pan": {
+       "drives": {
+        "phillips": [
+         "steel-blackoxide"
+        ]
+       }
+      },
+      "round": {
+       "drives": {
+        "hex": [
+         "steel-blackoxide"
+        ]
+       }
+      },
+      "socket": {
+       "drives": {
+        "hex": [
+         "steel-chrome"
+        ]
+       }
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "34",
+      "half": "back"
+     }
+    },
+    "M5|14": {
+     "types": [
+      "socket"
+     ],
+     "detail": {
+      "socket": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "34",
+      "half": "front"
+     }
+    },
+    "M5|16": {
+     "types": [
+      "socket",
+      "button",
+      "round"
+     ],
+     "detail": {
+      "socket": {
+       "drives": {
+        "hex": [
+         "steel-chrome"
+        ]
+       }
+      },
+      "button": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      },
+      "round": {
+       "drives": {
+        "hex": [
+         "steel-blackoxide"
+        ],
+        "combo": [
+         "steel-blackoxide"
+        ]
+       }
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "35",
+      "half": "back"
+     }
+    },
+    "M5|20": {
+     "types": [
+      "button",
+      "flat",
+      "socket",
+      "round"
+     ],
+     "detail": {
+      "button": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      },
+      "flat": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      },
+      "socket": {
+       "drives": {
+        "hex": [
+         "steel-chrome"
+        ]
+       }
+      },
+      "round": {
+       "drives": {
+        "hex": [
+         "steel-blackoxide"
+        ]
+       }
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "35",
+      "half": "front"
+     }
+    },
+    "M5|25": {
+     "types": [
+      "flat",
+      "button",
+      "round:c",
+      "round"
+     ],
+     "detail": {
+      "round:c": {
+       "drives": {
+        "combo": [
+         "steel-zinc"
+        ]
+       }
+      },
+      "flat": {
+       "drives": {
+        "hex": [
+         "stainless"
+        ]
+       }
+      },
+      "button": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      },
+      "round": {
+       "drives": {
+        "hex": [
+         "steel-blackoxide"
+        ]
+       }
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "36",
+      "half": "back"
+     }
+    },
+    "M5|35": {
+     "types": [
+      "cheese"
+     ],
+     "detail": {
+      "cheese": {
+       "drives": {
+        "combo": [
+         "steel-blackoxide"
+        ]
+       }
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "36",
+      "half": "front"
+     }
+    },
+    "M5|60": {
+     "types": [
+      "socket"
+     ],
+     "detail": {
+      "socket": {
+       "drives": {
+        "hex": [
+         "steel-blackoxide"
+        ]
+       }
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "37",
+      "half": "back"
+     }
+    },
+    "M5|lockwasher": {
+     "types": [
+      "split"
+     ],
+     "detail": {
+      "split": {
+       "materials": [
+        "steel-blackoxide",
+        "steel-zinc",
+        "stainless"
+       ]
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "40",
+      "half": "back"
+     }
+    },
+    "M5|washer": {
+     "types": [
+      "undersized",
+      "fender",
+      "washer"
+     ],
+     "detail": {
+      "undersized": {
+       "materials": [
+        "stainless",
+        "steel-blackoxide"
+       ]
+      },
+      "washer": {
+       "materials": [
+        "stainless"
+       ]
+      },
+      "fender": {
+       "materials": [
+        "stainless"
+       ]
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "40",
+      "half": "front"
+     }
+    },
+    "M5|locknut": {
+     "types": [
+      "toothednut"
+     ],
+     "detail": {
+      "toothednut": {
+       "materials": [
+        "steel-chrome"
+       ]
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "39",
+      "half": "back"
+     }
+    },
+    "M5|nut": {
+     "types": [
+      "nut"
+     ],
+     "detail": {
+      "nut": {
+       "materials": [
+        "steel-blackoxide",
+        "stainless"
+       ]
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "39",
+      "half": "front"
      }
     }
    },
@@ -5859,7 +6189,7 @@
    ]
   }
  ],
- "rev": 1805,
+ "rev": 1903,
  "layout": {
   "cabinets": [
    {

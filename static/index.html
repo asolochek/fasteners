@@ -695,8 +695,14 @@ async function reload() {
   if (data && d.rev === data.rev) return;
   data = d; icons = ic; if (!pageId || !data.pages.some(p => p.id === pageId)) pageId = data.pages[0].id; render(); status('loaded');
 }
-// pick up changes made elsewhere whenever the tab comes back into view
+// pick up changes made elsewhere: the server announces every save, and the tab also checks when it comes back into view
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !saveTimer) reload(); });
+let events; function listen() {
+  try { events = new EventSource('/api/events'); } catch (e) { return; }
+  events.onmessage = e => { if (data && +e.data !== data.rev && !saveTimer) reload(); };
+  events.onerror = () => { events.close(); setTimeout(listen, 5000); };   // reconnect after the server restarts
+}
+listen();
 reload();
 </script>
 </body>

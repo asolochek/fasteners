@@ -26,6 +26,16 @@ app.put('/api/data', (req, res) => {
   d.rev = (cur.rev || 0) + 1;
   fs.writeFileSync(DATA + '.tmp', JSON.stringify(d, null, 1)); fs.renameSync(DATA + '.tmp', DATA);
   res.json({ ok: true, rev: d.rev });
+  notify(d.rev);
+});
+// GET /api/events: a server-sent event stream; every save announces the new revision, so other open pages reload
+const listeners = new Set();
+const notify = rev => { for (const r of listeners) r.write(`data: ${rev}\n\n`); };
+app.get('/api/events', (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
+  res.write(`data: ${load().rev || 0}\n\n`); listeners.add(res);
+  const ping = setInterval(() => res.write(': ping\n\n'), 25000);   // keeps proxies and browsers from closing an idle stream
+  req.on('close', () => { clearInterval(ping); listeners.delete(res); });
 });
 // icons for the page: every base name, the pointed version of every head shape, and every screw variant in use anywhere
 app.get('/api/icons', (req, res) => {

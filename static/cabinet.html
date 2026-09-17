@@ -452,6 +452,13 @@ function render() {
 }
 load();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+// the server announces every save (from the grid, another tab, or this page): reload unless the revision is already ours
+let events; function listen() {
+  try { events = new EventSource('/api/events'); } catch (e) { return; }
+  events.onmessage = e => { if (data && +e.data !== data.rev) load(); };
+  events.onerror = () => { events.close(); setTimeout(listen, 5000); };
+}
+listen();
 </script>
 </body>
 </html>
