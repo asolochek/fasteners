@@ -179,6 +179,7 @@ function status(t) { $('#status').textContent = t; }
 function save() {
   clearTimeout(saveTimer); status('saving…');
   saveTimer = setTimeout(async () => {
+    saveTimer = null;   // the pending edit is on its way; reloads announced from elsewhere are allowed again once it lands
     const r = await fetch('/api/data', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     if (r.status === 409) { data = (await r.json()).data; render(); status('reloaded'); alert('The data had changed on the server (another tab, or an update). Reloaded it — please redo your last change.'); return; }
     if (r.ok) { data.rev = (await r.json()).rev; status('saved'); refreshPreviews(); } else { status('save failed'); alert('Save failed'); }
