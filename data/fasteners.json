@@ -4222,7 +4222,8 @@
     "M5|10": {
      "types": [
       "round",
-      "socket"
+      "socket",
+      "hex"
      ],
      "detail": {
       "round": {
@@ -5858,7 +5859,7 @@
    ]
   }
  ],
- "rev": 1804,
+ "rev": 1805,
  "layout": {
   "cabinets": [
    {
