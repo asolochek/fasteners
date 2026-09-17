@@ -536,7 +536,7 @@ function openDetail(key, type, x, y) {
   const c = cell(key), p = page(); c.detail = c.detail || {}; const info = c.detail[type] = c.detail[type] || {};
   const v = vParse(type), isHead = HEAD_SHAPES.includes(v.shape), isWasher = key.split('|')[1].endsWith('washer');
   const mats = isWasher ? MAT_WASHER : MAT_SCREW, fixed = isHead ? FIXED_DRIVE[v.shape] : undefined;
-  const drives = isHead && fixed === undefined ? (DRIVES_FOR[v.shape] ? DRIVES.filter(d => DRIVES_FOR[v.shape].includes(d[0])) : DRIVES) : (fixed && fixed !== 'none' ? [[fixed, DRIVES.find(d => d[0] === fixed)[1] + ' (always)']] : []);
+  const drives = isHead && fixed === undefined ? (DRIVES_FOR[v.shape] || DRIVES) : (fixed && fixed !== 'none' ? [[fixed, DRIVES.find(d => d[0] === fixed)[1] + ' (always)']] : []);
   // one row per material ("plain"), and for the metals a fold-out list of finishes, each its own tick
   const matList = (drive) => {
     const list = (drive ? (info.drives || {})[drive] : info.materials) || [];
@@ -582,7 +582,7 @@ function openDetail(key, type, x, y) {
     const d = b.dataset.drive, m = b.dataset.m, what = `${iconLabel(type)} · ${cellTextClient(p, key)}`;
     if (!d && !m) return openLoc(key, info, what, e.clientX, e.clientY, here);
     info.items = info.items || {}; const it = info.items[`${d}|${m}`] = info.items[`${d}|${m}`] || {};
-    const mat = matName(mats, m), drv = (DRIVES.find(x => x[0] === d) || [])[1] || '';
+    const mat = matName(mats, m), drv = ([...(DRIVES_FOR[v.shape] || []), ...DRIVES].find(x => x[0] === d) || [])[1] || '';
     openLoc(key, it, `${what} · ${[drv, mat].filter(Boolean).join(', ')}`, e.clientX, e.clientY, () => { if (!Object.keys(it).length) delete info.items[`${d}|${m}`]; here(); });
   });
   $('#pop').querySelectorAll('.finbtn').forEach(b => b.onclick = () => { const k = b.dataset.fin; if (openFin.has(k)) openFin.delete(k); else openFin.add(k); here(); });
@@ -617,9 +617,11 @@ function openVariant(key, type, x, y) {
 }
 // which head / nut / washer types this page shows (types ticked in cells but hidden here still print)
 // drive and material vocabularies for the per-head detail (right-click / long-press on a ticked icon)
-const DRIVES = [['slotted', 'Slotted'], ['phillips', 'Phillips'], ['combo', 'Slotted + Phillips combo'], ['hexslot', 'Hex + slotted'], ['pozidriv', 'Pozidriv'], ['jis', 'JIS'], ['torx', 'Torx'], ['hex', 'Hex'], ['square', 'Square']];
+const DRIVES = [['slotted', 'Slotted'], ['phillips', 'Phillips'], ['combo', 'Slotted + Phillips combo'], ['pozidriv', 'Pozidriv'], ['jis', 'JIS'], ['torx', 'Torx'], ['hex', 'Hex'], ['square', 'Square']];
 const FIXED_DRIVE = { socket: 'hex', shoulder: 'hex', setscrew: 'hex', thumb: 'none' };   // by shape
-const DRIVES_FOR = { hex: ['hex', 'hexslot'], hexwasher: ['hex', 'hexslot'] };   // shapes with a restricted drive choice   // carriage bolts: usually none, but some carry a slot, so the normal list applies   // heads whose drive is a given
+// hex and hex washer heads: the head is the drive (external hex); a slot, Phillips or JIS recess may be added to it
+const HEX_DRIVES = [['hex', 'External hex only'], ['slotted', 'External hex + slotted'], ['phillips', 'External hex + Phillips'], ['jis', 'External hex + JIS']];
+const DRIVES_FOR = { hex: HEX_DRIVES, hexwasher: HEX_DRIVES };   // shapes with their own drive list   // carriage bolts: usually none, but some carry a slot, so the normal list applies   // heads whose drive is a given
 // materials: [key, name, finishes]; a finish is stored as `${material}-${finish}` (plain = the bare material key)
 const MAT_SCREW = [
   ['steel', 'Steel', [['blackoxide', 'black oxide'], ['brass', 'brass plated'], ['bronze', 'bronze plated'], ['cadmium', 'cadmium'], ['chrome', 'chrome'], ['nickel', 'nickel'], ['galvanized', 'galvanized'], ['zinc', 'zinc'], ['zincyellow', 'zinc yellow chromate'], ['tin', 'TiN'], ['ceramic', 'ceramic (exterior)']]],

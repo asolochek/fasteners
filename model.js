@@ -173,7 +173,7 @@ function matShort(key) {
   const fin = b === 'steel' && f === 'tin' ? 'TiN' : (FIN_SHORT[f] || f);
   return b === 'steel' ? fin : `${MAT_SHORT[b] || b} ${fin}`;
 }
-const DRIVE_SHORT = { slotted: 'slotted', phillips: 'Phillips', combo: 'combo', hexslot: 'hex+slot', pozidriv: 'Pozi', jis: 'JIS', torx: 'Torx', hex: 'hex', square: 'square' };
+const DRIVE_SHORT = { slotted: 'slotted', phillips: 'Phillips', combo: 'combo', pozidriv: 'Pozi', jis: 'JIS', torx: 'Torx', hex: 'hex', square: 'square' };
 // print order: labels with a drawer first, by drawer number then rear before front; the rest in reading order
 function drawerOrder(page, groups) {
   const cabIx = id => Math.max(0, CABINETS.findIndex(c => c.id === id));
