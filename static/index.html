@@ -176,19 +176,35 @@ function lengths(page) {
 }
 const page = () => data.pages.find(p => p.id === pageId);
 function status(t) { $('#status').textContent = t; }
+// undo: every save pushes the state it replaces; ⌘Z / Ctrl+Z (outside text fields) puts it back
+let lastSaved = null; const undoStack = [];
 function save() {
+  if (lastSaved !== null) { undoStack.push(lastSaved); if (undoStack.length > 30) undoStack.shift(); lastSaved = null; }
   clearTimeout(saveTimer); status('saving…');
   saveTimer = setTimeout(async () => {
     saveTimer = null;   // the pending edit is on its way; reloads announced from elsewhere are allowed again once it lands
     const r = await fetch('/api/data', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     if (r.status === 409) { data = (await r.json()).data; render(); status('reloaded'); alert('The data had changed on the server (another tab, or an update). Reloaded it — please redo your last change.'); return; }
-    if (r.ok) { data.rev = (await r.json()).rev; status('saved'); refreshPreviews(); } else { status('save failed'); alert('Save failed'); }
+    if (r.ok) { data.rev = (await r.json()).rev; lastSaved = JSON.stringify(data); status('saved'); refreshPreviews(); } else { status('save failed'); alert('Save failed'); }
   }, 400);
 }
+function undo() {
+  if (!undoStack.length) return status('nothing to undo');
+  const prev = JSON.parse(undoStack.pop()); prev.rev = data.rev; data = prev; lastSaved = null;
+  clearTimeout(saveTimer); status('saving…');
+  saveTimer = setTimeout(async () => {
+    saveTimer = null;
+    const r = await fetch('/api/data', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    if (r.ok) { data.rev = (await r.json()).rev; lastSaved = JSON.stringify(data); status('undone'); } else { status('undo failed'); reload(); }
+  }, 50);
+  render();
+}
+document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && !/^(input|textarea|select)$/i.test(e.target.tagName)) { e.preventDefault(); undo(); } });
 function cell(key) { const p = page(); return p.cells[key] || (p.cells[key] = { types: [] }); }
+const ghosts = {};   // cell key -> extra variants unticked this session; they stay visible (greyed) until re-ticked or the page reloads
 function toggle(key, type) {
   const c = cell(key); const i = c.types.indexOf(type);
-  if (i >= 0) c.types.splice(i, 1); else c.types.push(type);
+  if (i >= 0) { c.types.splice(i, 1); (ghosts[key] = ghosts[key] || new Set()).add(type); } else { c.types.push(type); ghosts[key]?.delete(type); }
   save(); render();
 }
 // locations: a drawer half ("12", "12R", "12F") or a bin ("B3"); each of a cell, a head type and a drive+material of a head
@@ -241,15 +257,15 @@ function iconEl(type, on, key) {
   d.oncontextmenu = e => { e.preventDefault(); if (on) openDetail(key, type, e.clientX, e.clientY); };
   return d;
 }
-function shownTypes(c, types, universe) {   // the column's own types plus any other variants ticked in this cell, in shape order
-  const extra = (c.types || []).filter(t => !types.includes(t) && (!universe || universe.includes(shapeOf(t))));
+function shownTypes(c, types, universe, key) {   // the column's own types plus any other variants ticked (or just unticked) in this cell, in shape order
+  const extra = [...(c.types || []), ...(key && ghosts[key] ? [...ghosts[key]] : [])].filter((t, i, a) => a.indexOf(t) === i && !types.includes(t) && (!universe || universe.includes(shapeOf(t))));
   if (!universe) return [...types, ...extra];
   return [...types, ...extra.sort((a, b) => universe.indexOf(shapeOf(a)) - universe.indexOf(shapeOf(b)) || a.localeCompare(b))];
 }
 function cellTd(key, types, extraClass = '', universe = null) {
   const c = page().cells[key] || { types: [] };
   const td = document.createElement('td'); td.className = 'cell ' + extraClass + (c.types.length ? ' have' : '');
-  const shown = universe ? shownTypes(c, types, universe) : types;
+  const shown = universe ? shownTypes(c, types, universe, key) : types;
   const ic = document.createElement('div'); ic.className = 'icons' + (shown.length + (universe ? 1 : 0) > 9 ? ' dense' : '');
   for (const t of shown) ic.appendChild(iconEl(t, c.types.includes(t), key));
   if (universe && universe.some(sh => !shown.includes(defVariant(page(), sh)))) { const m = document.createElement('div'); m.className = 'more'; m.textContent = '…'; m.title = 'other head shapes'; m.onclick = e => openMore(key, universe, e.clientX, e.clientY); ic.appendChild(m); }
@@ -365,7 +381,7 @@ function renderMobile(p, lens) {
     const card = document.createElement('div'); card.className = 'card' + (c.types.length ? ' have' : '');
     const t = document.createElement('div'); t.className = 'ttl'; t.innerHTML = `<span>${title}</span><span class="dec">${sub}</span>`; card.appendChild(t);
     const ic = document.createElement('div'); ic.className = 'icons';
-    const shown = universe ? shownTypes(c, types, universe) : types;
+    const shown = universe ? shownTypes(c, types, universe, key) : types;
     for (const ty of shown) ic.appendChild(iconEl(ty, c.types.includes(ty), key));
     if (universe && universe.some(sh => !shown.includes(defVariant(p, sh)))) { const m = document.createElement('div'); m.className = 'more'; m.textContent = '…'; m.onclick = e => openMore(key, universe, e.clientX, e.clientY); ic.appendChild(m); }
     card.appendChild(ic);
@@ -714,7 +730,7 @@ function hidePreview() { $('#preview').style.display = 'none'; }
 async function reload() {
   const [d, ic] = await Promise.all([fetch('/api/data').then(r => r.json()), fetch('/api/icons').then(r => r.json())]);
   if (data && d.rev === data.rev) return;
-  data = d; icons = ic; if (!pageId || !data.pages.some(p => p.id === pageId)) pageId = data.pages[0].id; render(); status('loaded');
+  data = d; icons = ic; lastSaved = JSON.stringify(data); if (!pageId || !data.pages.some(p => p.id === pageId)) pageId = data.pages[0].id; render(); status('loaded');
 }
 // pick up changes made elsewhere: the server announces every save, and the tab also checks when it comes back into view
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !saveTimer) reload(); });
