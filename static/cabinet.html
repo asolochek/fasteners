@@ -24,7 +24,7 @@ main { display:flex; gap:16px; padding:0 14px; flex:1; min-height:0; }
 #right h2 { position:sticky; top:0; background:var(--paper); margin:0; padding:0 0 8px; z-index:1; }
 .cabinet { border:2px solid var(--ink2); border-radius:10px; padding:10px; margin-bottom:16px; }
 .cabinet h2 { margin:0 0 8px; }
-.grid { display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; align-items:start; }   /* a drawer is only as tall as its own cards, not the tallest in its row */
+.grid { display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; }
 .grid.k4x4 { grid-template-columns:repeat(4, 1fr); max-width:700px; }
 .grid.k4x4w { grid-template-columns:2fr repeat(4, 1fr) 2fr; grid-template-rows:repeat(12, auto); max-width:1000px; }
 .grid.k4x4w .drawer { grid-row:span 3; }
@@ -43,7 +43,7 @@ main { display:flex; gap:16px; padding:0 14px; flex:1; min-height:0; }
 .drawer .n { background:var(--cab, var(--ink2)); color:#fff; padding:1px 5px; border-radius:8px; }
 .drawer.none { background:#efeeea; }
 .legend .cab { display:inline-block; width:14px; height:14px; border-radius:7px; vertical-align:-2px; margin-right:4px; }
-.drawer { background:var(--none); border-radius:6px; min-height:78px; position:relative; display:grid; grid-auto-rows:minmax(36px, 1fr); }   /* equal halves, each as tall as the fuller one (grid, so Safari agrees with Chrome) */
+.drawer { background:var(--none); border-radius:6px; min-height:92px; position:relative; display:grid; grid-auto-rows:minmax(46px, 1fr); }   /* two equal halves; one label per half, so every drawer is the same size */
 .drawer .n { position:absolute; top:3px; right:5px; font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; pointer-events:none; z-index:1; }
 .half { padding:5px 6px 4px; border-radius:6px; display:flex; flex-direction:column; gap:3px; }
 .half[data-h="front"] { border-top:1px dashed var(--line); }   /* rear above the line, front below, like the drawer */
@@ -52,14 +52,14 @@ main { display:flex; gap:16px; padding:0 14px; flex:1; min-height:0; }
 .half.ins { box-shadow:inset 0 4px 0 var(--accent); }   /* insertion bar: drop here to insert at this half, shifting what is in it along */
 .card.over { outline:2px solid #8fcf8f; background:var(--drop); }   /* drop on a card: merge into its label */
 .half.gap { background:var(--bad); }
-.card { background:var(--have); border:1px solid var(--line); border-radius:5px; padding:3px 6px; font-size:12.5px; cursor:grab; box-shadow:0 1px 2px rgba(0,0,0,.06); position:relative; }
+.card { background:var(--have); border:1px solid var(--line); border-radius:5px; padding:3px 6px; font-size:12.5px; cursor:grab; box-shadow:0 1px 2px rgba(0,0,0,.06); position:relative; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .card:active { cursor:grabbing; }
 .card.dragging { opacity:.4; }
 .card.ov { font-style:italic; color:var(--ink2); }
 .card.ov::after { content:' (overflow)'; font-size:11px; }
 .card.gap { border-color:var(--bad2); color:var(--bad2); font-weight:600; }
 .card.whole { border-width:2px; border-color:var(--ink2); }
-.card .pg { display:block; font-size:10px; color:var(--ink2); }
+.card .pg { display:block; font-size:10px; color:var(--ink2); overflow:hidden; text-overflow:ellipsis; }
 .card.cat { border-left:5px solid var(--cat); }   /* unassigned: the category the card belongs to, in its colour */
 .card .pg.list { color:var(--accent); }
 #right { width:250px; flex:none; }
@@ -153,18 +153,18 @@ function objectAt(pageId, part, level) {
 function setCardLoc(card, loc) {
   for (const part of card.parts) {
     const level = RANK[part.level] > RANK[card.grain] ? part.level : card.grain;
-    const o = objectAt(card.pageId, part, level || 'cell'); if (!o) continue;
+    const o = objectAt(part.pageId || card.pageId, part, level || 'cell'); if (!o) continue;
     if (part.overflow) {
       const old = card.from ? slotKey(card.undivided ? { ...card.from, half: '' } : card.from) : null;
       o.overflow = (o.overflow || []).filter(l => !old || slotKey(M.locOf({ loc: l }) || {}) !== old);
-      if (loc) { const l = { ...loc }; if (l.cabinet === (pageOf(card.pageId).cabinet || '')) delete l.cabinet; o.overflow.push(l); } if (!o.overflow.length) delete o.overflow;
+      if (loc) { const l = { ...loc }; if (l.cabinet === (pageOf(part.pageId || card.pageId).cabinet || '')) delete l.cabinet; o.overflow.push(l); } if (!o.overflow.length) delete o.overflow;
     } else {
       delete o.drawer; delete o.half;
-      if (loc) { o.loc = { ...loc }; if (o.loc.cabinet === (pageOf(card.pageId).cabinet || '')) delete o.loc.cabinet; } else delete o.loc;
+      if (loc) { o.loc = { ...loc }; if (o.loc.cabinet === (pageOf(part.pageId || card.pageId).cabinet || '')) delete o.loc.cabinet; } else delete o.loc;
     }
   }
 }
-function setWhole(card, on) { for (const part of card.parts) { const o = objectAt(card.pageId, part, 'cell'); if (o) { if (on) o.whole = true; else delete o.whole; } } }
+function setWhole(card, on) { for (const part of card.parts) { const o = objectAt(part.pageId || card.pageId, part, 'cell'); if (o) { if (on) o.whole = true; else delete o.whole; } } }
 
 // ---- cards: one per label, or the pieces of a split slot ----
 const short = { drive: d => M.DRIVE_SHORT[d] || d, mat: m => M.matShort(m) };
@@ -174,16 +174,16 @@ function cardsOf(entries, loc) {
   for (const e of entries) {
     const base = { from: loc, overflow: e.overflow, whole: e.whole, gap: e.gap, page: e.page, pageId: e.pageId, list: M.isList(pageOf(e.pageId)), undivided: !!e.undivided };
     if (!mode) { out.push({ ...base, grain: '', text: e.text, parts: e.parts }); continue; }
-    const p = pageOf(e.pageId), groups = new Map();
+    const groups = new Map();
     for (const part of e.parts) {
-      const k = mode === 'cell' ? part.key : mode === 'type' ? `${part.key}\n${part.type}` : `${part.key}\n${part.type}\n${part.drive}|${part.material}`;
+      const k = mode === 'cell' ? `${part.pageId}\n${part.key}` : mode === 'type' ? `${part.pageId}\n${part.key}\n${part.type}` : `${part.pageId}\n${part.key}\n${part.type}\n${part.drive}|${part.material}`;
       if (!groups.has(k)) groups.set(k, []); groups.get(k).push(part);
     }
     for (const [k, parts] of groups) {
-      const pt = parts[0]; let text = M.cellText(p, pt.key);
+      const pt = parts[0], p = pageOf(pt.pageId || e.pageId); let text = M.cellText(p, pt.key);
       if (mode !== 'cell' && pt.type) text += ' · ' + (labels[pt.type] || pt.type);
       if (mode === 'item') text += ' · ' + [pt.drive && short.drive(pt.drive), pt.material && short.mat(pt.material)].filter(Boolean).join(' ');
-      out.push({ ...base, grain: mode, text, parts });
+      out.push({ ...base, grain: mode, text, parts, page: p.title, pageId: p.id });
     }
   }
   return out;
@@ -325,8 +325,8 @@ function cardMenu(card, x, y) {
   if (card.from && !card.grain) {
     const key = slotKey(card.from);
     items.push(['hd', 'Split this label into…']);
-    items.push(new Set(card.parts.map(p => p.key)).size > 1 ? ['…one card per size', () => { splitMode[key] = 'cell'; render(); }] : ['dis', 'one size only']);
-    items.push(new Set(card.parts.map(p => p.key + '\n' + p.type)).size > 1 ? ['…one card per head type', () => { splitMode[key] = 'type'; render(); }] : ['dis', 'one head type only']);
+    items.push(new Set(card.parts.map(p => p.pageId + '\n' + p.key)).size > 1 ? ['…one card per size (or page)', () => { splitMode[key] = 'cell'; render(); }] : ['dis', 'one size only']);
+    items.push(new Set(card.parts.map(p => p.pageId + '\n' + p.key + '\n' + p.type)).size > 1 ? ['…one card per head type', () => { splitMode[key] = 'type'; render(); }] : ['dis', 'one head type only']);
     items.push(card.parts.length > 1 ? ['…one card per drive + material', () => { splitMode[key] = 'item'; render(); }] : ['dis', 'one drive + material only']);
   } else if (card.from && card.grain) items.push(['Show as one label again', () => { delete splitMode[slotKey(card.from)]; render(); }]);
   if (!card.overflow) items.push([card.whole ? 'Does not need a whole drawer' : 'Needs a whole drawer', () => {

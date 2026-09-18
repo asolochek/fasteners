@@ -48,11 +48,14 @@ app.get('/api/icon', (req, res) => res.json({ name: req.query.name, svg: I.icon(
 app.get('/api/printed', (req, res) => res.json(loadPrinted()));
 
 // ---- what a location holds ----
-// portions of the given cells grouped by location (drawer half or bin); a portion without a location is a group of its own
-function groupBySlot(page, keys) {
+// every populated cell of every page, split by location and grouped by it: cells of ANY page that share a drawer half or a
+// bin are one label (wood and sheet metal #8 × 1/2″ in one drawer print as one "#8 × 1/2″" with both icons). A portion
+// with no location is a group of its own, and a list line always prints on its own.
+function allGroups(d) {
   const groups = new Map(), singles = [];
-  for (const pt of M.portions(page, keys)) {
-    const s = M.portionSlot(pt); if (!s || M.isList(page)) { singles.push([pt]); continue; }   // list lines print one label each
+  for (const page of d.pages) for (const pt of M.portions(page, M.populated(page))) {
+    pt.page = page;
+    const s = M.portionSlot(pt); if (!s || M.isList(page)) { singles.push([pt]); continue; }
     if (!groups.has(s)) groups.set(s, []); groups.get(s).push(pt);
   }
   return [...singles, ...groups.values()];
@@ -61,8 +64,8 @@ const groupSlot = g => M.portionSlot(g[0]);
 // what sets this portion apart from the rest of its cell: the drives / materials of its items when the head type's other
 // items live elsewhere, as a short list ("SS/zinc", "Phillips"); "overflow" is added by the caller. The icons already
 // say which types are here, so type names are left out.
-function qualifier(page, pt) {
-  const all = M.items(page, pt.key), ds = new Set(), ms = new Set();
+function qualifier(pt) {
+  const all = M.items(pt.page, pt.key), ds = new Set(), ms = new Set();
   const u = (list, f) => [...new Set(list.map(f).filter(Boolean))];
   for (const t of pt.types) {
     const mine = pt.items.filter(i => i.type === t), whole = all.filter(i => i.type === t);
@@ -74,36 +77,37 @@ function qualifier(page, pt) {
   return { drives: [...ds], materials: [...ms] };
 }
 // the qualifier line of a group: the union over its portions, drives then materials, then "overflow" if any portion is one
-function groupQual(page, group) {
+function groupQual(group) {
   const ds = new Set(), ms = new Set(); let over = false;
-  for (const pt of group) { const q = qualifier(page, pt); q.drives.forEach(x => ds.add(x)); q.materials.forEach(x => ms.add(x)); over = over || pt.overflow; }
+  for (const pt of group) { const q = qualifier(pt); q.drives.forEach(x => ds.add(x)); q.materials.forEach(x => ms.add(x)); over = over || pt.overflow; }
   return [[...ds].join('/'), [...ms].join('/'), over ? 'overflow' : ''].filter(Boolean).join(' ');
 }
 // the text of one location's label: { pn, value, qual, types, sig }
 // cells that share a location print as ONE label: "#10 Washer" (washers + lock washers), "#4-40 Nut" (nuts + lock nuts),
 // or for screws the size in the big slot and the lengths on the detail line; the icons are the union of the cells'
-function groupText(page, group) {
+function groupText(group) {
   const types = [...new Set(group.flatMap(pt => pt.types || []))];
-  const qual = groupQual(page, group);
-  if (group.length === 1) { const pn = M.cellText(page, group[0].key), value = M.isList(page) ? (M.listItem(page, group[0].key)?.detail || '') : ''; return { pn, value, qual, types, sig: `${pn}|${value}|${qual}|${types.join(',')}` }; }
-  const cells = group.map(pt => ({ k: pt.key, types: pt.types, suffix: pt.key.split('|')[1], base: pt.key.split('|')[0] }));
-  // reading order inside the label: rows in page order, lengths ascending, hardware after the lengths
-  const rowIx = id => page.rows.findIndex(r => r.id === id);
-  cells.sort((a, b) => (rowIx(a.base) - rowIx(b.base)) || ((isNaN(+a.suffix) ? 1e9 : +a.suffix) - (isNaN(+b.suffix) ? 1e9 : +b.suffix)));
-  // the size text: thread sizes of one diameter merge their pitches ("#8-32/36", "M6×1/0.75"); different diameters are listed
-  const rowsIn = [...new Set(cells.filter(c => !c.suffix.endsWith('washer')).map(c => c.base))].map(id => page.rows.find(r => r.id === id)).filter(Boolean);
-  const dias = [...new Set(rowsIn.map(r => r.dia))];
+  const qual = groupQual(group);
+  if (group.length === 1) { const pt = group[0], pn = M.cellText(pt.page, pt.key), value = M.isList(pt.page) ? (M.listItem(pt.page, pt.key)?.detail || '') : ''; return { pn, value, qual, types, sig: `${pn}|${value}|${qual}|${types.join(',')}` }; }
+  const pageIx = pg => group[0].page === pg ? 0 : 1;
+  const cells = group.map(pt => { const [base, suffix] = pt.key.split('|'); const hw = M.HW.find(h => h[1] === suffix); return { k: pt.key, page: pt.page, suffix, base, row: pt.page.rows.find(r => r.id === base), isWasher: suffix.endsWith('washer'), item: hw ? hw[3] : M.lengthText(pt.page, +suffix), rowIx: pt.page.rows.findIndex(r => r.id === base), pageIx: pageIx(pt.page) }; });
+  // reading order inside the label: page, rows in page order, lengths ascending, hardware after the lengths
+  cells.sort((a, b) => (a.pageIx - b.pageIx) || (a.rowIx - b.rowIx) || ((isNaN(+a.suffix) ? 1e9 : +a.suffix) - (isNaN(+b.suffix) ? 1e9 : +b.suffix)));
+  // the size text: thread sizes of one diameter merge their pitches ("#8-32/36", "M6×1/0.75"); different diameters are listed.
+  // The same size on two pages (wood and sheet metal #8) is one size.
+  const rowsIn = []; for (const c of cells) if (!c.isWasher && c.row && !rowsIn.some(r => r.label === c.row.label)) rowsIn.push(c.row);
+  const dias = [...new Set(rowsIn.map(r => r.dia))], units = cells[0].page.units;
   let base;
-  if (cells.every(c => c.suffix.endsWith('washer'))) base = [...new Set(cells.map(c => c.base))].join(' / ');
-  else if (dias.length === 1 && rowsIn.length > 1) base = page.units === 'mm' ? `${dias[0]}×${rowsIn.map(r => r.pitch).join('/')}` : `${dias[0]}-${rowsIn.map(r => r.pitch).join('/')}`;
+  if (cells.every(c => c.isWasher)) base = [...new Set(cells.map(c => c.base))].join(' / ');
+  else if (dias.length === 1 && rowsIn.length > 1) base = units === 'mm' ? `${dias[0]}×${rowsIn.map(r => r.pitch).join('/')}` : `${dias[0]}-${rowsIn.map(r => r.pitch).join('/')}`;
   else base = rowsIn.map(r => r.label).join(' / ');
-  const items = [...new Set(cells.map(c => M.HW.find(h => h[1] === c.suffix)?.[3] || M.lengthText(page, +c.suffix)))];   // one entry per length, however many rows share it
+  const items = [...new Set(cells.map(c => c.item))];   // one entry per length, however many rows or pages share it
   let pn, value = '';
-  if (cells.every(c => c.suffix.endsWith('washer'))) pn = `${base} Washer`;
+  if (cells.every(c => c.isWasher)) pn = `${base} Washer`;
   else if (cells.every(c => c.suffix.endsWith('nut'))) pn = `${base} Nut`;
   else if (items.length === 1 && !cells.some(c => isNaN(+c.suffix))) pn = `${base} × ${items[0]}`;   // one length shared by the rows: a plain screw label
   else if (dias.length > 1) {   // several diameters with their own lengths: one "size × lengths" per row, the first one big
-    const per = rowsIn.map(r => `${r.label} × ${cells.filter(c => c.base === r.id).map(c => M.HW.find(h => h[1] === c.suffix)?.[3] || M.lengthText(page, +c.suffix)).join('/')}`);
+    const per = rowsIn.map(r => `${r.label} × ${[...new Set(cells.filter(c => c.row && c.row.label === r.label).map(c => c.item))].join('/')}`);
     pn = per[0]; value = per.slice(1).join('  ');
   }
   else { pn = base; value = items.join('  '); }
@@ -119,8 +123,8 @@ function wrap2(text, fs) {
   }
   return best ? [best.a, best.b] : [text];
 }
-function drawerLabel(page, group) {
-  const S = L.STYLE.drawer, t = groupText(page, group);
+function drawerLabel(group) {
+  const S = L.STYLE.drawer, t = groupText(group);
   const base = [t.value, t.qual].filter(Boolean);
   const detX = S.pnX + L.textWidth(t.pn, S.pn) + 2.5;
   const freeFor = (lines, sp) => S.len - S.pad - 1.5 - Math.max(S.pnX + L.textWidth(t.pn, S.pn), ...lines.map(l => detX + L.textWidth(l, sp)));
@@ -132,24 +136,15 @@ function drawerLabel(page, group) {
   let pick = null;
   for (const c of cands) { c.lay = I.layout(t.types, freeFor(c.lines, c.sp ?? S.spec), S.glyphH); if (!pick || c.lay.size > pick.lay.size + 1e-6) pick = c; if (c.lay.size >= Math.min(3.0, S.glyphH / 2)) { pick = c; break; } }
   const extra = pick.lines.length ? { spec: pick.sp, detX, detCenter: pick.lines.length === 1 } : {};
+  const isList = group.length === 1 && M.isList(group[0].page);
   return { kind: 'drawer', pn: t.pn, value: pick.lines[0] || '', specs: pick.lines[1] || '', pinout: null, glyphSvg: t.types.length ? I.icons(t.types, pick.lay.rows) : null, glyphMaxW: pick.lay.maxW, ...extra,
-           generic: true, _n: t.types.length || (M.isList(page) ? 1 : 0), _sig: t.sig, _slot: groupSlot(group) };
+           generic: true, _n: t.types.length || (isList ? 1 : 0), _sig: t.sig, _slot: groupSlot(group) };
 }
 // an 18 mm bin label: everything in the bin, from every page. One entry: the size big with its details under it; several:
 // one line per entry at a size that fits (up to six lines)
-function binEntries(d, bin) {
-  const out = [];
-  for (const page of d.pages) for (const g of groupBySlot(page, M.populated(page))) {
-    if (groupSlot(g) !== `B:${bin}`) continue;
-    // one entry per diameter, so each line of the label reads "size × lengths"
-    const diaOf = pt => { const [a, b = ''] = pt.key.split('|'); return M.isList(page) ? pt.key : b.endsWith('washer') ? a : (page.rows.find(r => r.id === a)?.dia || a); };
-    const byDia = new Map(); for (const pt of g) { const k = diaOf(pt); if (!byDia.has(k)) byDia.set(k, []); byDia.get(k).push(pt); }
-    for (const sub of byDia.values()) out.push({ page, group: sub, ...groupText(page, sub) });
-  }
-  return out;
-}
-function binLabel(d, bin) {
-  const S = L.STYLE.bin, entries = binEntries(d, bin);
+function binEntries(groups, bin) { return groups.filter(g => groupSlot(g) === `B:${bin}`).map(g => ({ group: g, ...groupText(g) })); }
+function binLabel(groups, bin) {
+  const S = L.STYLE.bin, entries = binEntries(groups, bin);
   const types = [...new Set(entries.flatMap(e => e.types))];
   let lab;
   if (entries.length === 1) lab = { pn: entries[0].pn, value: entries[0].value, specs: entries[0].qual, lines: [] };
@@ -203,24 +198,24 @@ async function sendPdf(res, labels, name, bins) {
   if (L.warnings.length) console.warn(L.warnings.join('\n'));
   res.send(Buffer.from(pdf));
 }
+// the printed record key of a portion, and whether a group is already printed as it stands
+const printedKey = pt => `${pt.page.id}|${pt.key}`;
 // POST /api/labels -> PDF of 9 mm drawer labels: { page, keys: [...] | "all" | "new" [, slots: [...]] } or { drawers: "12-16, 20, 30R" }
 // (every page). Bin labels are 18 mm and come from a separate call: { bins: "all" | "B1, B3-5" | ["B1", ...] [, only: "new"] }.
 // A page request whose cells also live in bins answers with X-Bins: the bins to fetch next (204 when there are only bins).
 app.post('/api/labels', async (req, res) => {
-  const d = load();
+  const d = load(), all = allGroups(d);
   if (req.body.bins !== undefined) {
     const bins = binList(d, req.body.bins); if (!bins) return res.status(400).json({ error: 'bad bin list; use e.g. B1, B3-5, A2' });
-    let labels = bins.map(b => binLabel(d, b)).filter(l => l._n > 0);
+    let labels = bins.map(b => binLabel(all, b)).filter(l => l._n > 0);
     if (req.body.only === 'new') { const pr = loadPrinted(); labels = labels.filter(l => pr[`bin|${l._bin}`] !== l._sig); }
     return sendPdf(res, labels, 'bins-' + (req.body.bins === 'all' ? 'all' : labels.map(l => l._bin).join('_')));
   }
-  let groups = [], pageOf = new Map(), name = 'all', bins = [];
+  let groups = [], name = 'all', bins = [];
   if (req.body.drawers) {
     const home = d.pages.find(p => p.id === req.body.page)?.cabinet || M.CABINETS[0].id;
     const ok = drawerMatcher(req.body.drawers, home); if (!ok) return res.status(400).json({ error: 'bad drawer list; use e.g. 12-16, 20, 30R, M3' });
-    for (const page of d.pages) {
-      for (const g of groupBySlot(page, M.populated(page))) if (g[0].kind === 'drawer' && ok(g[0].cabinet, g[0].drawer, g[0].half)) { groups.push(g); pageOf.set(g, page); }
-    }
+    groups = all.filter(g => g[0].kind === 'drawer' && ok(g[0].cabinet, g[0].drawer, g[0].half));
     // cabinet, then drawer order, rear before front
     const dk = g => [M.CABINETS.findIndex(c => c.id === g[0].cabinet), +g[0].drawer, g[0].half === 'front' ? 1 : 0];
     groups.sort((a, b) => { const [c, x, y] = dk(a), [e, u, v] = dk(b); return (c - e) || (x - u) || (y - v); });
@@ -228,76 +223,71 @@ app.post('/api/labels', async (req, res) => {
   } else {
     const page = d.pages.find(p => p.id === req.body.page);
     if (!page) return res.status(404).json({ error: 'no such page' });
-    let keys = req.body.keys === 'all' || req.body.keys === 'new' ? M.populated(page) : (req.body.keys || []);
-    if (Array.isArray(req.body.keys)) {
-      // a chosen cell prints the label of each of its locations (or of the slots chosen from the split-cell dialog, '' = the
-      // unlocated part); a location shared with other cells prints the merged label, and nothing else of those cells
-      const orig = new Set(keys), chosen = Array.isArray(req.body.slots) ? new Set(req.body.slots) : null;
-      let slots = new Set(M.portions(page, keys).map(M.portionSlot).filter(Boolean));
-      if (chosen) slots = new Set([...slots].filter(x => chosen.has(x)));
-      const more = M.portions(page).filter(pt => slots.has(M.portionSlot(pt))).map(pt => pt.key);
-      keys = [...new Set([...keys, ...more])];
-      groups = groupBySlot(page, keys).filter(g => groupSlot(g) ? slots.has(groupSlot(g)) : (orig.has(g[0].key) && (!chosen || chosen.has(''))));
-    } else groups = groupBySlot(page, keys);
-    groups = M.drawerOrder(page, groups); groups.forEach(g => pageOf.set(g, page));
+    const keys = new Set(req.body.keys === 'all' || req.body.keys === 'new' ? M.populated(page) : (req.body.keys || []));
+    // the labels of every location this page's chosen cells touch (merged with whatever else is there, from any page),
+    // plus the unlocated part of those cells; `slots` from the split-cell dialog narrows it ('' = the unlocated part)
+    const chosen = Array.isArray(req.body.slots) ? new Set(req.body.slots) : null;
+    const mine = g => g.filter(pt => pt.page === page && keys.has(pt.key));
+    groups = all.filter(g => mine(g).length && (!chosen || chosen.has(groupSlot(g))));
+    groups = M.drawerOrder(page, groups);
     bins = [...new Set(groups.filter(g => g[0].kind === 'bin').map(g => g[0].bin))];
     groups = groups.filter(g => g[0].kind !== 'bin');
     if (req.body.keys === 'new') {
       const pr = loadPrinted();
-      groups = groups.filter(g => pr[`${page.id}|${g[0].key}`] !== groupText(page, g).sig);
-      bins = bins.filter(b => pr[`bin|${b}`] !== binLabel(d, b)._sig);
+      groups = groups.filter(g => { const sig = groupText(g).sig; return g.some(pt => pr[printedKey(pt)] !== sig); });
+      bins = bins.filter(b => pr[`bin|${b}`] !== binLabel(all, b)._sig);
     }
     name = `${page.id}-${Array.isArray(req.body.keys) ? (req.body.keys.length === 1 ? req.body.keys[0] : 'selection') : req.body.keys}`;
   }
-  const labels = groups.map(g => drawerLabel(pageOf.get(g), g)).filter(l => l._n > 0);
+  const labels = groups.map(drawerLabel).filter(l => l._n > 0);
   if (!labels.length && bins.length) { res.setHeader('Access-Control-Expose-Headers', 'X-Bins'); res.setHeader('X-Bins', bins.join(',')); return res.status(204).end(); }
   return sendPdf(res, labels, name, bins);
 });
-// POST /api/printed { page, keys: [...] | "all" } marks those labels (and the bins they touch) as printed with their current text;
-// { bins: [...] | "all" } marks bins
+// POST /api/printed { page, keys: [...] | "all" } marks the labels those cells are on (every cell on them, from any page) and the
+// bins they touch as printed with their current text; { bins: [...] | "all" } marks bins
 app.post('/api/printed', (req, res) => {
-  const d = load(), pr = loadPrinted();
+  const d = load(), pr = loadPrinted(), all = allGroups(d);
   let marked = 0;
-  if (req.body.bins !== undefined) { for (const b of binList(d, req.body.bins) || []) { pr[`bin|${b}`] = binLabel(d, b)._sig; marked++; } }
+  if (req.body.bins !== undefined) { for (const b of binList(d, req.body.bins) || []) { pr[`bin|${b}`] = binLabel(all, b)._sig; marked++; } }
   else {
     const page = d.pages.find(p => p.id === req.body.page); if (!page) return res.status(404).json({ error: 'no such page' });
-    const keys = req.body.keys === 'all' ? M.populated(page) : (req.body.keys || []);
-    for (const g of groupBySlot(page, keys)) {
-      if (g[0].kind === 'bin') { pr[`bin|${g[0].bin}`] = binLabel(d, g[0].bin)._sig; continue; }
-      const sig = groupText(page, g).sig; for (const pt of g) pr[`${page.id}|${pt.key}`] = sig;
+    const keys = new Set(req.body.keys === 'all' ? M.populated(page) : (req.body.keys || []));
+    for (const g of all.filter(g => g.some(pt => pt.page === page && keys.has(pt.key)))) {
+      if (g[0].kind === 'bin') { pr[`bin|${g[0].bin}`] = binLabel(all, g[0].bin)._sig; continue; }
+      const sig = groupText(g).sig; for (const pt of g) pr[printedKey(pt)] = sig;
     }
-    marked = keys.length;
+    marked = keys.size;
   }
   fs.writeFileSync(PRINTED, JSON.stringify(pr, null, 1)); res.json({ ok: true, marked });
 });
 // GET /api/cabinet -> what is in each drawer and bin: { cabinets: [{ id, title, color, drawers: { "12": { back: [...], front: [...], whole: [...] } }],
-// bins: { "B3": [...] }, unassigned: [...] }. Each entry (one label): { text, page, pageId, keys, gap, overflow, whole, parts } where gap = the screw
-// lengths in that half are not a contiguous run of the page's lengths, overflow = everything in this entry is overflow stock,
-// whole = its stock is flagged as needing a whole drawer, parts = the items behind it (with the level each got its location from)
+// bins: { "B3": [...] }, unassigned: [...] }. Each entry (one label): { text, page, pageId, keys, gap, overflow, whole, parts } where
+// page lists every page with stock on it, gap = a size's lengths here are not a contiguous run of the lengths that size has,
+// overflow = everything in this entry is overflow stock, whole = its stock is flagged as needing a whole drawer, parts = the
+// items behind it, each with its page and the level it got its location from
 app.get('/api/cabinet', (req, res) => {
   const d = load(), bins = {}, unassigned = [];
   const cabinets = M.CABINETS.map(c => ({ ...c, drawers: {} }));
-  const pages = req.query.page ? d.pages.filter(p => p.id === req.query.page) : d.pages;
-  for (const page of pages) {
-    for (const g of groupBySlot(page, M.populated(page))) {
-      const c = g[0], t = groupText(page, g);
-      // gap check per row: the lengths of one size held here must be consecutive among the lengths that size actually has
-      // (a column the size has no stock in does not count as a gap)
-      let gap = false; const byRow = {};
-      for (const pt of g) { const [a, b] = pt.key.split('|'); if (!isNaN(+b)) (byRow[a] = byRow[a] || []).push(+b); }
-      for (const [row, lens] of Object.entries(byRow)) {
-        const have = M.lengths(page).filter(l => (page.cells[`${row}|${l}`]?.types || []).length), idx = lens.map(l => have.indexOf(l)).sort((x, y) => x - y);
-        for (let i = 1; i < idx.length; i++) if (idx[i] !== idx[i - 1] + 1) gap = true;
-      }
-      const parts = g.flatMap(pt => pt.items.map(it => ({ key: it.key, type: it.type, drive: it.drive, material: it.material, overflow: pt.overflow, level: pt.overflow ? it.overLevel : it.locLevel })));
-      const entry = { text: t.pn + (t.value ? '  ' + t.value : '') + (t.qual ? '  ' + t.qual : ''), page: page.title, pageId: page.id, keys: g.map(pt => pt.key), gap,
-                      overflow: g.every(pt => pt.overflow), whole: g.some(pt => pt.items.some(it => it.whole)), parts };
-      if (!c.kind) { unassigned.push(entry); continue; }
-      if (c.kind === 'bin') { (bins[c.bin] = bins[c.bin] || []).push(entry); continue; }
-      const cabinet = cabinets.find(x => x.id === c.cabinet) || cabinets[0];
-      const dr = cabinet.drawers[c.drawer] = cabinet.drawers[c.drawer] || { back: [], front: [], whole: [] };
-      dr[c.half || 'whole'].push(entry);
+  const pages = new Set(req.query.page ? d.pages.filter(p => p.id === req.query.page) : d.pages);
+  for (const g of allGroups(d)) {
+    if (!g.some(pt => pages.has(pt.page))) continue;
+    const c = g[0], t = groupText(g);
+    // gap check per size: the lengths of one size held here must be consecutive among the lengths that size actually has
+    let gap = false; const bySize = {};
+    for (const pt of g) { const [a, b] = pt.key.split('|'); if (!isNaN(+b)) (bySize[pt.page.id + '|' + a] = bySize[pt.page.id + '|' + a] || { page: pt.page, row: a, lens: [] }).lens.push(+b); }
+    for (const { page, row, lens } of Object.values(bySize)) {
+      const have = M.lengths(page).filter(l => (page.cells[`${row}|${l}`]?.types || []).length), idx = lens.map(l => have.indexOf(l)).sort((x, y) => x - y);
+      for (let i = 1; i < idx.length; i++) if (idx[i] !== idx[i - 1] + 1) gap = true;
     }
+    const parts = g.flatMap(pt => pt.items.map(it => ({ key: it.key, pageId: pt.page.id, type: it.type, drive: it.drive, material: it.material, overflow: pt.overflow, level: pt.overflow ? it.overLevel : it.locLevel })));
+    const titles = [...new Set(g.map(pt => pt.page.title))];
+    const entry = { text: t.pn + (t.value ? '  ' + t.value : '') + (t.qual ? '  ' + t.qual : ''), page: titles.join(' · '), pageId: c.page.id, keys: g.map(pt => pt.key), gap,
+                    overflow: g.every(pt => pt.overflow), whole: g.some(pt => pt.items.some(it => it.whole)), parts };
+    if (!c.kind) { unassigned.push(entry); continue; }
+    if (c.kind === 'bin') { (bins[c.bin] = bins[c.bin] || []).push(entry); continue; }
+    const cabinet = cabinets.find(x => x.id === c.cabinet) || cabinets[0];
+    const dr = cabinet.drawers[c.drawer] = cabinet.drawers[c.drawer] || { back: [], front: [], whole: [] };
+    dr[c.half || 'whole'].push(entry);
   }
   res.json({ cabinets, bins, unassigned, pages: d.pages.map(p => ({ id: p.id, title: p.title, cabinet: p.cabinet || '' })), page: req.query.page || '' });
 });
@@ -306,10 +296,10 @@ app.get('/api/preview.png', async (req, res) => {
   const d = load(), page = d.pages.find(p => p.id === req.query.page); if (!page) return res.status(404).end();
   const mine = M.portions(page, [req.query.key]); if (!mine.length) return res.status(404).end();
   const pt = ('slot' in req.query ? mine.find(p => M.portionSlot(p) === req.query.slot) : null) || mine.find(p => !p.overflow) || mine[0];
-  const slot = M.portionSlot(pt);
+  const slot = M.portionSlot(pt), all = allGroups(d);
   let lab;
-  if (pt.kind === 'bin') lab = binLabel(d, pt.bin);
-  else lab = drawerLabel(page, slot ? groupBySlot(page, M.populated(page)).find(g => groupSlot(g) === slot) : [pt]);
+  if (pt.kind === 'bin') lab = binLabel(all, pt.bin);
+  else { pt.page = page; lab = drawerLabel((slot && all.find(g => groupSlot(g) === slot)) || [pt]); }
   res.setHeader('Content-Type', 'image/png'); res.send(await L.renderPng(L.labelSvg(lab.kind, lab)));
 });
 const port = +process.env.PORT || 8093;

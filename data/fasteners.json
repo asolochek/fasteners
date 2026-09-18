@@ -6786,11 +6786,6 @@
         "phillips": [
          "stainless"
         ]
-       },
-       "loc": {
-        "kind": "drawer",
-        "drawer": "10",
-        "half": "back"
        }
       }
      }
@@ -6925,7 +6920,7 @@
    ]
   }
  ],
- "rev": 2131,
+ "rev": 2132,
  "layout": {
   "cabinets": [
    {
