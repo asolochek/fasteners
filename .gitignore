@@ -2,3 +2,4 @@ node_modules/
 __pycache__/
 server.log
 helper/print-helper.log
+data/helper.token

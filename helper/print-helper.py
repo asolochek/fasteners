@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 # Copyright (C) 2026 Aaron Solochek. Licensed under the GNU GPL v3; see LICENSE.
-"""Print helper for the label printer. Runs on the Windows PC the Epson LW-PX900 is attached to and prints PDFs that the
-fastener page (or anything else on the LAN) POSTs to it, silently, on a named printer queue using that queue's saved defaults
-(tape width, auto length, cut per label - set once in the queue's Printing Preferences, one queue per tape width).
+"""Print helper for the label printer. Runs on the Windows PC the Epson LW-PX900 is attached to and prints label PDFs
+silently on a named printer queue using that queue's saved defaults (tape width, auto length, cut per label - set once in the
+queue's Printing Preferences, one queue per tape width).
 
-    python print-helper.py [--port 8094] [--token SECRET] [--backend acrobat|gs|sumatra] [--exe "C:\\path\\to\\program.exe"] [--bind 0.0.0.0]
+Normal use: it connects out to the Partstore server and collects the print jobs the page leaves there, so nothing has to reach
+this PC from outside and the page can be served over https:
+    python print-helper.py --server https://partstore.example.org --token SECRET [--backend acrobat|gs|sumatra] [--exe "C:\\path\\to\\program.exe"]
+(the token is the contents of data/helper.token on the server)
+
+Without --server it listens on the LAN instead, for anything that POSTs PDFs to it:
+    python print-helper.py [--port 8094] [--token SECRET] [--bind 0.0.0.0] [--backend ...] [--exe ...]
 Runs fine under pythonw.exe (no console, e.g. from a logon task): it then logs to print-helper.log beside the script.
 
 Backends, tried in this order unless --backend is given:
@@ -12,14 +18,15 @@ Backends, tried in this order unless --backend is given:
     gs       Ghostscript (gswin64c) mswinpr2 device  - hands the page to the queue at 1:1, no paper matching
     sumatra  SumatraPDF -print-to  - NOT suitable for the label queues: it picks a driver paper by page size (cuts labels short)
 
-Endpoints (CORS open, so a browser page served from elsewhere can call them):
+Endpoints when listening (CORS open, so a browser page served from elsewhere can call them):
     GET  /printers                         -> JSON list of installed printer names + which backend is in use
     POST /print?printer=NAME[&token=..]    -> body = the PDF; prints it, returns {"ok":true,"pages":N,"backend":..}
     GET  /                                  -> a tiny status page
 Python 3.8+ standard library only.
 """
-import argparse, json, os, shutil, subprocess, sys, tempfile, time
-VERSION = '2026-09-15.2'   # shown by GET / and /printers and on startup; bump on every change
+import argparse, json, os, shutil, subprocess, sys, tempfile, time, urllib.request, urllib.error
+from urllib.parse import unquote
+VERSION = '2026-09-18.1'   # shown by GET / and /printers and on startup; bump on every change
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -132,15 +139,60 @@ class H(BaseHTTPRequestHandler):
             except OSError: pass
     def log_message(self, fmt, *a): log('%s %s' % (time.strftime('%H:%M:%S'), fmt % a))
 
+def print_bytes(data, printer):
+    """print one PDF held in memory; returns (ok, pages, backend name, message)"""
+    name, exe = backend()
+    if not exe: return (False, 0, None, 'no print program found: install Acrobat Reader or Ghostscript, or pass --backend/--exe')
+    fd, path = tempfile.mkstemp(suffix='.pdf', prefix='labels-'); os.write(fd, data); os.close(fd)
+    try:
+        ok, msg = print_pdf(name, exe, path, printer)
+        return (ok, count_pages(data), name, msg)
+    finally:
+        try: time.sleep(3); os.remove(path)
+        except OSError: pass
+
+def poll(server, token):
+    """collect jobs from the Partstore server for ever: long-poll /api/helper/next, print, report to /api/helper/done"""
+    base = server.rstrip('/')
+    def call(path, body=None, timeout=60):
+        req = urllib.request.Request(base + path, data=None if body is None else json.dumps(body).encode(), headers={'X-Token': token, 'Content-Type': 'application/json', 'User-Agent': 'print-helper/' + VERSION})
+        return urllib.request.urlopen(req, timeout=timeout)
+    hello = 0; wait = 2; down = False
+    while True:
+        try:
+            if time.time() - hello > 600:
+                name, exe = backend(); call('/api/helper/hello', {'printers': printers(), 'backend': name, 'version': VERSION}).read(); hello = time.time()
+            r = call('/api/helper/next')
+            if down: log('%s connected to %s again' % (time.strftime('%H:%M:%S'), base)); down = False
+            wait = 2
+            if r.status != 200: r.read(); continue
+            job, printer, data = r.headers.get('X-Job'), unquote(r.headers.get('X-Printer', '')), r.read()
+            try: ok, pages, name, msg = print_bytes(data, printer)
+            except Exception as e: ok, pages, name, msg = False, 0, None, str(e)
+            log('%s job %s: %s %d page(s) to %s via %s%s' % (time.strftime('%H:%M:%S'), job, 'printed' if ok else 'FAILED', pages, printer, name, '' if ok else ': ' + msg))
+            call('/api/helper/done', {'job': job, 'ok': ok, 'pages': pages, 'backend': name, 'error': None if ok else f'{name}: {msg}'}).read()
+        except urllib.error.HTTPError as e:
+            if e.code == 403: log('%s the server refused the token (HTTP 403); check --token against data/helper.token' % time.strftime('%H:%M:%S'))
+            else: log('%s server answered HTTP %d' % (time.strftime('%H:%M:%S'), e.code))
+            hello = 0; down = True; time.sleep(wait); wait = min(wait * 2, 60)
+        except Exception as e:
+            if not down: log('%s cannot reach %s: %s (retrying)' % (time.strftime('%H:%M:%S'), base, e))
+            hello = 0; down = True; time.sleep(wait); wait = min(wait * 2, 60)
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--version', action='version', version=VERSION)
     ap.add_argument('--port', type=int, default=8094); ap.add_argument('--bind', default='0.0.0.0', help='0.0.0.0 = accept connections from the LAN (default); 127.0.0.1 = this PC only')
-    ap.add_argument('--token', default='', help='if set, callers must send ?token= or X-Token')
+    ap.add_argument('--server', default='', help='Partstore address, e.g. https://partstore.example.org: collect print jobs from it instead of listening')
+    ap.add_argument('--token', default='', help='with --server: the server\'s helper token; listening: if set, callers must send ?token= or X-Token')
     ap.add_argument('--backend', choices=['acrobat', 'gs', 'sumatra'], default='', help='print program (default: first found of acrobat, gs, sumatra)')
     ap.add_argument('--exe', default='', help='path to that program, if it is not found automatically')
     ARGS = ap.parse_args()
     name, exe = backend()
+    if ARGS.server:
+        if not ARGS.token: sys.exit('--server needs --token (the contents of data/helper.token on the server)')
+        log(f'label print helper {VERSION} collecting jobs from {ARGS.server}  backend: {name or "NONE FOUND"} ({exe})  printers: {printers() or "(none)"}')
+        poll(ARGS.server, ARGS.token)
     log(f'label print helper {VERSION} on http://{ARGS.bind}:{ARGS.port}/  backend: {name or "NONE FOUND"} ({exe})  printers: {printers() or "(none)"}')
     if ARGS.bind == '0.0.0.0':
         # listen on IPv6 and IPv4 at once, so http://localhost:8094/ works whichever the browser tries first

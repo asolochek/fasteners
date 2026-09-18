@@ -1,4 +1,4 @@
-# Fasteners
+# Partstore
 
 A small web app for keeping track of a fastener collection stored in drawer cabinets, and for printing the drawer labels.
 Each page is a class of fastener (imperial machine screws, metric machine screws, wood screws, sheet metal screws, …) laid out as
@@ -21,7 +21,9 @@ node server.js          # http://127.0.0.1:8093/
 ```
 
 It binds to localhost. Put a reverse proxy with authentication in front of it (`apache-vhost.example.conf` is an example with
-HTTP basic auth) or reach it through an SSH tunnel: `ssh -L 8093:127.0.0.1:8093 host`. `fasteners.service` is a systemd unit.
+HTTP basic auth) or reach it through an SSH tunnel: `ssh -L 8093:127.0.0.1:8093 host`. `partstore.service` is a systemd unit.
+Direct printing goes through the server: the print helper connects out to it with the token in `data/helper.token`, which the
+server creates on first start (keep it out of git).
 
 The model lives in `data/fasteners.json` and is edited entirely through the page; keep it in git. `data/printed.json`
 records what has been printed.
@@ -87,7 +89,7 @@ print one label each. Locations, bins, the cabinet map and PDF: drawers… work 
   drawers asks which to print.
 - Order is by drawer number, rear before front, then the unassigned cells in reading order.
 - Without the helper the PDF downloads; print it from Acrobat at actual size on a queue whose defaults are set to 9 mm tape,
-  auto length, cut per label. With the helper (`helper/`, see its README) the **Printer…** panel sends labels straight to
+  auto length, cut per label. With the helper (`helper/`, see its README) connected to the server, the **Printer…** panel sends labels straight to
   the printer.
 
 ## Layout of the repo

@@ -6935,6 +6935,18 @@
        }
       }
      }
+    },
+    "#4|0.5": {
+     "types": [
+      "flat:p"
+     ],
+     "detail": {
+      "flat:p": {
+       "drives": {
+        "torx": []
+       }
+      }
+     }
     }
    },
    "cabinet": "wood"
@@ -7020,7 +7032,7 @@
    ]
   }
  ],
- "rev": 2209,
+ "rev": 2211,
  "layout": {
   "cabinets": [
    {

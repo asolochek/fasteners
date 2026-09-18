@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<title>Fasteners</title>
+<title>Partstore</title>
 <style>
 :root { --paper:#f7f6f2; --ink:#17181a; --ink2:#5b6470; --line:#d9d7cf; --have:#dff3df; --have2:#8fcf8f; --none:#ebe9e3; --accent:#d8641f; }
 html, body { height:100%; }
@@ -128,7 +128,7 @@ table.list .drawer { white-space:nowrap; }
 </head>
 <body>
 <header>
-  <h1>Fasteners</h1>
+  <h1>Partstore</h1>
   <div id="tabs"></div>
   <select id="pageSel"></select>
   <span class="spacer"></span>
@@ -143,7 +143,7 @@ table.list .drawer { white-space:nowrap; }
   <button id="printNew">PDF: unprinted</button>
   <button id="printAll">PDF: all</button>
   <button id="markPrinted">Mark all printed</button>
-  <button id="helperBtn" title="print helper on the PC with the label printer">Printer…</button>
+  <button id="helperBtn" title="printer queues for direct printing">Printer…</button>
   <button type="button" id="cabinetBtn" title="drawer map for this page">Cabinet</button>
   <span id="status"></span>
 </header>
@@ -456,19 +456,20 @@ $('#addLen').onclick = () => {
   if (!lengths(p).includes(n)) (p.lengths.extra = p.lengths.extra || []).push(n);
   save(); render();
 };
-// print helper (helper/print-helper.py on the PC with the printer): settings live in this browser
+// direct printing goes through the server, which hands the PDF to helper/print-helper.py on the PC with the printer; the
+// choice of queues lives in this browser
 const HS = { get() { try { return JSON.parse(localStorage.getItem('helper') || '{}'); } catch (e) { return {}; } }, set(v) { try { localStorage.setItem('helper', JSON.stringify(v)); } catch (e) {} } };
-function helperUrl(path, extra = '') { const h = HS.get(); const base = (h.url || '').replace(/\/+$/, ''); return base ? `${base}${path}?token=${encodeURIComponent(h.token || '')}${extra}` : null; }
 async function sendToPrinter(blob, n, tape = '9') {
-  const h = HS.get(), printer = tape === '18' ? h.printerBin : h.printer, url = helperUrl('/print', `&printer=${encodeURIComponent(printer || '')}`);
-  if (!url || !printer) { if (tape === '18') alert('No printer queue is set for 18 mm bin labels (Printer…). Downloading the PDF instead.'); return false; }
+  const h = HS.get(), printer = tape === '18' ? h.printerBin : h.printer;
+  if (!printer) { alert(`No printer queue is set for ${tape} mm labels (Printer…). Downloading the PDF instead.`); return false; }
   status(`sending ${n} label${n == 1 ? '' : 's'} to ${printer}…`);
   try {
-    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: blob });
+    const r = await fetch(`/api/print?printer=${encodeURIComponent(printer)}&pages=${n}`, { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: blob });
     const j = await r.json();
+    if (r.status === 503) { alert(j.error + ' Downloading the PDF instead.'); return false; }
     if (!r.ok) { alert('Print helper: ' + (j.error || r.status)); status('print failed'); return true; }
     status(`printed ${j.pages} label${j.pages == 1 ? '' : 's'} on ${printer}`); return true;
-  } catch (e) { alert(`Could not reach the print helper at ${h.url}. Downloading the PDF instead.`); return false; }
+  } catch (e) { alert('Could not send the labels to the server. Downloading the PDF instead.'); return false; }
 }
 // the locations a cell's stock is split over: [{ slot, label, types }] (the unlocated part has slot '')
 function cellSlots(key) {
@@ -684,28 +685,29 @@ function renderTypes() {
 $('#typesBtn').onclick = () => { const t = $('#types'); if (t.style.display === 'block') t.style.display = 'none'; else { renderTypes(); t.style.display = 'block'; } };
 function renderHelper() {
   const h = HS.get();
-  $('#helper').innerHTML = `<b>Print helper</b>
-    <label>Helper address (the PC with the printer)</label><input id="hUrl" placeholder="http://192.168.1.20:8094" value="${h.url || ''}">
-    <label>Token (if the helper was started with --token)</label><input id="hTok" value="${h.token || ''}">
-    <label>Printer queue for 9 mm drawer labels</label><select id="hPrn"><option value="">(fetch printers first)</option></select>
-    <label>Printer queue for 18 mm bin labels</label><select id="hPrnB"><option value="">(fetch printers first)</option></select>
-    <div class="row"><button id="hTest" type="button">Fetch printers</button><label style="margin:0"><input type="checkbox" id="hDirect" style="width:auto" ${h.direct ? 'checked' : ''}> print directly instead of downloading</label></div>
+  $('#helper').innerHTML = `<b>Label printer</b>
+    <label>Printer queue for 9 mm drawer labels</label><select id="hPrn"></select>
+    <label>Printer queue for 18 mm bin labels</label><select id="hPrnB"></select>
+    <div class="row"><button id="hTest" type="button">Refresh</button><label style="margin:0"><input type="checkbox" id="hDirect" style="width:auto" ${h.direct ? 'checked' : ''}> print directly instead of downloading</label></div>
     <div class="msg" id="hMsg"></div>
     <div class="row"><button id="hSave" type="button">Save</button><button id="hClose" type="button">Close</button></div>`;
   const sel = $('#hPrn'), selB = $('#hPrnB');
-  if (h.printer) sel.innerHTML = `<option value="${h.printer}">${h.printer}</option>`;
-  selB.innerHTML = `<option value="">(none)</option>` + (h.printerBin ? `<option value="${h.printerBin}" selected>${h.printerBin}</option>` : '');
-  $('#hTest').onclick = async () => {
-    HS.set({ ...HS.get(), url: $('#hUrl').value.trim(), token: $('#hTok').value.trim() });
-    const url = helperUrl('/printers'); if (!url) return ($('#hMsg').textContent = 'enter the helper address first');
-    $('#hMsg').textContent = 'contacting helper…';
-    try { const j = await (await fetch(url)).json(); if (j.error) throw new Error(j.error);
-      sel.innerHTML = j.printers.map(pn => `<option ${pn === h.printer ? 'selected' : ''}>${pn}</option>`).join('') || '<option value="">(no printers found)</option>';
-      selB.innerHTML = '<option value="">(none)</option>' + j.printers.map(pn => `<option ${pn === h.printerBin ? 'selected' : ''}>${pn}</option>`).join('');
-      $('#hMsg').textContent = `helper ${j.version || '(old, no version)'} · print program: ${j.backend || 'NONE FOUND'} · ${j.printers.length} printers`;
-    } catch (e) { $('#hMsg').textContent = 'no answer from the helper: ' + e.message; }
+  // the saved queues stay selectable while the helper is offline
+  const fill = names => {
+    const opt = (pn, cur) => `<option ${pn === cur ? 'selected' : ''}>${pn}</option>`;
+    sel.innerHTML = [...new Set([h.printer, ...names].filter(Boolean))].map(pn => opt(pn, h.printer)).join('') || '<option value="">(no printers known yet)</option>';
+    selB.innerHTML = '<option value="">(none)</option>' + [...new Set([h.printerBin, ...names].filter(Boolean))].map(pn => opt(pn, h.printerBin)).join('');
   };
-  $('#hSave').onclick = () => { HS.set({ url: $('#hUrl').value.trim(), token: $('#hTok').value.trim(), printer: sel.value, printerBin: selB.value, direct: $('#hDirect').checked }); $('#hMsg').textContent = 'saved'; };
+  const refresh = async () => {
+    $('#hMsg').textContent = 'asking the server…';
+    try { const j = await (await fetch('/api/print/status')).json(); fill(j.printers || []);
+      $('#hMsg').textContent = j.online ? `helper ${j.version || ''} connected · print program: ${j.backend || 'NONE FOUND'} · ${(j.printers || []).length} printers`
+        : 'the print helper is not connected (it runs on the PC with the label printer)';
+    } catch (e) { $('#hMsg').textContent = 'no answer from the server: ' + e.message; }
+  };
+  fill([]); refresh();
+  $('#hTest').onclick = refresh;
+  $('#hSave').onclick = () => { HS.set({ printer: sel.value, printerBin: selB.value, direct: $('#hDirect').checked }); $('#hMsg').textContent = 'saved'; };
   $('#hClose').onclick = () => { $('#helper').style.display = 'none'; };
 }
 $('#helperBtn').onclick = () => { const t = $('#helper'); if (t.style.display === 'block') t.style.display = 'none'; else { renderHelper(); t.style.display = 'block'; } };

@@ -1,14 +1,15 @@
 // Copyright (C) 2026 Aaron Solochek. Licensed under the GNU GPL v3; see LICENSE.
-// Fastener grid: a small web app for the fastener cabinets. Serves the grid, stores the JSON model, renders drawer labels as PDF.
+// Partstore: a small web app for the fastener cabinets. Serves the grid, stores the JSON model, renders drawer labels as PDF
+// and relays print jobs to the print helper on the PC with the label printer.
 // Run:  node server.js            (port 8093 unless PORT is set; bind to localhost, Apache proxies and authenticates)
 // Label rendering reuses ~/binner-docs/plan-src/labels.js (Futura, 360 dpi): drawer labels on 9 mm tape, bin labels on 18 mm.
-const path = require('path'), fs = require('fs');
+const path = require('path'), fs = require('fs'), crypto = require('crypto');
 process.env.NODE_PATH = path.join(__dirname, 'node_modules');   // labels.js finds sharp and pdf-lib through NODE_PATH
 const express = require('express');
 const L = require('/home/aarons/binner-docs/plan-src/labels.js');
 const I = require('./icons.js'), M = require('./model.js');
-const DATA = process.env.FASTENERS_DATA || path.join(__dirname, 'data', 'fasteners.json');   // FASTENERS_DATA: another data file (tests)
-const PRINTED = process.env.FASTENERS_PRINTED || path.join(__dirname, 'data', 'printed.json');   // { "<page>|<cell key>": "<label text + types>", "bin|B3": "..." } = what has been printed
+const DATA = process.env.PARTSTORE_DATA || process.env.FASTENERS_DATA || path.join(__dirname, 'data', 'fasteners.json');   // PARTSTORE_DATA: another data file (tests)
+const PRINTED = process.env.PARTSTORE_PRINTED || process.env.FASTENERS_PRINTED || path.join(__dirname, 'data', 'printed.json');   // { "<page>|<cell key>": "<label text + types>", "bin|B3": "..." } = what has been printed
 const app = express();
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'static')));
@@ -302,5 +303,50 @@ app.get('/api/preview.png', async (req, res) => {
   else { pt.page = page; lab = drawerLabel((slot && all.find(g => groupSlot(g) === slot)) || [pt]); }
   res.setHeader('Content-Type', 'image/png'); res.send(await L.renderPng(L.labelSvg(lab.kind, lab)));
 });
+// Print relay. The page is served over https and the printer's PC sits behind NAT, so the page cannot call the helper and
+// neither can this server: the helper (helper/print-helper.py --server) polls here instead. The page POSTs a PDF to /api/print,
+// the helper collects it from /api/helper/next, prints it and reports to /api/helper/done, which answers the page's request.
+// /api/helper/* is exempt from Apache's login and carries the token in data/helper.token (made on first start) as X-Token.
+const TOKEN_FILE = process.env.PARTSTORE_HELPER_TOKEN_FILE || path.join(__dirname, 'data', 'helper.token');
+if (!fs.existsSync(TOKEN_FILE)) fs.writeFileSync(TOKEN_FILE, crypto.randomBytes(24).toString('hex') + '\n', { mode: 0o600 });
+const HELPER_TOKEN = fs.readFileSync(TOKEN_FILE, 'utf8').trim();
+const helper = { seen: 0, info: {}, waiting: null };   // seen = last poll (ms); info = what the helper said about itself; waiting = its parked poll
+const jobs = new Map(), queue = [];                     // job id -> { id, pdf, printer, res, timer }; queue = ids not yet collected
+const helperOnline = () => Date.now() - helper.seen < 45000;
+const helperAuth = (req, res, next) => {
+  const a = Buffer.from(String(req.get('X-Token') || '')), b = Buffer.from(HELPER_TOKEN);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return res.status(403).json({ error: 'bad token' });
+  helper.seen = Date.now(); next();
+};
+const hand = (res, job) => { res.setHeader('Content-Type', 'application/pdf'); res.setHeader('X-Job', job.id); res.setHeader('X-Printer', encodeURIComponent(job.printer)); res.send(job.pdf); };
+const finish = (job, code, body) => { clearTimeout(job.timer); jobs.delete(job.id); const i = queue.indexOf(job.id); if (i >= 0) queue.splice(i, 1); if (!job.res.headersSent) job.res.status(code).json(body); };
+// POST /api/helper/hello { printers, backend, version }: the helper introduces itself on start and now and then
+app.post('/api/helper/hello', helperAuth, (req, res) => { helper.info = { printers: req.body.printers || [], backend: req.body.backend || null, version: req.body.version || '' }; res.json({ ok: true }); });
+// GET /api/helper/next: long poll; the next job as a PDF (X-Job, X-Printer), or 204 after 25 s with nothing to print
+app.get('/api/helper/next', helperAuth, (req, res) => {
+  if (helper.waiting) { clearTimeout(helper.waiting.timer); helper.waiting.res.status(204).end(); helper.waiting = null; }
+  const id = queue.shift(); if (id) return hand(res, jobs.get(id));
+  const w = helper.waiting = { res, timer: setTimeout(() => { if (helper.waiting === w) helper.waiting = null; helper.seen = Date.now(); res.status(204).end(); }, 25000) };
+  req.on('close', () => { if (helper.waiting === w) { clearTimeout(w.timer); helper.waiting = null; } });
+});
+// POST /api/helper/done { job, ok, pages, backend, error }
+app.post('/api/helper/done', helperAuth, (req, res) => {
+  const job = jobs.get(req.body.job);
+  if (job) req.body.ok ? finish(job, 200, { ok: true, pages: req.body.pages || job.pages, printer: job.printer, backend: req.body.backend }) : finish(job, 500, { error: req.body.error || 'print failed' });
+  res.json({ ok: true });
+});
+// GET /api/print/status -> { online, printers, backend, version } for the page's Printer… dialog
+app.get('/api/print/status', (req, res) => res.json({ online: helperOnline(), ...helper.info }));
+// POST /api/print?printer=NAME[&pages=N], body = the PDF: answers once the helper has printed it (or could not)
+app.post('/api/print', express.raw({ type: 'application/pdf', limit: '50mb' }), (req, res) => {
+  const printer = String(req.query.printer || '');
+  if (!printer) return res.status(400).json({ error: 'printer= is required' });
+  if (!Buffer.isBuffer(req.body) || req.body.subarray(0, 4).toString() !== '%PDF') return res.status(400).json({ error: 'body is not a PDF' });
+  if (!helperOnline()) return res.status(503).json({ error: 'the print helper is not connected (is the PC with the label printer on?)' });
+  const job = { id: crypto.randomBytes(8).toString('hex'), pdf: req.body, printer, res, pages: +req.query.pages || 0 };   // pages: the page's own count, for when the helper cannot count them
+  job.timer = setTimeout(() => finish(job, 504, { error: 'the print helper did not report back' }), 170000);
+  jobs.set(job.id, job);
+  if (helper.waiting) { const w = helper.waiting; helper.waiting = null; clearTimeout(w.timer); hand(w.res, job); } else queue.push(job.id);
+});
 const port = +process.env.PORT || 8093;
-app.listen(port, '127.0.0.1', () => console.log(`fasteners on http://127.0.0.1:${port}`));
+app.listen(port, '127.0.0.1', () => console.log(`partstore on http://127.0.0.1:${port}`));

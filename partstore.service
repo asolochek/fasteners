@@ -1,13 +1,13 @@
-# systemd unit for the fastener grid. Install:  sudo cp fasteners.service /etc/systemd/system/ && sudo systemctl enable --now fasteners
+# systemd unit for Partstore. Install:  sudo cp partstore.service /etc/systemd/system/ && sudo systemctl enable --now partstore
 [Unit]
-Description=Fastener grid (labels for the fastener cabinets)
+Description=Partstore (fastener cabinets and their labels)
 After=network.target
 
 [Service]
 User=aarons
-WorkingDirectory=/home/aarons/fasteners
+WorkingDirectory=/usr/local/share/partstore
 Environment=PORT=8093
-ExecStart=/usr/bin/node /home/aarons/fasteners/server.js
+ExecStart=/usr/bin/node /usr/local/share/partstore/server.js
 Restart=on-failure
 
 [Install]
