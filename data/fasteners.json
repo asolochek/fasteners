@@ -484,9 +484,18 @@
      "half": "front"
     },
     "#4|lockwasher": {
-     "types": [],
+     "types": [
+      "split"
+     ],
      "drawer": "32",
-     "half": "back"
+     "half": "back",
+     "detail": {
+      "split": {
+       "materials": [
+        "stainless"
+       ]
+      }
+     }
     },
     "3-48|nut": {
      "types": [
@@ -866,9 +875,18 @@
      "half": "back"
     },
     "#8|lockwasher": {
-     "types": [],
+     "types": [
+      "split"
+     ],
      "drawer": "48",
-     "half": "back"
+     "half": "back",
+     "detail": {
+      "split": {
+       "materials": [
+        "stainless"
+       ]
+      }
+     }
     },
     "10-24|0.375": {
      "types": [
@@ -905,9 +923,18 @@
      }
     },
     "#10|lockwasher": {
-     "types": [],
+     "types": [
+      "split"
+     ],
      "drawer": "56",
-     "half": "back"
+     "half": "back",
+     "detail": {
+      "split": {
+       "materials": [
+        "stainless"
+       ]
+      }
+     }
     },
     "10-32|0.5": {
      "types": [
@@ -5235,6 +5262,18 @@
       "drawer": "60",
       "half": "back"
      }
+    },
+    "M4|locknut": {
+     "types": [
+      "nylock"
+     ],
+     "detail": {
+      "nylock": {
+       "materials": [
+        "stainless"
+       ]
+      }
+     }
     }
    },
    "locknuts": [
@@ -6765,7 +6804,7 @@
      "loc": {
       "kind": "drawer",
       "drawer": "8",
-      "half": "front"
+      "half": "back"
      }
     },
     "#10|1": {
@@ -6858,7 +6897,8 @@
     },
     "#8|0.75": {
      "types": [
-      "hexwasher:p:c"
+      "hexwasher:p:c",
+      "flange:p:c"
      ],
      "detail": {
       "hexwasher:p:c": {
@@ -6866,11 +6906,32 @@
         "hex": [
          "steel-chrome"
         ]
-       },
-       "loc": {
-        "kind": "drawer",
-        "drawer": "4",
-        "half": "front"
+       }
+      },
+      "flange:p:c": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "5",
+      "half": "front"
+     }
+    },
+    "#8|1": {
+     "types": [
+      "flange:p:c"
+     ],
+     "detail": {
+      "flange:p:c": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
        }
       }
      }
@@ -6959,7 +7020,7 @@
    ]
   }
  ],
- "rev": 2190,
+ "rev": 2209,
  "layout": {
   "cabinets": [
    {
