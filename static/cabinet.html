@@ -45,7 +45,7 @@ main { display:flex; gap:16px; padding:0 14px; flex:1; min-height:0; }
 .legend .cab { display:inline-block; width:14px; height:14px; border-radius:7px; vertical-align:-2px; margin-right:4px; }
 .drawer { background:var(--none); border-radius:6px; min-height:78px; position:relative; display:flex; flex-direction:column; }
 .drawer .n { position:absolute; top:3px; right:5px; font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; pointer-events:none; z-index:1; }
-.half { flex:1; min-height:36px; padding:5px 6px 4px; border-radius:6px; display:flex; flex-direction:column; gap:3px; }
+.half { flex:1 1 auto; min-height:36px; padding:5px 6px 4px; border-radius:6px; display:flex; flex-direction:column; gap:3px; }   /* auto basis: Safari otherwise sizes the halves to their minimum and the cards spill into the next row */
 .half[data-h="front"] { border-top:1px dashed var(--line); }   /* rear above the line, front below, like the drawer */
 .half.whole { border-top:0; }
 .half.over { background:var(--drop); outline:2px solid #8fcf8f; }

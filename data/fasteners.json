@@ -445,7 +445,8 @@
       },
       "washer": {
        "materials": [
-        "plastic"
+        "plastic",
+        "phenolic"
        ]
       }
      }
@@ -753,7 +754,10 @@
       "washer"
      ],
      "drawer": "48",
-     "half": "front"
+     "half": "front",
+     "detail": {
+      "washer": {}
+     }
     },
     "8-32|0.3125": {
      "types": [
@@ -5067,6 +5071,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "62",
+      "half": "back"
      }
     },
     "M10|35": {
@@ -5081,6 +5090,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "62",
+      "half": "front"
      }
     },
     "M8|50": {
@@ -5095,6 +5109,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "59",
+      "half": "front"
      }
     },
     "M8|40": {
@@ -5109,6 +5128,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "59",
+      "half": "back"
      }
     },
     "M8|16": {
@@ -5123,6 +5147,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "57",
+      "half": "front"
      }
     },
     "M8|12": {
@@ -5137,6 +5166,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "57",
+      "half": "back"
      }
     },
     "M8|35": {
@@ -5159,6 +5193,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "58",
+      "half": "front"
      }
     },
     "M8|30": {
@@ -5173,6 +5212,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "58",
+      "half": "back"
      }
     },
     "M8|locknut": {
@@ -5185,6 +5229,11 @@
         "steel-blackoxide"
        ]
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "60",
+      "half": "back"
      }
     }
    },
@@ -5318,7 +5367,6 @@
      "types": [
       "flat:p",
       "button:p",
-      "hexwasher:p:c",
       "pan:p"
      ],
      "detail": {
@@ -5334,13 +5382,6 @@
        "drives": {
         "slotted": [
          "steel-zinc"
-        ]
-       }
-      },
-      "hexwasher:p:c": {
-       "drives": {
-        "hex": [
-         "steel-chrome"
         ]
        }
       },
@@ -5452,8 +5493,7 @@
     "#6|1": {
      "types": [
       "button:p",
-      "flat:p",
-      "pan:p:c"
+      "flat:p"
      ],
      "detail": {
       "button:p": {
@@ -5472,13 +5512,6 @@
          "stainless"
         ]
        }
-      },
-      "pan:p:c": {
-       "drives": {
-        "phillips": [
-         "stainless"
-        ]
-       }
       }
      },
      "loc": {
@@ -5490,7 +5523,6 @@
     "#8|0.5": {
      "types": [
       "flat:p",
-      "hexwasher:p:c",
       "pan:p"
      ],
      "detail": {
@@ -5498,13 +5530,6 @@
        "drives": {
         "phillips": [
          "steel-zinc"
-        ]
-       }
-      },
-      "hexwasher:p:c": {
-       "drives": {
-        "hex": [
-         "steel-chrome"
         ]
        }
       },
@@ -5602,8 +5627,7 @@
     "#10|0.75": {
      "types": [
       "flat:p",
-      "button:p",
-      "pan:p:c"
+      "button:p"
      ],
      "detail": {
       "flat:p": {
@@ -5617,13 +5641,6 @@
        "drives": {
         "slotted": [
          "steel-zinc"
-        ]
-       }
-      },
-      "pan:p:c": {
-       "drives": {
-        "phillips": [
-         "stainless"
         ]
        }
       },
@@ -5757,7 +5774,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "27",
+      "drawer": "35",
       "half": "back"
      }
     },
@@ -5782,7 +5799,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "29",
+      "drawer": "37",
       "half": "back"
      }
     },
@@ -5801,7 +5818,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "30",
+      "drawer": "38",
       "half": "back"
      }
     },
@@ -5821,7 +5838,7 @@
      "whole": true,
      "loc": {
       "kind": "drawer",
-      "drawer": "32",
+      "drawer": "40",
       "half": ""
      }
     },
@@ -5840,7 +5857,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "31",
+      "drawer": "39",
       "half": "back"
      }
     },
@@ -5859,7 +5876,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "29",
+      "drawer": "37",
       "half": "front"
      }
     },
@@ -5878,7 +5895,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "28",
+      "drawer": "36",
       "half": "back"
      }
     },
@@ -5897,7 +5914,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "30",
+      "drawer": "38",
       "half": "front"
      }
     },
@@ -5916,7 +5933,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "27",
+      "drawer": "35",
       "half": "front"
      }
     },
@@ -6019,7 +6036,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "28",
+      "drawer": "36",
       "half": "front"
      }
     },
@@ -6150,7 +6167,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "25",
+      "drawer": "33",
       "half": "back"
      }
     },
@@ -6172,7 +6189,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "26",
+      "drawer": "34",
       "half": "back"
      }
     },
@@ -6191,7 +6208,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "26",
+      "drawer": "34",
       "half": "front"
      }
     },
@@ -6584,7 +6601,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "25",
+      "drawer": "33",
       "half": "front"
      }
     }
@@ -6744,6 +6761,85 @@
        }
       }
      }
+    },
+    "#10|0.75": {
+     "types": [
+      "pan:p:c"
+     ],
+     "detail": {
+      "pan:p:c": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       }
+      }
+     }
+    },
+    "#6|1": {
+     "types": [
+      "pan:p:c"
+     ],
+     "detail": {
+      "pan:p:c": {
+       "drives": {
+        "phillips": [
+         "stainless"
+        ]
+       },
+       "loc": {
+        "kind": "drawer",
+        "drawer": "10",
+        "half": "back"
+       }
+      }
+     }
+    },
+    "#8|0.5": {
+     "types": [
+      "hexwasher:p:c",
+      "flange:p"
+     ],
+     "detail": {
+      "hexwasher:p:c": {
+       "drives": {
+        "hex": [
+         "steel-chrome"
+        ]
+       },
+       "loc": {
+        "kind": "drawer",
+        "drawer": "17",
+        "half": "front"
+       }
+      },
+      "flange:p": {
+       "drives": {
+        "phillips": [
+         "steel-zinc"
+        ]
+       }
+      }
+     }
+    },
+    "#8|0.75": {
+     "types": [
+      "hexwasher:p:c"
+     ],
+     "detail": {
+      "hexwasher:p:c": {
+       "drives": {
+        "hex": [
+         "steel-chrome"
+        ]
+       },
+       "loc": {
+        "kind": "drawer",
+        "drawer": "18",
+        "half": "front"
+       }
+      }
+     }
     }
    },
    "cabinet": "wood"
@@ -6829,7 +6925,7 @@
    ]
   }
  ],
- "rev": 2099,
+ "rev": 2131,
  "layout": {
   "cabinets": [
    {
