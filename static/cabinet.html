@@ -84,7 +84,7 @@ main { display:flex; gap:16px; padding:0 14px; flex:1; min-height:0; }
 <body>
 <header><h1>Fastener cabinet</h1>
   <span class="tabs" id="tabs"></span>
-  <button id="undo" disabled title="undo the last move or shift">Undo</button>
+  <button id="undo" disabled title="undo the last move or shift (⌘Z / Ctrl+Z)">Undo</button>
   <button id="setupBtn" title="cabinets and how many drawers each category has">Cabinets…</button>
   <span id="status"></span>
   <span class="legend" id="cablegend"></span>
@@ -135,7 +135,10 @@ async function commit(what) {
   cab = normalize(await (await fetch('/api/cabinet')).json()); render(); status(what || 'saved'); return true;
 }
 function snapshot() { undoStack.push(JSON.stringify(data)); if (undoStack.length > 30) undoStack.shift(); $('#undo').disabled = false; }
-$('#undo').onclick = async () => { if (!undoStack.length) return; const prev = JSON.parse(undoStack.pop()); prev.rev = data.rev; data = prev; $('#undo').disabled = !undoStack.length; await commit('undone'); };
+async function undo() { if (!undoStack.length) return; const prev = JSON.parse(undoStack.pop()); prev.rev = data.rev; data = prev; $('#undo').disabled = !undoStack.length; await commit('undone'); }
+$('#undo').onclick = undo;
+// ⌘Z / Ctrl+Z undoes the last move or shift (outside text fields)
+document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && !/^(input|textarea|select)$/i.test(e.target.tagName)) { e.preventDefault(); undo(); } });
 
 // ---- the objects a part's location lives on ----
 const pageOf = id => data.pages.find(p => p.id === id);

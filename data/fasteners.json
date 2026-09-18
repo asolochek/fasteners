@@ -5396,7 +5396,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "18",
+      "drawer": "26",
       "half": "front"
      }
     },
@@ -5424,7 +5424,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "4",
+      "drawer": "12",
       "half": "front"
      }
     },
@@ -5543,7 +5543,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "17",
+      "drawer": "25",
       "half": "front"
      }
     },
@@ -5578,7 +5578,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "19",
+      "drawer": "27",
       "half": "back"
      }
     },
@@ -5620,7 +5620,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "19",
+      "drawer": "27",
       "half": "front"
      }
     },
@@ -5648,7 +5648,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "22",
+      "drawer": "30",
       "half": "back"
      }
     },
@@ -5690,7 +5690,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "22",
+      "drawer": "30",
       "half": "front"
      }
     },
@@ -5725,7 +5725,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "23",
+      "drawer": "31",
       "half": "back"
      }
     },
@@ -5752,7 +5752,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "24",
+      "drawer": "32",
       "half": "front"
      }
     },
@@ -5960,7 +5960,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "21",
+      "drawer": "29",
       "half": "back"
      }
     },
@@ -5979,7 +5979,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "18",
+      "drawer": "26",
       "half": "back"
      }
     },
@@ -6017,7 +6017,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "20",
+      "drawer": "28",
       "half": "back"
      }
     },
@@ -6055,7 +6055,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "21",
+      "drawer": "29",
       "half": "front"
      }
     },
@@ -6091,7 +6091,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "11",
+      "drawer": "19",
       "half": "back"
      }
     },
@@ -6110,7 +6110,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "12",
+      "drawer": "20",
       "half": "front"
      }
     },
@@ -6148,7 +6148,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "14",
+      "drawer": "22",
       "half": "front"
      }
     },
@@ -6262,7 +6262,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "20",
+      "drawer": "28",
       "half": "front"
      }
     },
@@ -6281,7 +6281,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "4",
+      "drawer": "12",
       "half": "back"
      }
     },
@@ -6309,7 +6309,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "5",
+      "drawer": "13",
       "half": "back"
      }
     },
@@ -6328,7 +6328,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "5",
+      "drawer": "13",
       "half": "front"
      }
     },
@@ -6348,7 +6348,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "6",
+      "drawer": "14",
       "half": "back"
      }
     },
@@ -6368,7 +6368,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "6",
+      "drawer": "14",
       "half": "front"
      }
     },
@@ -6387,7 +6387,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "1",
+      "drawer": "17",
       "half": "back"
      }
     },
@@ -6406,7 +6406,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "1",
+      "drawer": "17",
       "half": "front"
      }
     },
@@ -6425,7 +6425,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "2",
+      "drawer": "18",
       "half": "back"
      }
     },
@@ -6452,7 +6452,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "11",
+      "drawer": "19",
       "half": "front"
      }
     },
@@ -6471,7 +6471,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "12",
+      "drawer": "20",
       "half": "back"
      }
     },
@@ -6490,7 +6490,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "13",
+      "drawer": "21",
       "half": "back"
      }
     },
@@ -6509,7 +6509,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "14",
+      "drawer": "22",
       "half": "back"
      }
     },
@@ -6531,7 +6531,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "15",
+      "drawer": "23",
       "half": "back"
      }
     },
@@ -6550,7 +6550,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "17",
+      "drawer": "25",
       "half": "back"
      }
     },
@@ -6569,7 +6569,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "23",
+      "drawer": "31",
       "half": "front"
      }
     },
@@ -6582,7 +6582,7 @@
      },
      "loc": {
       "kind": "drawer",
-      "drawer": "24",
+      "drawer": "32",
       "half": "back"
      }
     },
@@ -6704,6 +6704,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "2",
+      "half": "back"
      }
     },
     "#6|0.5": {
@@ -6718,6 +6723,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "2",
+      "half": "front"
      }
     },
     "#4|0.375": {
@@ -6732,6 +6742,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "1",
+      "half": "back"
      }
     },
     "1/4|1.5": {
@@ -6746,6 +6761,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "8",
+      "half": "front"
      }
     },
     "#10|1": {
@@ -6760,6 +6780,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "7",
+      "half": "front"
      }
     },
     "#10|0.75": {
@@ -6774,6 +6799,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "7",
+      "half": "back"
      }
     },
     "#6|1": {
@@ -6788,11 +6818,15 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "3",
+      "half": "back"
      }
     },
     "#8|0.5": {
      "types": [
-      "hexwasher:p:c",
       "flange:p"
      ],
      "detail": {
@@ -6804,8 +6838,8 @@
        },
        "loc": {
         "kind": "drawer",
-        "drawer": "17",
-        "half": "front"
+        "drawer": "4",
+        "half": "back"
        }
       },
       "flange:p": {
@@ -6815,6 +6849,11 @@
         ]
        }
       }
+     },
+     "loc": {
+      "kind": "drawer",
+      "drawer": "5",
+      "half": "back"
      }
     },
     "#8|0.75": {
@@ -6830,7 +6869,7 @@
        },
        "loc": {
         "kind": "drawer",
-        "drawer": "18",
+        "drawer": "4",
         "half": "front"
        }
       }
@@ -6920,7 +6959,7 @@
    ]
   }
  ],
- "rev": 2132,
+ "rev": 2190,
  "layout": {
   "cabinets": [
    {
