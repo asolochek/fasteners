@@ -24,7 +24,7 @@ main { display:flex; gap:16px; padding:0 14px; flex:1; min-height:0; }
 #right h2 { position:sticky; top:0; background:var(--paper); margin:0; padding:0 0 8px; z-index:1; }
 .cabinet { border:2px solid var(--ink2); border-radius:10px; padding:10px; margin-bottom:16px; }
 .cabinet h2 { margin:0 0 8px; }
-.grid { display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; }
+.grid { display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; align-items:start; }   /* a drawer is only as tall as its own cards, not the tallest in its row */
 .grid.k4x4 { grid-template-columns:repeat(4, 1fr); max-width:700px; }
 .grid.k4x4w { grid-template-columns:2fr repeat(4, 1fr) 2fr; grid-template-rows:repeat(12, auto); max-width:1000px; }
 .grid.k4x4w .drawer { grid-row:span 3; }
